@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <!-- 1. Ứng dụng chính HDTOOL (Ribbon Tab HDTOOL & các công cụ) -->
+  <AddIn Type="Application">
+    <Name>HDTOOL</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.App</FullClassName>
+    <ClientId>B7C59E12-4C10-4A82-96DE-57C894EF31A0</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 2. Lệnh Căn Chỉnh Grids Mặt Bằng & Sheet (Người dùng tự chọn) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Căn Chỉnh Grids</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.GridCropCommand</FullClassName>
+    <ClientId>E1F30C4D-2374-4C75-A8F8-690DF27E1C38</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 3. Lệnh Căn Chỉnh Level Mặt Cắt, Đứng & Sheet (Người dùng tự chọn) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Căn Chỉnh Level</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.LevelCropCommand</FullClassName>
+    <ClientId>7E659A1D-318D-4F2A-85F0-5C2BA267DF6C</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 4. Menu Trung Tâm Điều Khiển HDTOOL -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Menu Tùy Chọn</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.HDToolMainCommand</FullClassName>
+    <ClientId>A42BF97D-0C7A-4598-BE95-A7A890CF6C5D</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 5. Lệnh Tự Động Nhận Diện Nhanh (Smart Align) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Tự Động Căn (Smart Align)</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.SmartCropCommand</FullClassName>
+    <ClientId>2D7C8A9B-4321-4E7B-9A23-C5E6D7E8F9A0</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 6. Lệnh Xuất Danh Mục Bản Vẽ (Sheet List) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Xuất Danh Mục Bản Vẽ</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.ExportSheetListCommand</FullClassName>
+    <ClientId>9F3A1C2E-5B4D-4A78-8E6C-3D2E1F0A9B8C</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+  <!-- 7. Lệnh Cập Nhật Danh Mục Bản Vẽ Từ Excel (Update Sheet List) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Cập Nhật Danh Mục Bản Vẽ</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.UpdateSheetListCommand</FullClassName>
+    <ClientId>A3C8B7D1-84E2-4F15-9A6D-0C7E5F2B1A9D</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 8. Lệnh Thống Kê Khối Lượng Ống Nước & Phụ Kiện (Soi sáng đối tượng & Gộp parameter) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Thống Kê Khối Lượng Ống Nước</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.MepQuantityCommand</FullClassName>
+    <ClientId>C4D5E6F7-1A2B-3C4D-5E6F-7A8B9C0D1E2F</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+</RevitAddIns>

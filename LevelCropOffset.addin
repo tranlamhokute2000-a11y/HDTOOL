@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Level and Grid Crop Offset Addin</Name>
+    <Assembly>LevelCropOffset\LevelCropOffset.dll</Assembly>
+    <AddInId>8B3E12D4-95C8-4D2A-B9B2-E80C9C3E14A5</AddInId>
+    <FullClassName>LevelCropOffset.App</FullClassName>
+    <VendorId>ADSK</VendorId>
+    <VendorDescription>BIM Developer</VendorDescription>
+  </AddIn>
+  <AddIn Type="Command">
+    <Name>Căn Chỉnh Grid Mặt Bằng</Name>
+    <Assembly>LevelCropOffset\LevelCropOffset.dll</Assembly>
+    <AddInId>9C4E3D2A-1B8F-4A7C-B5E3-891234CDEF56</AddInId>
+    <FullClassName>LevelCropOffset.GridCropCommand</FullClassName>
+    <VendorId>ADSK</VendorId>
+    <VendorDescription>BIM Developer</VendorDescription>
+  </AddIn>
+  <AddIn Type="Command">
+    <Name>Căn Chỉnh Level So Với Crop</Name>
+    <Assembly>LevelCropOffset\LevelCropOffset.dll</Assembly>
+    <AddInId>6A2F11C3-84B7-3E19-A8A1-D70B8B2D0394</AddInId>
+    <FullClassName>LevelCropOffset.LevelCropCommand</FullClassName>
+    <VendorId>ADSK</VendorId>
+    <VendorDescription>BIM Developer</VendorDescription>
+  </AddIn>
+  <AddIn Type="Command">
+    <Name>Tự Động Căn Smart Align</Name>
+    <Assembly>LevelCropOffset\LevelCropOffset.dll</Assembly>
+    <AddInId>3A7B8C9D-2E1F-4F6A-B7D8-901234ABCDEF</AddInId>
+    <FullClassName>LevelCropOffset.SmartCropCommand</FullClassName>
+    <VendorId>ADSK</VendorId>
+    <VendorDescription>BIM Developer</VendorDescription>
+  </AddIn>
+</RevitAddIns>

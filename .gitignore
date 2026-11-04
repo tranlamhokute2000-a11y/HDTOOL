@@ -1,0 +1,23 @@
+# Build outputs & installers
+Build/
+Installer/
+*.exe
+*.zip
+*.dll
+*.pdb
+
+# Temporary & OS files
+*.tmp
+*.log
+Thumbs.db
+[Dd]esktop.ini
+
+# Visual Studio / IDE
+.vs/
+bin/
+obj/
+*.user
+*.suo
+
+# Scratch scripts
+scratch/
