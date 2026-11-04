@@ -79,3 +79,4 @@ Hệ thống sẽ:
 2. Biên dịch `HDTOOL.dll` và `Setup.exe` 0 lỗi.
 3. Tự động đồng bộ sang `%APPDATA%\Autodesk\Revit\Addins\2024`, `2025`, `2027`.
 4. Tự động áp dụng Retention Policy: Chỉ giữ 2 version gần nhất trong thư mục dự án, giữ Desktop của Sếp Hồ luôn sạch đẹp 100%!
+
