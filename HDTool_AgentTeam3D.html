@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HDTOOL - VĂN PHÒNG 3D ĐỘI NGŨ AGENT (SẾP HỒ CHỈ HUY)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    body {
+      overflow: hidden;
+      background: #0f172a;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #f8fafc;
+    }
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    /* Top Bar */
+    .top-header {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .top-header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+    }
+    .badge-user {
+      background: #1e293b;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px #22c55e;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    /* Main Control Panel for Sep Ho */
+    .control-panel {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      width: 360px;
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      max-height: calc(100vh - 30px);
+      overflow-y: auto;
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 8px;
+    }
+
+    /* Emergency Alert Button */
+    .btn-emergency {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: alertGlow 2s infinite alternate;
+    }
+    .btn-emergency:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.6);
+      background: linear-gradient(135deg, #f87171, #ef4444);
+    }
+    .btn-emergency:active { transform: translateY(1px); }
+    @keyframes alertGlow {
+      0% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+      100% { box-shadow: 0 0 28px rgba(239, 68, 68, 0.85); }
+    }
+
+    /* Agent Cards */
+    .agent-card {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+    .agent-card:hover {
+      background: rgba(30, 41, 59, 0.95);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .agent-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .agent-name {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .agent-state-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #0369a1;
+      color: #e0f2fe;
+    }
+    .agent-state-badge.state-working { background: #047857; color: #d1fae5; }
+    .agent-state-badge.state-smoking { background: #b45309; color: #fef3c7; }
+    .agent-state-badge.state-sleeping { background: #6b21a8; color: #f3e8ff; }
+    .agent-state-badge.state-chatting { background: #0e7490; color: #cffafe; }
+
+    /* Action Buttons Row */
+    .agent-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+    .btn-action {
+      background: #334155;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 6px 2px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .btn-action:hover {
+      background: #475569;
+      color: white;
+    }
+    .btn-action.active {
+      background: #0284c7;
+      color: white;
+      border-color: #38bdf8;
+    }
+
+    /* Camera Views Row */
+    .camera-views {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 12px;
+    }
+    .btn-cam {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      padding: 7px 4px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-cam:hover {
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    /* Live Speech Toast */
+    .speech-bubble {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #f8fafc;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s;
+    }
+
+    /* 3D Label Overlays */
+    .agent-3d-tag {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: opacity 0.2s;
+    }
+  </style>
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <div class="top-header">
+    <span class="live-dot"></span>
+    <h1>HDTOOL 3D AGENT STUDIO</h1>
+    <div class="badge-user">SẾP HỒ (CHỈ HUY TRƯỞNG)</div>
+  </div>
+
+  <!-- Control Panel For Sep Ho -->
+  <div class="control-panel">
+    <div class="panel-title">
+      <span>ĐIỀU HÀNH TỔ CÔNG TÁC</span>
+      <span style="font-size: 11px; color: #94a3b8;">5 CHUYÊN VIÊN</span>
+    </div>
+
+    <!-- Alert Button -->
+    <button class="btn-emergency" onclick="triggerAlertAll()">
+      <span>🚨</span>
+      <span>SẾP HỒ GIAO VIỆC MỚI!</span>
+    </button>
+
+    <!-- Agent 1 -->
+    <div class="agent-card" id="card-director">
+      <div class="agent-info">
+        <span class="agent-name">🎖️ Giám Đốc Dự Án</span>
+        <span class="agent-state-badge state-working" id="badge-director">ĐANG CHỈ HUY</span>
+      </div>
+      <div class="agent-actions">
+        <button class="btn-action active" onclick="setAgentState('director', 'working')">Làm việc</button>
+        <button class="btn-action" onclick="setAgentState('director', 'smoking')">Thuốc lào</button>
+        <button class="btn-action" onclick="setAgentState('director', 'sleeping')">Đi ngủ</button>
+        <button class="btn-action" onclick="setAgentState('director', 'chatting')">Chém gió</button>
+      </div>
+    </div>
+
+    <!-- Agent 2 -->
+    <div class="agent-card" id="card-developer">
+      <div class="agent-info">
+        <span class="agent-name">💻 Kỹ Sư Lập Trình</span>
+        <span class="agent-state-badge state-working" id="badge-developer">ĐANG CODE</span>
+      </div>
+      <div class="agent-actions">
+        <button class="btn-action active" onclick="setAgentState('developer', 'working')">Làm việc</button>
+        <button class="btn-action" onclick="setAgentState('developer', 'smoking')">Thuốc lào</button>
+        <button class="btn-action" onclick="setAgentState('developer', 'sleeping')">Đi ngủ</button>
+        <button class="btn-action" onclick="setAgentState('developer', 'chatting')">Chém gió</button>
+      </div>
+    </div>
+
+    <!-- Agent 3 -->
+    <div class="agent-card" id="card-designer">
+      <div class="agent-info">
+        <span class="agent-name">🎨 Chuyên Viên Đồ Họa</span>
+        <span class="agent-state-badge state-working" id="badge-designer">VẼ UI/UX</span>
+      </div>
+      <div class="agent-actions">
+        <button class="btn-action active" onclick="setAgentState('designer', 'working')">Làm việc</button>
+        <button class="btn-action" onclick="setAgentState('designer', 'smoking')">Thuốc lào</button>
+        <button class="btn-action" onclick="setAgentState('designer', 'sleeping')">Đi ngủ</button>
+        <button class="btn-action" onclick="setAgentState('designer', 'chatting')">Chém gió</button>
+      </div>
+    </div>
+
+    <!-- Agent 4 -->
+    <div class="agent-card" id="card-fixer">
+      <div class="agent-info">
+        <span class="agent-name">🔧 Kỹ Thuật Fix Code</span>
+        <span class="agent-state-badge state-working" id="badge-fixer">SOI BUG</span>
+      </div>
+      <div class="agent-actions">
+        <button class="btn-action active" onclick="setAgentState('fixer', 'working')">Làm việc</button>
+        <button class="btn-action" onclick="setAgentState('fixer', 'smoking')">Thuốc lào</button>
+        <button class="btn-action" onclick="setAgentState('fixer', 'sleeping')">Đi ngủ</button>
+        <button class="btn-action" onclick="setAgentState('fixer', 'chatting')">Chém gió</button>
+      </div>
+    </div>
+
+    <!-- Agent 5 -->
+    <div class="agent-card" id="card-devops">
+      <div class="agent-info">
+        <span class="agent-name">📢 Ban Truyền Thông</span>
+        <span class="agent-state-badge state-working" id="badge-devops">GIT RELEASE</span>
+      </div>
+      <div class="agent-actions">
+        <button class="btn-action active" onclick="setAgentState('devops', 'working')">Làm việc</button>
+        <button class="btn-action" onclick="setAgentState('devops', 'smoking')">Thuốc lào</button>
+        <button class="btn-action" onclick="setAgentState('devops', 'sleeping')">Đi ngủ</button>
+        <button class="btn-action" onclick="setAgentState('devops', 'chatting')">Chém gió</button>
+      </div>
+    </div>
+
+    <!-- Quick Camera Navigation -->
+    <div class="panel-title" style="margin-top: 14px;">
+      <span>GÓC QUAN SÁT</span>
+    </div>
+    <div class="camera-views">
+      <button class="btn-cam" onclick="focusCamera('overview')">🏢 Toàn Cảnh</button>
+      <button class="btn-cam" onclick="focusCamera('director')">🎖️ Giám Đốc</button>
+      <button class="btn-cam" onclick="focusCamera('dev')">💻 Kỹ Sư Dev</button>
+      <button class="btn-cam" onclick="focusCamera('balcony')">🚬 Ban Công</button>
+      <button class="btn-cam" onclick="focusCamera('bed')">💤 Giường Ngủ</button>
+      <button class="btn-cam" onclick="focusCamera('teatable')">☕ Bàn Trà Đá</button>
+    </div>
+  </div>
+
+  <!-- Live Speech Toast -->
+  <div class="speech-bubble" id="speech-bubble">
+    <span style="font-size: 20px;">🗣️</span>
+    <span id="speech-text">Giám Đốc: "Toàn đội chú ý, Sếp Hồ vừa ra chỉ thị mới! Cùng nhau tập trung nào!"</span>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <!-- Audio Synthesizer (Web Audio API - Không cần file ngoài) -->
+  <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playKeyboardSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600 + Math.random() * 400, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    function playWaterPipeSound() {
+      // Tiếng rít điếu cày thuốc lào sòng sọc đặc trưng
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      for (let i = 0; i < 6; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220 + Math.random() * 120, now + i * 0.08);
+        gain.gain.setValueAtTime(0.08, now + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + (i + 1) * 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + i * 0.08);
+        osc.stop(now + (i + 1) * 0.08);
+      }
+    }
+
+    function playSnoreSound() {
+      // Tiếng thở khò khò khi ngủ
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(90, now);
+      osc.frequency.linearRampToValueAtTime(140, now + 0.4);
+      osc.frequency.linearRampToValueAtTime(80, now + 0.8);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.4);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.8);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.8);
+    }
+
+    function playAlertSound() {
+      // Chuông báo động Sếp Hồ giao việc
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      for (let i = 0; i < 3; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(880, now + i * 0.2);
+        osc.frequency.setValueAtTime(1200, now + i * 0.2 + 0.1);
+        gain.gain.setValueAtTime(0.12, now + i * 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.2 + 0.18);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + i * 0.2);
+        osc.stop(now + i * 0.2 + 0.18);
+      }
+    }
+  </script>
+
+  <!-- 3D Scene Script -->
+  <script>
+    let scene, camera, renderer, controls;
+    let smokeParticles = [];
+    let smokeMaterial;
+    let clock = new THREE.Clock();
+
+    // 5 Agents definitions
+    const agentsData = {
+      director: {
+        id: 'director',
+        name: 'Giám Đốc Dự Án',
+        role: 'Chỉ Huy & Chốt Kiến Trúc',
+        color: 0x1e3a8a, // Navy
+        hairColor: 0x1f2937,
+        badgeId: 'badge-director',
+        deskPos: { x: 0, y: 0, z: -3.5 },
+        deskRot: 0,
+        smokePos: { x: 7.5, y: 0, z: 2.5 },
+        bedPos: { x: -6.5, y: 0.6, z: -2.0 },
+        chatPos: { x: 6.2, y: 0, z: 1.5 },
+        state: 'working',
+        mesh: null
+      },
+      developer: {
+        id: 'developer',
+        name: 'Kỹ Sư Lập Trình',
+        role: 'Code Revit API & C#',
+        color: 0x0284c7, // Cyan Blue
+        hairColor: 0x4b5563,
+        badgeId: 'badge-developer',
+        deskPos: { x: -2.8, y: 0, z: -0.5 },
+        deskRot: Math.PI / 4,
+        smokePos: { x: 8.5, y: 0, z: 1.5 },
+        bedPos: { x: -6.5, y: 0.6, z: 0.0 },
+        chatPos: { x: 6.8, y: 0, z: 0.8 },
+        state: 'working',
+        mesh: null
+      },
+      designer: {
+        id: 'designer',
+        name: 'Chuyên Viên Đồ Họa',
+        role: 'Thiết Kế UI & Ribbon',
+        color: 0x8b5cf6, // Violet
+        hairColor: 0x9333ea,
+        badgeId: 'badge-designer',
+        deskPos: { x: 2.8, y: 0, z: -0.5 },
+        deskRot: -Math.PI / 4,
+        smokePos: { x: 8.5, y: 0, z: 3.2 },
+        bedPos: { x: -6.5, y: 0.6, z: 2.0 },
+        chatPos: { x: 5.5, y: 0, z: 2.2 },
+        state: 'working',
+        mesh: null
+      },
+      fixer: {
+        id: 'fixer',
+        name: 'Kỹ Thuật Fix Code',
+        role: 'Sửa Lỗi & Debug Log',
+        color: 0xd97706, // Amber
+        hairColor: 0x374151,
+        badgeId: 'badge-fixer',
+        deskPos: { x: -2.5, y: 0, z: 2.5 },
+        deskRot: Math.PI / 6,
+        smokePos: { x: 7.0, y: 0, z: 4.0 },
+        bedPos: { x: -5.0, y: 0.6, z: -2.0 },
+        chatPos: { x: 7.2, y: 0, z: 2.0 },
+        state: 'working',
+        mesh: null
+      },
+      devops: {
+        id: 'devops',
+        name: 'Ban Truyền Thông',
+        role: 'Build +1 & Git Push',
+        color: 0x059669, // Emerald
+        hairColor: 0x111827,
+        badgeId: 'badge-devops',
+        deskPos: { x: 2.5, y: 0, z: 2.5 },
+        deskRot: -Math.PI / 6,
+        smokePos: { x: 8.2, y: 0, z: 4.5 },
+        bedPos: { x: -5.0, y: 0.6, z: 1.0 },
+        chatPos: { x: 6.0, y: 0, z: 3.2 },
+        state: 'working',
+        mesh: null
+      }
+    };
+
+    function init() {
+      const container = document.getElementById('canvas-container');
+
+      // Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+      scene.fog = new THREE.FogExp2(0x0f172a, 0.025);
+
+      // Camera
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 11, 14);
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      // OrbitControls
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2.05;
+      controls.minDistance = 3;
+      controls.maxDistance = 35;
+      controls.target.set(0, 1.2, 0);
+
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xfff7ed, 0.85);
+      dirLight.position.set(10, 20, 12);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.bias = -0.0005;
+      scene.add(dirLight);
+
+      // Neon Accent Lights
+      const blueNeon = new THREE.PointLight(0x38bdf8, 1.2, 12);
+      blueNeon.position.set(0, 4, -3);
+      scene.add(blueNeon);
+
+      const amberNeon = new THREE.PointLight(0xf59e0b, 1.0, 10);
+      amberNeon.position.set(7.5, 3, 2.5); // Ban công thuốc lào
+      scene.add(amberNeon);
+
+      // Build Office Environment
+      buildOfficeRoom();
+      buildBalconyZone();
+      buildSleepZone();
+
+      // Spawn 5 Agents
+      for (let key in agentsData) {
+        createAgentCharacter(agentsData[key]);
+      }
+
+      // Setup Particle Smoke for Thuốc Lào
+      setupSmokeParticles();
+
+      // Window resize
+      window.addEventListener('resize', onWindowResize);
+
+      // Animation Loop
+      animate();
+    }
+
+    function buildOfficeRoom() {
+      // Main Floor (Gỗ ấm)
+      const floorGeo = new THREE.BoxGeometry(14, 0.2, 14);
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: 0x1e293b,
+        roughness: 0.3,
+        metalness: 0.1
+      });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.position.y = -0.1;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      // Thảm nỉ công nghệ ở giữa
+      const rugGeo = new THREE.BoxGeometry(8, 0.05, 8);
+      const rugMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+      const rug = new THREE.Mesh(rugGeo, rugMat);
+      rug.position.set(0, 0.02, 0);
+      rug.receiveShadow = true;
+      scene.add(rug);
+
+      // Tường sau (Back Wall) có logo HDTOOL
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
+      const backWallGeo = new THREE.BoxGeometry(14, 6, 0.3);
+      const backWall = new THREE.Mesh(backWallGeo, wallMat);
+      backWall.position.set(0, 3, -7);
+      backWall.receiveShadow = true;
+      scene.add(backWall);
+
+      // Logo LED trên tường sau: "HDTOOL REVIT ADD-IN"
+      const boardGeo = new THREE.BoxGeometry(6, 1.5, 0.1);
+      const boardMat = new THREE.MeshStandardMaterial({
+        color: 0x0f172a,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.2
+      });
+      const board = new THREE.Mesh(boardGeo, boardMat);
+      board.position.set(0, 4.2, -6.8);
+      scene.add(board);
+
+      // Bàn VIP Giám Đốc (Desk 1)
+      createDesk(0, -3.5, 0, 2.6, 1.2, true);
+
+      // 4 Bàn Kỹ Sư & Chuyên Viên
+      createDesk(-2.8, -0.5, Math.PI / 4, 1.8, 0.9, false);
+      createDesk(2.8, -0.5, -Math.PI / 4, 1.8, 0.9, false);
+      createDesk(-2.5, 2.5, Math.PI / 6, 1.8, 0.9, false);
+      createDesk(2.5, 2.5, -Math.PI / 6, 1.8, 0.9, false);
+
+      // Cây xanh trang trí văn phòng
+      createPlant(-5.5, -5.5);
+      createPlant(5.5, -5.5);
+    }
+
+    function createDesk(x, z, rot, width, depth, isVip) {
+      const deskGroup = new THREE.Group();
+
+      // Mặt bàn
+      const topGeo = new THREE.BoxGeometry(width, 0.1, depth);
+      const topMat = new THREE.MeshStandardMaterial({
+        color: isVip ? 0x0284c7 : 0xe2e8f0,
+        roughness: 0.2,
+        metalness: isVip ? 0.3 : 0.05
+      });
+      const topMesh = new THREE.Mesh(topGeo, topMat);
+      topMesh.position.y = 0.9;
+      topMesh.castShadow = true;
+      topMesh.receiveShadow = true;
+      deskGroup.add(topMesh);
+
+      // Chân bàn kim loại
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.2 });
+      const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.9, 8);
+      const offsets = [
+        [-width / 2 + 0.1, -depth / 2 + 0.1],
+        [width / 2 - 0.1, -depth / 2 + 0.1],
+        [-width / 2 + 0.1, depth / 2 - 0.1],
+        [width / 2 - 0.1, depth / 2 - 0.1]
+      ];
+      offsets.forEach(([ox, oz]) => {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(ox, 0.45, oz);
+        leg.castShadow = true;
+        deskGroup.add(leg);
+      });
+
+      // Màn hình vi tính (Dual Monitor)
+      const monMat = new THREE.MeshStandardMaterial({ color: 0x111827 });
+      const screenMat = new THREE.MeshBasicMaterial({ color: isVip ? 0x38bdf8 : 0x22c55e });
+
+      // Screen 1
+      const monGeo = new THREE.BoxGeometry(0.7, 0.45, 0.04);
+      const mon = new THREE.Mesh(monGeo, monMat);
+      mon.position.set(-0.35, 1.3, -depth / 4);
+      mon.rotation.y = 0.1;
+      deskGroup.add(mon);
+
+      const screenGeo = new THREE.PlaneGeometry(0.64, 0.39);
+      const scr = new THREE.Mesh(screenGeo, screenMat);
+      scr.position.set(-0.35, 1.3, -depth / 4 + 0.025);
+      scr.rotation.y = 0.1;
+      deskGroup.add(scr);
+
+      // Screen 2
+      const mon2 = new THREE.Mesh(monGeo, monMat);
+      mon2.position.set(0.35, 1.3, -depth / 4);
+      mon2.rotation.y = -0.15;
+      deskGroup.add(mon2);
+
+      const scr2 = new THREE.Mesh(screenGeo, screenMat);
+      scr2.position.set(0.35, 1.3, -depth / 4 + 0.025);
+      scr2.rotation.y = -0.15;
+      deskGroup.add(scr2);
+
+      // Bàn phím cơ & chuột
+      const kbGeo = new THREE.BoxGeometry(0.4, 0.02, 0.15);
+      const kbMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+      const kb = new THREE.Mesh(kbGeo, kbMat);
+      kb.position.set(0, 0.96, 0.1);
+      deskGroup.add(kb);
+
+      // Ghế công thái học
+      const chairMat = new THREE.MeshStandardMaterial({ color: isVip ? 0xd97706 : 0x0284c7, roughness: 0.6 });
+      const seatGeo = new THREE.BoxGeometry(0.5, 0.08, 0.5);
+      const seat = new THREE.Mesh(seatGeo, chairMat);
+      seat.position.set(0, 0.55, 0.55);
+      deskGroup.add(seat);
+
+      const backGeo = new THREE.BoxGeometry(0.5, 0.6, 0.08);
+      const back = new THREE.Mesh(backGeo, chairMat);
+      back.position.set(0, 0.85, 0.76);
+      deskGroup.add(back);
+
+      deskGroup.position.set(x, 0, z);
+      deskGroup.rotation.y = rot;
+      scene.add(deskGroup);
+    }
+
+    function createPlant(x, z) {
+      const plantGroup = new THREE.Group();
+      const potGeo = new THREE.CylinderGeometry(0.3, 0.2, 0.6, 12);
+      const potMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      const pot = new THREE.Mesh(potGeo, potMat);
+      pot.position.y = 0.3;
+      plantGroup.add(pot);
+
+      const leafMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.7 });
+      for (let i = 0; i < 5; i++) {
+        const leafGeo = new THREE.SphereGeometry(0.25, 8, 8);
+        leafGeo.scale(0.8, 1.8, 0.5);
+        const leaf = new THREE.Mesh(leafGeo, leafMat);
+        leaf.position.set((Math.random() - 0.5) * 0.3, 0.7 + i * 0.15, (Math.random() - 0.5) * 0.3);
+        leaf.rotation.set(Math.random() * 0.4, Math.random() * Math.PI, Math.random() * 0.4);
+        plantGroup.add(leaf);
+      }
+      plantGroup.position.set(x, 0, z);
+      scene.add(plantGroup);
+    }
+
+    function buildBalconyZone() {
+      // Khu Ban Công Hút Thuốc Lào & Chém Gió (Bên Phải)
+      const balconyFloorGeo = new THREE.BoxGeometry(5, 0.18, 12);
+      const balconyFloorMat = new THREE.MeshStandardMaterial({
+        color: 0x78716c, // Gạch đá sần ban công
+        roughness: 0.8
+      });
+      const balcony = new THREE.Mesh(balconyFloorGeo, balconyFloorMat);
+      balcony.position.set(8.5, -0.09, 2);
+      balcony.receiveShadow = true;
+      scene.add(balcony);
+
+      // Lan can kính ngoài trời (View thành phố)
+      const railMat = new THREE.MeshPhysicalMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.35,
+        roughness: 0.1,
+        transmission: 0.9
+      });
+      const railGeo = new THREE.BoxGeometry(0.1, 1.2, 12);
+      const rail = new THREE.Mesh(railGeo, railMat);
+      rail.position.set(11, 0.6, 2);
+      scene.add(rail);
+
+      // ================= BẢN SẮC VIỆT NAM: ĐIẾU CÀY THUỐC LÀO TIÊN LÃNG =================
+      const dieuCayGroup = new THREE.Group();
+
+      // Thân điếu nứa vàng bóng
+      const ongDieuGeo = new THREE.CylinderGeometry(0.04, 0.045, 0.9, 16);
+      const nuaMat = new THREE.MeshStandardMaterial({
+        color: 0xd97706, // Vàng tre nứa
+        roughness: 0.3,
+        metalness: 0.1
+      });
+      const ongDieu = new THREE.Mesh(ongDieuGeo, nuaMat);
+      ongDieu.position.set(0, 0.45, 0);
+      ongDieu.rotation.z = -0.25; // Điếu cày đặt nghiêng
+      dieuCayGroup.add(ongDieu);
+
+      // Nỏ điếu (chỗ tra thuốc lào)
+      const noDieuGeo = new THREE.CylinderGeometry(0.03, 0.02, 0.15, 8);
+      const noMat = new THREE.MeshStandardMaterial({ color: 0x78350f });
+      const noDieu = new THREE.Mesh(noDieuGeo, noMat);
+      noDieu.position.set(0.1, 0.3, 0);
+      noDieu.rotation.z = Math.PI / 3;
+      dieuCayGroup.add(noDieu);
+
+      // Đốm lửa đỏ âm ỉ trong nõ điếu
+      const domLuaGeo = new THREE.SphereGeometry(0.02, 8, 8);
+      const domLuaMat = new THREE.MeshBasicMaterial({ color: 0xff4500 });
+      const domLua = new THREE.Mesh(domLuaGeo, domLuaMat);
+      domLua.position.set(0.15, 0.33, 0);
+      dieuCayGroup.add(domLua);
+
+      // Bàn trà đá vỉa hè ban công
+      const tableGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.5, 16);
+      const tableMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.7 });
+      const teaTable = new THREE.Mesh(tableGeo, tableMat);
+      teaTable.position.set(7.5, 0.25, 2.5);
+      scene.add(teaTable);
+
+      // Ấm trà tích bọc mây & cốc trà đá
+      const potGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.25, 12);
+      const potMat = new THREE.MeshStandardMaterial({ color: 0x15803d });
+      const teapot = new THREE.Mesh(potGeo, potMat);
+      teapot.position.set(7.5, 0.62, 2.3);
+      scene.add(teapot);
+
+      for (let i = 0; i < 3; i++) {
+        const cupGeo = new THREE.CylinderGeometry(0.04, 0.03, 0.1, 8);
+        const cupMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, transparent: true, opacity: 0.8 });
+        const cup = new THREE.Mesh(cupGeo, cupMat);
+        cup.position.set(7.3 + i * 0.15, 0.55, 2.6);
+        scene.add(cup);
+      }
+
+      dieuCayGroup.position.set(8.2, 0, 2.2);
+      scene.add(dieuCayGroup);
+
+      // Ghế đẩu ngồi chém gió
+      const stoolMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+      const stoolGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.3, 12);
+
+      const stool1 = new THREE.Mesh(stoolGeo, stoolMat);
+      stool1.position.set(6.8, 0.15, 2.2);
+      scene.add(stool1);
+
+      const stool2 = new THREE.Mesh(stoolGeo, stoolMat);
+      stool2.position.set(7.5, 0.15, 3.4);
+      scene.add(stool2);
+    }
+
+    function buildSleepZone() {
+      // Khu Giường Ngủ Nghỉ Ngơi (Bên Trái)
+      const bedGroup = new THREE.Group();
+
+      // Khung giường đôi êm ái
+      const frameGeo = new THREE.BoxGeometry(2.4, 0.4, 6.5);
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+      const frame = new THREE.Mesh(frameGeo, frameMat);
+      frame.position.set(0, 0.2, 0);
+      bedGroup.add(frame);
+
+      // Đệm nệm êm ái
+      const mattressGeo = new THREE.BoxGeometry(2.2, 0.25, 6.3);
+      const mattressMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9 });
+      const mattress = new THREE.Mesh(mattressGeo, mattressMat);
+      mattress.position.set(0, 0.45, 0);
+      bedGroup.add(mattress);
+
+      // Gối ôm & chăn ấm
+      const pillowGeo = new THREE.BoxGeometry(1.8, 0.15, 0.6);
+      const pillowMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8 });
+      const pillow = new THREE.Mesh(pillowGeo, pillowMat);
+      pillow.position.set(0, 0.6, -2.6);
+      bedGroup.add(pillow);
+
+      const blanketGeo = new THREE.BoxGeometry(2.1, 0.1, 4.5);
+      const blanketMat = new THREE.MeshStandardMaterial({ color: 0x6366f1 });
+      const blanket = new THREE.Mesh(blanketGeo, blanketMat);
+      blanket.position.set(0, 0.55, 0.5);
+      bedGroup.add(blanket);
+
+      bedGroup.position.set(-6.5, 0, 0);
+      scene.add(bedGroup);
+    }
+
+    function createAgentCharacter(agent) {
+      const charGroup = new THREE.Group();
+
+      // Thân người (Body)
+      const bodyGeo = new THREE.BoxGeometry(0.4, 0.6, 0.25);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: agent.color, roughness: 0.5 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 0.7;
+      body.castShadow = true;
+      charGroup.add(body);
+
+      // Đầu người (Head)
+      const headGeo = new THREE.BoxGeometry(0.3, 0.32, 0.28);
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xfcd34d, roughness: 0.6 });
+      const head = new THREE.Mesh(headGeo, skinMat);
+      head.position.y = 1.15;
+      head.castShadow = true;
+      charGroup.add(head);
+
+      // Tóc (Hair)
+      const hairGeo = new THREE.BoxGeometry(0.32, 0.12, 0.3);
+      const hairMat = new THREE.MeshStandardMaterial({ color: agent.hairColor });
+      const hair = new THREE.Mesh(hairGeo, hairMat);
+      hair.position.y = 1.32;
+      charGroup.add(hair);
+
+      // Hai mắt kính/mắt chớp
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
+      const eyeGeo = new THREE.BoxGeometry(0.06, 0.06, 0.02);
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      leftEye.position.set(-0.08, 1.18, 0.15);
+      charGroup.add(leftEye);
+
+      const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+      rightEye.position.set(0.08, 1.18, 0.15);
+      charGroup.add(rightEye);
+
+      // Tay (Arms)
+      const armGeo = new THREE.BoxGeometry(0.1, 0.4, 0.1);
+      const leftArm = new THREE.Mesh(armGeo, bodyMat);
+      leftArm.position.set(-0.26, 0.75, 0.05);
+      charGroup.add(leftArm);
+
+      const rightArm = new THREE.Mesh(armGeo, bodyMat);
+      rightArm.position.set(0.26, 0.75, 0.05);
+      charGroup.add(rightArm);
+
+      // Bảng tên 3D trên đầu
+      const tagCanvas = document.createElement('canvas');
+      tagCanvas.width = 256;
+      tagCanvas.height = 64;
+      const ctx = tagCanvas.getContext('2d');
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.roundRect(0, 0, 256, 64, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 4;
+      ctx.roundRect(0, 0, 256, 64, 16);
+      ctx.stroke();
+
+      ctx.font = 'bold 24px Segoe UI';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText(agent.name, 128, 40);
+
+      const tagTex = new THREE.CanvasTexture(tagCanvas);
+      const tagMat = new THREE.SpriteMaterial({ map: tagTex });
+      const tagSprite = new THREE.Sprite(tagMat);
+      tagSprite.scale.set(1.4, 0.35, 1);
+      tagSprite.position.set(0, 1.7, 0);
+      charGroup.add(tagSprite);
+
+      // Biểu tượng Zzz (khi ngủ)
+      const zzzCanvas = document.createElement('canvas');
+      zzzCanvas.width = 128;
+      zzzCanvas.height = 128;
+      const zctx = zzzCanvas.getContext('2d');
+      zctx.font = 'bold 64px Segoe UI';
+      zctx.fillStyle = '#c084fc';
+      zctx.fillText('Zzz...', 10, 80);
+      const zzzTex = new THREE.CanvasTexture(zzzCanvas);
+      const zzzMat = new THREE.SpriteMaterial({ map: zzzTex, transparent: true, opacity: 0 });
+      const zzzSprite = new THREE.Sprite(zzzMat);
+      zzzSprite.scale.set(0.8, 0.8, 1);
+      zzzSprite.position.set(0.4, 1.9, 0);
+      charGroup.add(zzzSprite);
+      charGroup.zzzSprite = zzzSprite;
+
+      // Điếu cày mini cầm tay (khi hút thuốc lào)
+      const handPipeGeo = new THREE.CylinderGeometry(0.02, 0.025, 0.45, 8);
+      const handPipeMat = new THREE.MeshStandardMaterial({ color: 0xd97706 });
+      const handPipe = new THREE.Mesh(handPipeGeo, handPipeMat);
+      handPipe.position.set(0.18, 0.65, 0.2);
+      handPipe.rotation.set(0.4, 0, -0.6);
+      handPipe.visible = false;
+      charGroup.add(handPipe);
+      charGroup.handPipe = handPipe;
+
+      // Set initial position
+      charGroup.position.set(agent.deskPos.x, agent.deskPos.y, agent.deskPos.z);
+      charGroup.rotation.y = agent.deskRot;
+
+      agent.mesh = charGroup;
+      scene.add(charGroup);
+    }
+
+    function setupSmokeParticles() {
+      const particleCount = 45;
+      const smokeGeo = new THREE.SphereGeometry(0.12, 6, 6);
+      smokeMaterial = new THREE.MeshBasicMaterial({
+        color: 0xe2e8f0,
+        transparent: true,
+        opacity: 0.6
+      });
+
+      for (let i = 0; i < particleCount; i++) {
+        const p = new THREE.Mesh(smokeGeo, smokeMaterial.clone());
+        p.position.set(7.5, 0.5, 2.5);
+        p.visible = false;
+        p.userData = {
+          speedY: 0.02 + Math.random() * 0.03,
+          driftX: (Math.random() - 0.5) * 0.015,
+          driftZ: (Math.random() - 0.5) * 0.015,
+          life: 0,
+          maxLife: 60 + Math.random() * 40
+        };
+        scene.add(p);
+        smokeParticles.push(p);
+      }
+    }
+
+    // Set Agent State
+    function setAgentState(agentId, newState) {
+      const agent = agentsData[agentId];
+      if (!agent || !agent.mesh) return;
+
+      agent.state = newState;
+      const mesh = agent.mesh;
+      const badge = document.getElementById(agent.badgeId);
+
+      // Cập nhật nút UI
+      const card = document.getElementById('card-' + agentId);
+      if (card) {
+        const btns = card.querySelectorAll('.btn-action');
+        btns.forEach(b => b.classList.remove('active'));
+        if (newState === 'working') btns[0].classList.add('active');
+        if (newState === 'smoking') btns[1].classList.add('active');
+        if (newState === 'sleeping') btns[2].classList.add('active');
+        if (newState === 'chatting') btns[3].classList.add('active');
+      }
+
+      // Xóa Zzz và ẩn điếu cày tay mặc định
+      mesh.zzzSprite.material.opacity = 0;
+      mesh.handPipe.visible = false;
+
+      let targetPos, targetRot, badgeText, badgeClass, speechText;
+
+      if (newState === 'working') {
+        targetPos = agent.deskPos;
+        targetRot = agent.deskRot;
+        badgeText = 'ĐANG LÀM VIỆC ⚡';
+        badgeClass = 'state-working';
+        speechText = `${agent.name}: "Em đang tập trung làm việc cật lực phục vụ Sếp Hồ đây ạ!"`;
+        playKeyboardSound();
+      } else if (newState === 'smoking') {
+        targetPos = agent.smokePos;
+        targetRot = Math.PI;
+        badgeText = 'HÚT THUỐC LÀO 💨';
+        badgeClass = 'state-smoking';
+        speechText = `${agent.name}: "Rít một hơi thuốc lào Tiên Lãng sòng sọc cho tỉnh táo đầu óc nào!"`;
+        mesh.handPipe.visible = true;
+        playWaterPipeSound();
+      } else if (newState === 'sleeping') {
+        targetPos = agent.bedPos;
+        targetRot = -Math.PI / 2;
+        badgeText = 'ĐANG ĐI NGỦ 💤';
+        badgeClass = 'state-sleeping';
+        speechText = `${agent.name}: "Khò khò... Em tranh thủ chợp mắt 15 phút lấy sức chiến đấu tiếp!"`;
+        mesh.zzzSprite.material.opacity = 0.9;
+        playSnoreSound();
+      } else if (newState === 'chatting') {
+        targetPos = agent.chatPos;
+        targetRot = -Math.PI / 3;
+        badgeText = 'CHÉM GIÓ TRÀ ĐÁ ☕';
+        badgeClass = 'state-chatting';
+        speechText = `${agent.name}: "Làm ngụm trà đá, miếng kẹo lạc rồi chém gió chuyện Revit nào anh em ơi!"`;
+      }
+
+      badge.className = 'agent-state-badge ' + badgeClass;
+      badge.innerText = badgeText;
+      showSpeech(speechText);
+
+      // Tween Di chuyển Agent mượt mà trong không gian 3D
+      new TWEEN.Tween(mesh.position)
+        .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 800)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+
+      new TWEEN.Tween(mesh.rotation)
+        .to({ y: targetRot }, 800)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+    }
+
+    // Nút Báo Động: Sếp Hồ Giao Việc Mới!
+    function triggerAlertAll() {
+      playAlertSound();
+      showSpeech('🚨 BÁO ĐỘNG TOÀN ĐỘI! Sếp Hồ vừa giao việc mới! Tất cả anh em lập tức quay lại bàn làm việc!');
+
+      // Đưa toàn bộ 5 Agents về trạng thái làm việc cật lực
+      for (let key in agentsData) {
+        setAgentState(key, 'working');
+      }
+
+      // Rung nhẹ camera tạo hiệu ứng khẩn trương
+      const origY = camera.position.y;
+      new TWEEN.Tween(camera.position)
+        .to({ y: origY + 0.4 }, 100)
+        .yoyo(true)
+        .repeat(5)
+        .start();
+    }
+
+    function showSpeech(text) {
+      const bubble = document.getElementById('speech-bubble');
+      const textElem = document.getElementById('speech-text');
+      textElem.innerText = text;
+      bubble.style.transform = 'translateX(-50%) scale(1.05)';
+      setTimeout(() => {
+        bubble.style.transform = 'translateX(-50%) scale(1)';
+      }, 200);
+    }
+
+    function focusCamera(target) {
+      let lookAt = new THREE.Vector3(0, 1.2, 0);
+      let camPos = new THREE.Vector3(0, 11, 14);
+
+      if (target === 'overview') {
+        camPos.set(0, 11, 14);
+        lookAt.set(0, 1.2, 0);
+      } else if (target === 'director') {
+        camPos.set(0, 3.5, -0.5);
+        lookAt.set(0, 1.2, -3.5);
+      } else if (target === 'dev') {
+        camPos.set(-1.5, 3.0, 1.8);
+        lookAt.set(-2.8, 1.2, -0.5);
+      } else if (target === 'balcony') {
+        camPos.set(4.5, 3.5, 5.5);
+        lookAt.set(8.0, 1.2, 2.5);
+      } else if (target === 'bed') {
+        camPos.set(-3.5, 3.5, 1.5);
+        lookAt.set(-6.5, 0.8, 0);
+      } else if (target === 'teatable') {
+        camPos.set(5.5, 2.5, 4.5);
+        lookAt.set(7.5, 0.8, 2.5);
+      }
+
+      new TWEEN.Tween(camera.position)
+        .to({ x: camPos.x, y: camPos.y, z: camPos.z }, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      new TWEEN.Tween(controls.target)
+        .to({ x: lookAt.x, y: lookAt.y, z: lookAt.z }, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      TWEEN.update();
+
+      // Cử động nhẹ của các Agent theo trạng thái
+      const time = Date.now() * 0.003;
+      for (let key in agentsData) {
+        const ag = agentsData[key];
+        if (ag.mesh) {
+          if (ag.state === 'working') {
+            // Tay gõ phím nhấp nhô
+            ag.mesh.position.y = ag.deskPos.y + Math.sin(time * 3 + ag.deskPos.x) * 0.015;
+          } else if (ag.state === 'sleeping') {
+            // Thở phập phồng khi ngủ
+            ag.mesh.position.y = ag.bedPos.y + Math.sin(time * 1.2) * 0.02;
+            if (ag.mesh.zzzSprite) {
+              ag.mesh.zzzSprite.position.y = 1.9 + Math.sin(time * 1.5) * 0.08;
+            }
+          } else if (ag.state === 'smoking') {
+            // Lắc lư khi rít thuốc lào
+            ag.mesh.rotation.y = ag.smokePos ? Math.PI + Math.sin(time * 1.5) * 0.1 : 0;
+          }
+        }
+      }
+
+      // Update Particle Smoke (Khói thuốc lào bay lên cuộn cuộn)
+      smokeParticles.forEach((p, idx) => {
+        // Kiểm tra xem có agent nào đang hút thuốc lào không
+        const isAnyoneSmoking = Object.values(agentsData).some(a => a.state === 'smoking');
+        if (isAnyoneSmoking) {
+          p.visible = true;
+          p.position.y += p.userData.speedY;
+          p.position.x += p.userData.driftX;
+          p.position.z += p.userData.driftZ;
+          p.scale.multiplyScalar(1.015);
+          p.material.opacity = Math.max(0, 0.6 * (1 - p.userData.life / p.userData.maxLife));
+          p.userData.life++;
+
+          if (p.userData.life > p.userData.maxLife) {
+            p.userData.life = 0;
+            p.position.set(7.5 + (Math.random() - 0.5) * 0.6, 1.2, 2.5 + (Math.random() - 0.5) * 0.6);
+            p.scale.set(1, 1, 1);
+          }
+        } else {
+          p.visible = false;
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // Start everything
+    window.onload = init;
+  </script>
+</body>
+</html>
