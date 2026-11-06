@@ -69,3 +69,14 @@ Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong
   4. Sếp Hồ kiểm tra trực quan, điều chỉnh sắp xếp đến khi ưng ý và bấm **"CHỐT & XUẤT CẤU HÌNH"**.
   5. Chỉ sau khi Sếp Hồ chốt layout, Antigravity mới áp dụng cấu hình này vào `Source/App.cs`, tạo code giao diện Add-in và tiến hành biên dịch cập nhật!
 
+---
+
+## 5. QUY TẮC ĐẨY DỮ LIỆU LÊN GITHUB & LỊCH NHẮC NHỞ HÀNG NGÀY (BẮT BUỘC THEO LỆNH SẾP HỒ)
+
+- **LỊCH NHẮC NHỞ ĐỊNH KỲ 16H15 HÀNG NGÀY**:
+  - Đúng **16h15 hàng ngày**, Antigravity tự động chủ động hỏi/nhắc nhở Sếp Hồ: *"Sếp Hồ ơi, đã 16h15 rồi, Sếp có muốn em cập nhật (push) toàn bộ code, tài liệu và tri thức mới nhất hôm nay lên GitHub không ạ?"*
+  - Nếu Sếp đồng ý -> Antigravity tiến hành kiểm tra git status, tạo commit chuẩn chỉ và push lên GitHub an toàn 100%.
+
+- **CHỈ ĐẨY LÊN GITHUB KHI SẾP HỒ ĐỒNG Ý / YÊU CẦU**:
+  - CHỈ ĐƯỢC PHÉP ĐẨY LÊN GITHUB KHI SẾP HỒ CÓ LỆNH RÕ RÀNG (ví dụ: *"đẩy lên github"*, *"push github"*, *"publish"*, hoặc trả lời *"đồng ý"* khi được nhắc vào 16h15).
+  - **KHI SẾP CHƯA ĐỒNG Ý THÌ TUYỆT ĐỐI KHÔNG PUSH**: Tuyệt đối không tự tiện chạy `git push`.

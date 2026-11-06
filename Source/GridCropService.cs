@@ -122,7 +122,7 @@ namespace HDTool
         }
 
         /// <summary>
-        /// Lấy tất cả Grids hiển thị trong View cụ thể
+        /// Lấy tất cả Grids hiển thị hoặc có đường tim đi qua Crop View (kể cả Grid đang bị ẩn hoặc bị kéo xa ở view khác)
         /// </summary>
         public static List<Grid> GetAllGridsInView(Document doc, Autodesk.Revit.DB.View view)
         {
@@ -149,7 +149,7 @@ namespace HDTool
             catch { }
 
             // 2. Quét toàn bộ Grid trong Document để tự động tìm các Grid có đường tim đi qua Crop View
-            // (kể cả khi 2 đầu Grid đang bị kéo ra ngoài vùng Crop View)
+            // (Đặc biệt xử lý các đường Grid bị ẩn do người dùng hoặc do view khác kéo đầu mút đi xa)
             try
             {
                 FilteredElementCollector docCollector = new FilteredElementCollector(doc);
@@ -170,26 +170,17 @@ namespace HDTool
                     double cropW = cropRight - cropLeft;
                     double cropH = cropTop - cropBottom;
 
-                    // Margin mở rộng khoảng 5 mét (16.4 ft) hoặc 30% kích thước Crop để bao trọn cả các trục biên
-                    double marginX = Math.Max(16.4, cropW * 0.3);
-                    double marginY = Math.Max(16.4, cropH * 0.3);
+                    double xCenter = (cropLeft + cropRight) / 2.0;
+                    double yCenter = (cropBottom + cropTop) / 2.0;
+
+                    // Margin mở rộng khoảng 6 mét (20 ft) hoặc 40% kích thước Crop để bao trọn cả các trục biên
+                    double marginX = Math.Max(20.0, cropW * 0.4);
+                    double marginY = Math.Max(20.0, cropH * 0.4);
 
                     foreach (Element e in allDocGrids)
                     {
                         Grid g = e as Grid;
                         if (g == null || resultDict.ContainsKey(g.Id)) continue;
-
-                        try
-                        {
-                            if (!g.CanBeVisibleInView(view) || g.IsHidden(view))
-                            {
-                                continue;
-                            }
-                        }
-                        catch
-                        {
-                            continue;
-                        }
 
                         try
                         {
@@ -211,7 +202,7 @@ namespace HDTool
                                 catch { }
                             }
 
-                            if (c == null && IsPlanView(view))
+                            if (c == null)
                             {
                                 try { c = g.Curve; } catch { }
                             }
@@ -239,32 +230,51 @@ namespace HDTool
 
                             if (absX >= absY)
                             {
-                                double yGrid = p0_v.Y;
-                                if (yGrid >= (cropBottom - marginY) && yGrid <= (cropTop + marginY))
+                                // Trục ngang (Horizontal Grid): Kiểm tra tọa độ Y tại tâm Crop Box
+                                if (Math.Abs(dir_v.X) > 1e-6)
                                 {
-                                    intersectsCrop = true;
+                                    double yAtCenter = p0_v.Y + (dir_v.Y / dir_v.X) * (xCenter - p0_v.X);
+                                    if (yAtCenter >= (cropBottom - marginY) && yAtCenter <= (cropTop + marginY))
+                                    {
+                                        intersectsCrop = true;
+                                    }
+                                }
+                                else
+                                {
+                                    double yGrid = p0_v.Y;
+                                    if (yGrid >= (cropBottom - marginY) && yGrid <= (cropTop + marginY))
+                                    {
+                                        intersectsCrop = true;
+                                    }
                                 }
                             }
                             else
                             {
-                                double xGrid = p0_v.X;
-                                if (xGrid >= (cropLeft - marginX) && xGrid <= (cropRight + marginX))
+                                // Trục dọc (Vertical Grid): Kiểm tra tọa độ X tại tâm Crop Box
+                                if (Math.Abs(dir_v.Y) > 1e-6)
                                 {
-                                    intersectsCrop = true;
+                                    double xAtCenter = p0_v.X + (dir_v.X / dir_v.Y) * (yCenter - p0_v.Y);
+                                    if (xAtCenter >= (cropLeft - marginX) && xAtCenter <= (cropRight + marginX))
+                                    {
+                                        intersectsCrop = true;
+                                    }
+                                }
+                                else
+                                {
+                                    double xGrid = p0_v.X;
+                                    if (xGrid >= (cropLeft - marginX) && xGrid <= (cropRight + marginX))
+                                    {
+                                        intersectsCrop = true;
+                                    }
                                 }
                             }
 
+                            // Kiểm tra tổng quát theo khoảng cách từ tâm Crop đến đường thẳng (cho trục xiên chéo)
                             if (!intersectsCrop)
                             {
-                                double c1 = -dir_v.Y * (cropLeft - marginX - p0_v.X) + dir_v.X * (cropBottom - marginY - p0_v.Y);
-                                double c2 = -dir_v.Y * (cropRight + marginX - p0_v.X) + dir_v.X * (cropBottom - marginY - p0_v.Y);
-                                double c3 = -dir_v.Y * (cropRight + marginX - p0_v.X) + dir_v.X * (cropTop + marginY - p0_v.Y);
-                                double c4 = -dir_v.Y * (cropLeft - marginX - p0_v.X) + dir_v.X * (cropTop + marginY - p0_v.Y);
-
-                                double minC = Math.Min(Math.Min(c1, c2), Math.Min(c3, c4));
-                                double maxC = Math.Max(Math.Max(c1, c2), Math.Max(c3, c4));
-
-                                if (minC <= 0 && maxC >= 0)
+                                double perpDist = Math.Abs(-dir_v.Y * (xCenter - p0_v.X) + dir_v.X * (yCenter - p0_v.Y));
+                                double cropDiagRadius = Math.Sqrt(cropW * cropW + cropH * cropH) * 0.5;
+                                if (perpDist <= cropDiagRadius + Math.Max(marginX, marginY))
                                 {
                                     intersectsCrop = true;
                                 }
@@ -285,14 +295,7 @@ namespace HDTool
                         Grid g = e as Grid;
                         if (g != null && !resultDict.ContainsKey(g.Id))
                         {
-                            try
-                            {
-                                if (g.CanBeVisibleInView(view) && !g.IsHidden(view))
-                                {
-                                    resultDict[g.Id] = g;
-                                }
-                            }
-                            catch { }
+                            resultDict[g.Id] = g;
                         }
                     }
                 }
@@ -411,12 +414,21 @@ namespace HDTool
                     double offsetLeftFeet = offsetLeftMm / MM_PER_FOOT;
                     double offsetRightFeet = offsetRightMm / MM_PER_FOOT;
 
+                    string internalError;
                     successCount = AdjustGridsInternal(doc, view, grids,
                         offsetTopFeet, offsetBottomFeet, offsetLeftFeet, offsetRightFeet,
-                        make2D, showSymbolTop, showSymbolBottom, showSymbolLeft, showSymbolRight);
+                        make2D, showSymbolTop, showSymbolBottom, showSymbolLeft, showSymbolRight,
+                        out internalError);
 
                     trans.Commit();
-                    resultMessage = string.Format("Đã căn chỉnh thành công {0} Grid theo khung Crop View!", successCount);
+                    if (successCount > 0)
+                    {
+                        resultMessage = string.Format("Đã căn chỉnh thành công {0} Grid theo khung Crop View!", successCount);
+                    }
+                    else
+                    {
+                        resultMessage = string.IsNullOrEmpty(internalError) ? "Không có Grid nào được căn chỉnh." : internalError;
+                    }
                     return successCount;
                 }
                 catch (Exception ex)
@@ -475,9 +487,11 @@ namespace HDTool
                         List<Grid> grids = GetAllGridsInView(doc, v);
                         if (grids.Count == 0) continue;
 
+                        string subErr;
                         int count = AdjustGridsInternal(doc, v, grids,
                             offsetTopFeet, offsetBottomFeet, offsetLeftFeet, offsetRightFeet,
-                            make2D, showSymbolTop, showSymbolBottom, showSymbolLeft, showSymbolRight);
+                            make2D, showSymbolTop, showSymbolBottom, showSymbolLeft, showSymbolRight,
+                            out subErr);
                         if (count > 0)
                         {
                             totalGrids += count;
@@ -530,12 +544,25 @@ namespace HDTool
         private static int AdjustGridsInternal(Document doc, Autodesk.Revit.DB.View view, IList<Grid> grids,
             double offsetTopFeet, double offsetBottomFeet, double offsetLeftFeet, double offsetRightFeet,
             bool make2D,
-            bool showSymbolTop, bool showSymbolBottom, bool showSymbolLeft, bool showSymbolRight)
+            bool showSymbolTop, bool showSymbolBottom, bool showSymbolLeft, bool showSymbolRight,
+            out string lastError)
         {
+            lastError = string.Empty;
             if (!view.CropBoxActive)
             {
                 view.CropBoxActive = true;
             }
+
+            // Đảm bảo Category Grids không bị ẩn trong View
+            try
+            {
+                Category gridCat = doc.Settings.Categories.get_Item(BuiltInCategory.OST_Grids);
+                if (gridCat != null && view.GetCategoryHidden(gridCat.Id))
+                {
+                    view.SetCategoryHidden(gridCat.Id, false);
+                }
+            }
+            catch { }
 
             BoundingBoxXYZ cropBox = view.CropBox;
             if (cropBox == null) return 0;
@@ -547,6 +574,9 @@ namespace HDTool
             double cropRight = Math.Max(cropBox.Min.X, cropBox.Max.X);
             double cropBottom = Math.Min(cropBox.Min.Y, cropBox.Max.Y);
             double cropTop = Math.Max(cropBox.Min.Y, cropBox.Max.Y);
+
+            double xCenter = (cropLeft + cropRight) / 2.0;
+            double yCenter = (cropBottom + cropTop) / 2.0;
 
             IList<CurveLoop> cropLoops = null;
             try
@@ -562,7 +592,34 @@ namespace HDTool
                 cropLoops = null;
             }
 
+            // 1. Bước chuẩn bị: Unhide và Maximize 3D Extents cho toàn bộ Grids, sau đó Regenerate
+            // để đảm bảo Revit cập nhật đầy đủ hình học của tất cả các trục cắt qua View này
+            foreach (Grid g in grids)
+            {
+                try
+                {
+                    if (g.IsHidden(view))
+                    {
+                        view.UnhideElements(new List<ElementId> { g.Id });
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    g.Maximize3DExtents();
+                }
+                catch { }
+            }
+
+            try
+            {
+                doc.Regenerate();
+            }
+            catch { }
+
             int successCount = 0;
+            lastError = string.Empty;
 
             foreach (Grid grid in grids)
             {
@@ -585,12 +642,17 @@ namespace HDTool
                     }
 
                     DatumExtentType extentType = make2D ? DatumExtentType.ViewSpecific : DatumExtentType.Model;
-                    IList<Curve> curves = grid.GetCurvesInView(extentType, view);
+                    IList<Curve> curves = null;
+                    try { curves = grid.GetCurvesInView(extentType, view); } catch { }
                     if (curves == null || curves.Count == 0)
                     {
-                        curves = grid.GetCurvesInView(DatumExtentType.Model, view);
+                        try { curves = grid.GetCurvesInView(DatumExtentType.ViewSpecific, view); } catch { }
                     }
-                    if ((curves == null || curves.Count == 0) && IsPlanView(view))
+                    if (curves == null || curves.Count == 0)
+                    {
+                        try { curves = grid.GetCurvesInView(DatumExtentType.Model, view); } catch { }
+                    }
+                    if (curves == null || curves.Count == 0)
                     {
                         try { curves = new List<Curve> { grid.Curve }; } catch { }
                     }
@@ -605,158 +667,163 @@ namespace HDTool
                     XYZ origDir = (p1 - p0).Normalize();
 
                     XYZ p0_v = tInv.OfPoint(p0);
-                    XYZ p1_v = tInv.OfPoint(p1);
                     XYZ dir_v = tInv.OfVector(origDir).Normalize();
 
                     double absX = Math.Abs(dir_v.X);
                     double absY = Math.Abs(dir_v.Y);
 
-                    double s_start = 0.0;
-                    double s_end = 0.0;
+                    XYZ ptStart_3d;
+                    XYZ ptEnd_3d;
 
                     if (absX >= absY)
                     {
+                        // TRỤC NGANG (HORIZONTAL GRID)
                         if (Math.Abs(dir_v.X) < 1e-6) continue;
 
-                        double yGrid = (p0_v.Y + p1_v.Y) / 2.0;
-                        double cLeft = cropLeft;
-                        double cRight = cropRight;
-
-                        if (cropLoops != null && cropLoops.Count > 0)
-                        {
-                            List<double> xIntersects = FindCropIntersectionsAtY(cropLoops, yGrid);
-                            if (xIntersects.Count >= 2)
-                            {
-                                cLeft = xIntersects.Min();
-                                cRight = xIntersects.Max();
-                            }
-                        }
-
-                        double targetLeft_v = cLeft - offsetLeftFeet;
-                        double targetRight_v = cRight + offsetRightFeet;
+                        double targetLeft_v = cropLeft - offsetLeftFeet;
+                        double targetRight_v = cropRight + offsetRightFeet;
 
                         if (targetRight_v <= targetLeft_v + (10.0 / MM_PER_FOOT))
                         {
                             targetRight_v = targetLeft_v + (10.0 / MM_PER_FOOT);
                         }
 
-                        s_start = (targetLeft_v - p0_v.X) / dir_v.X;
-                        s_end = (targetRight_v - p0_v.X) / dir_v.X;
+                        // Tính tham số s dọc theo phương origDir sao cho X trong hệ CropBox khớp targetLeft_v và targetRight_v
+                        double s1 = (targetLeft_v - p0_v.X) / dir_v.X;
+                        double s2 = (targetRight_v - p0_v.X) / dir_v.X;
+
+                        double sMin = Math.Min(s1, s2);
+                        double sMax = Math.Max(s1, s2);
+
+                        if (sMax - sMin < (10.0 / MM_PER_FOOT))
+                        {
+                            sMax = sMin + (10.0 / MM_PER_FOOT);
+                        }
+
+                        // Bảo đảm vector (ptEnd_3d - ptStart_3d) luôn cùng hướng 100% với origDir gốc của Grid
+                        ptStart_3d = p0 + sMin * origDir;
+                        ptEnd_3d = p0 + sMax * origDir;
                     }
                     else
                     {
+                        // TRỤC DỌC (VERTICAL GRID)
                         if (Math.Abs(dir_v.Y) < 1e-6) continue;
 
-                        double xGrid = (p0_v.X + p1_v.X) / 2.0;
-                        double cBottom = cropBottom;
-                        double cTop = cropTop;
-
-                        if (cropLoops != null && cropLoops.Count > 0)
-                        {
-                            List<double> yIntersects = FindCropIntersectionsAtX(cropLoops, xGrid);
-                            if (yIntersects.Count >= 2)
-                            {
-                                cBottom = yIntersects.Min();
-                                cTop = yIntersects.Max();
-                            }
-                        }
-
-                        double targetBottom_v = cBottom - offsetBottomFeet;
-                        double targetTop_v = cTop + offsetTopFeet;
+                        double targetBottom_v = cropBottom - offsetBottomFeet;
+                        double targetTop_v = cropTop + offsetTopFeet;
 
                         if (targetTop_v <= targetBottom_v + (10.0 / MM_PER_FOOT))
                         {
                             targetTop_v = targetBottom_v + (10.0 / MM_PER_FOOT);
                         }
 
-                        s_start = (targetBottom_v - p0_v.Y) / dir_v.Y;
-                        s_end = (targetTop_v - p0_v.Y) / dir_v.Y;
+                        // Tính tham số s dọc theo phương origDir sao cho Y trong hệ CropBox khớp targetBottom_v và targetTop_v
+                        double s1 = (targetBottom_v - p0_v.Y) / dir_v.Y;
+                        double s2 = (targetTop_v - p0_v.Y) / dir_v.Y;
+
+                        double sMin = Math.Min(s1, s2);
+                        double sMax = Math.Max(s1, s2);
+
+                        if (sMax - sMin < (10.0 / MM_PER_FOOT))
+                        {
+                            sMax = sMin + (10.0 / MM_PER_FOOT);
+                        }
+
+                        // Bảo đảm vector (ptEnd_3d - ptStart_3d) luôn cùng hướng 100% với origDir gốc của Grid
+                        ptStart_3d = p0 + sMin * origDir;
+                        ptEnd_3d = p0 + sMax * origDir;
                     }
 
-                    XYZ ptStart_3d = p0 + s_start * origDir;
-                    XYZ ptEnd_3d = p0 + s_end * origDir;
-
-                    Curve newCurve;
-                    if (s_start < s_end)
+                    // Đảm bảo chiều dài đoạn thẳng tối thiểu hợp lệ trong Revit
+                    if (ptStart_3d.DistanceTo(ptEnd_3d) < (10.0 / MM_PER_FOOT))
                     {
-                        newCurve = Line.CreateBound(ptStart_3d, ptEnd_3d);
-                    }
-                    else
-                    {
-                        newCurve = Line.CreateBound(ptEnd_3d, ptStart_3d);
+                        continue;
                     }
 
+                    Curve newCurve = Line.CreateBound(ptStart_3d, ptEnd_3d);
+
+                    bool applied = false;
+
+                    // Cách 1: Thiết lập theo ViewSpecific (2D)
                     try
                     {
-                        grid.SetCurveInView(extentType, view, newCurve);
-                        successCount++;
+                        grid.SetDatumExtentType(DatumEnds.End0, view, DatumExtentType.ViewSpecific);
+                        grid.SetDatumExtentType(DatumEnds.End1, view, DatumExtentType.ViewSpecific);
+                        grid.SetCurveInView(DatumExtentType.ViewSpecific, view, newCurve);
+                        applied = true;
                     }
-                    catch
+                    catch (Exception ex1)
                     {
-                        // Fallback 1: ViewSpecific
+                        lastError = ex1.Message;
+                    }
+
+                    // Cách 2: Nếu thất bại và người dùng không ép 2D, thử Model (3D)
+                    if (!applied && !make2D)
+                    {
                         try
                         {
-                            grid.SetDatumExtentType(DatumEnds.End0, view, DatumExtentType.ViewSpecific);
-                            grid.SetDatumExtentType(DatumEnds.End1, view, DatumExtentType.ViewSpecific);
-                            grid.SetCurveInView(DatumExtentType.ViewSpecific, view, newCurve);
-                            successCount++;
+                            grid.SetDatumExtentType(DatumEnds.End0, view, DatumExtentType.Model);
+                            grid.SetDatumExtentType(DatumEnds.End1, view, DatumExtentType.Model);
+                            grid.SetCurveInView(DatumExtentType.Model, view, newCurve);
+                            applied = true;
                         }
-                        catch
+                        catch (Exception ex2)
                         {
-                            // Fallback 2: Model
-                            try
-                            {
-                                grid.SetDatumExtentType(DatumEnds.End0, view, DatumExtentType.Model);
-                                grid.SetDatumExtentType(DatumEnds.End1, view, DatumExtentType.Model);
-                                grid.SetCurveInView(DatumExtentType.Model, view, newCurve);
-                                successCount++;
-                            }
-                            catch { }
+                            lastError = ex2.Message;
                         }
+                    }
+
+                    // Cách 3: Fallback trực tiếp với extentType hiện tại
+                    if (!applied)
+                    {
+                        try
+                        {
+                            grid.SetCurveInView(extentType, view, newCurve);
+                            applied = true;
+                        }
+                        catch (Exception ex3)
+                        {
+                            lastError = ex3.Message;
+                        }
+                    }
+
+                    if (applied)
+                    {
+                        successCount++;
                     }
 
                     // Thiết lập hiển thị bong bóng trục (Bubble / Symbol) theo 4 hướng độc lập
                     try
                     {
-                        DatumExtentType extentCheck = make2D ? DatumExtentType.ViewSpecific : DatumExtentType.Model;
-                        IList<Curve> curCurves = grid.GetCurvesInView(extentCheck, view);
-                        if (curCurves == null || curCurves.Count == 0) curCurves = grid.GetCurvesInView(DatumExtentType.ViewSpecific, view);
-                        if (curCurves == null || curCurves.Count == 0) curCurves = grid.GetCurvesInView(DatumExtentType.Model, view);
-                        if (curCurves != null && curCurves.Count > 0)
-                        {
-                            Curve c = curCurves[0];
-                            XYZ pt0 = c.GetEndPoint(0);
-                            XYZ pt1 = c.GetEndPoint(1);
-                            XYZ pt0_v = tInv.OfPoint(pt0);
-                            XYZ pt1_v = tInv.OfPoint(pt1);
+                        XYZ pStart_v = tInv.OfPoint(ptStart_3d);
+                        XYZ pEnd_v = tInv.OfPoint(ptEnd_3d);
 
-                            if (absX >= absY)
+                        if (absX >= absY)
+                        {
+                            // Trục ngang (Horizontal Grid): 2 đầu là Trái (Left) và Phải (Right)
+                            if (pStart_v.X <= pEnd_v.X)
                             {
-                                // Trục ngang (Horizontal Grid): 2 đầu là Trái (Left) và Phải (Right)
-                                if (pt0_v.X <= pt1_v.X)
-                                {
-                                    SetBubbleVisibility(grid, DatumEnds.End0, view, showSymbolLeft);
-                                    SetBubbleVisibility(grid, DatumEnds.End1, view, showSymbolRight);
-                                }
-                                else
-                                {
-                                    SetBubbleVisibility(grid, DatumEnds.End0, view, showSymbolRight);
-                                    SetBubbleVisibility(grid, DatumEnds.End1, view, showSymbolLeft);
-                                }
+                                SetBubbleVisibility(grid, DatumEnds.End0, view, showSymbolLeft);
+                                SetBubbleVisibility(grid, DatumEnds.End1, view, showSymbolRight);
                             }
                             else
                             {
-                                // Trục dọc (Vertical Grid): 2 đầu là Dưới (Bottom) và Trên (Top)
-                                if (pt0_v.Y <= pt1_v.Y)
-                                {
-                                    SetBubbleVisibility(grid, DatumEnds.End0, view, showSymbolBottom);
-                                    SetBubbleVisibility(grid, DatumEnds.End1, view, showSymbolTop);
-                                }
-                                else
-                                {
-                                    SetBubbleVisibility(grid, DatumEnds.End0, view, showSymbolTop);
-                                    SetBubbleVisibility(grid, DatumEnds.End1, view, showSymbolBottom);
-                                }
+                                SetBubbleVisibility(grid, DatumEnds.End0, view, showSymbolRight);
+                                SetBubbleVisibility(grid, DatumEnds.End1, view, showSymbolLeft);
+                            }
+                        }
+                        else
+                        {
+                            // Trục dọc (Vertical Grid): 2 đầu là Dưới (Bottom) và Trên (Top)
+                            if (pStart_v.Y <= pEnd_v.Y)
+                            {
+                                SetBubbleVisibility(grid, DatumEnds.End0, view, showSymbolBottom);
+                                SetBubbleVisibility(grid, DatumEnds.End1, view, showSymbolTop);
+                            }
+                            else
+                            {
+                                SetBubbleVisibility(grid, DatumEnds.End0, view, showSymbolTop);
+                                SetBubbleVisibility(grid, DatumEnds.End1, view, showSymbolBottom);
                             }
                         }
                     }

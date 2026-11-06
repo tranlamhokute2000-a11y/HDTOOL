@@ -68,8 +68,11 @@ namespace HDTool
         // Tên bảng Schedule tạo gần nhất
         public string LastScheduleName { get; set; }
 
-        // 6. Danh sách các cột Parameter dự án tùy chỉnh đã thêm
+        // 6. Danh sách các cột Parameter dự án tùy chỉnh đã thêm (Ống nước)
         public List<string> CustomParamColumns { get; set; }
+
+        // 6.1 Danh sách các cột Parameter dự án tùy chỉnh đã thêm cho ỐNG GIÓ & PHỤ KIỆN HVAC (theo lệnh Sếp Hồ)
+        public List<string> DuctCustomParamColumns { get; set; }
 
         // 7. Cấu hình chi tiết từng cột: Thứ tự (DisplayIndex), Độ rộng (Width), Ẩn/Hiện (Visible)
         public Dictionary<string, MepColumnConfig> Columns { get; set; }
@@ -85,6 +88,7 @@ namespace HDTool
             LastSelectedSheetNumber = string.Empty;
             LastScheduleName = string.Empty;
             CustomParamColumns = new List<string>();
+            DuctCustomParamColumns = new List<string>();
             Columns = new Dictionary<string, MepColumnConfig>(StringComparer.OrdinalIgnoreCase);
         }
 
@@ -148,6 +152,18 @@ namespace HDTool
                     {
                         sb.Append(string.Format("\"{0}\"", EscapeJson(CustomParamColumns[i])));
                         if (i < CustomParamColumns.Count - 1) sb.Append(", ");
+                    }
+                }
+                sb.AppendLine("],");
+
+                // DuctCustomParamColumns
+                sb.Append("  \"DuctCustomParamColumns\": [");
+                if (DuctCustomParamColumns != null && DuctCustomParamColumns.Count > 0)
+                {
+                    for (int i = 0; i < DuctCustomParamColumns.Count; i++)
+                    {
+                        sb.Append(string.Format("\"{0}\"", EscapeJson(DuctCustomParamColumns[i])));
+                        if (i < DuctCustomParamColumns.Count - 1) sb.Append(", ");
                     }
                 }
                 sb.AppendLine("],");
@@ -230,6 +246,22 @@ namespace HDTool
                         if (!string.IsNullOrEmpty(pName) && !settings.CustomParamColumns.Contains(pName))
                         {
                             settings.CustomParamColumns.Add(pName);
+                        }
+                    }
+                }
+
+                // Parse DuctCustomParamColumns
+                Match mDuctCustom = Regex.Match(json, "\"DuctCustomParamColumns\"\\s*:\\s*\\[([^\\]]*)\\]");
+                if (mDuctCustom.Success)
+                {
+                    string arrayBody = mDuctCustom.Groups[1].Value;
+                    MatchCollection matches = Regex.Matches(arrayBody, "\"([^\"]*)\"");
+                    foreach (Match m in matches)
+                    {
+                        string pName = UnescapeJson(m.Groups[1].Value);
+                        if (!string.IsNullOrEmpty(pName) && !settings.DuctCustomParamColumns.Contains(pName))
+                        {
+                            settings.DuctCustomParamColumns.Add(pName);
                         }
                     }
                 }

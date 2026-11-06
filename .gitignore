@@ -22,3 +22,11 @@ obj/
 # Scratch scripts
 scratch/
 
+# Node.js
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+
+

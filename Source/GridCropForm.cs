@@ -44,6 +44,7 @@ namespace HDTool
 
         private System.Windows.Forms.CheckBox chkEqual;
         private System.Windows.Forms.CheckBox chk2D;
+        private System.Windows.Forms.CheckBox chkRecoverHidden;
 
         private System.Windows.Forms.GroupBox grpSymbols;
         private System.Windows.Forms.CheckBox chkSymbolTop;
@@ -91,7 +92,7 @@ namespace HDTool
             this.SuspendLayout();
 
             this.Text = "HDTOOL - Căn Chỉnh Lưới Trục (Grids) Theo Khung Crop View";
-            this.Size = new System.Drawing.Size(530, 640);
+            this.Size = new System.Drawing.Size(530, 668);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -256,8 +257,17 @@ namespace HDTool
             chk2D.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Regular);
             chk2D.ForeColor = System.Drawing.Color.FromArgb(39, 174, 96);
             chk2D.Checked = true;
-            chk2D.Location = new System.Drawing.Point(18, 180);
+            chk2D.Location = new System.Drawing.Point(18, 178);
             chk2D.Size = new System.Drawing.Size(450, 22);
+
+            chkRecoverHidden = new System.Windows.Forms.CheckBox();
+            chkRecoverHidden.Text = "Tự động Unhide & Kéo các trục bị ẩn / kéo lệch từ View khác về";
+            chkRecoverHidden.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Bold);
+            chkRecoverHidden.ForeColor = System.Drawing.Color.FromArgb(217, 119, 6);
+            chkRecoverHidden.Checked = true;
+            chkRecoverHidden.Location = new System.Drawing.Point(18, 202);
+            chkRecoverHidden.Size = new System.Drawing.Size(450, 22);
+            toolTip.SetToolTip(chkRecoverHidden, "Tự động phát hiện các trục hoành/trục tung bị kéo dạt sang view khác hoặc bị ẩn trong view này để kéo về ngay khớp Crop View");
 
             grpInputs.Controls.Add(lblTop);
             grpInputs.Controls.Add(numTop);
@@ -273,11 +283,12 @@ namespace HDTool
             grpInputs.Controls.Add(lblUnitRight);
             grpInputs.Controls.Add(chkEqual);
             grpInputs.Controls.Add(chk2D);
+            grpInputs.Controls.Add(chkRecoverHidden);
 
             // 4. Bật/Tắt Ký Hiệu Đầu Trục (Symbols / Bubbles 4 Hướng)
             grpSymbols = new System.Windows.Forms.GroupBox();
             grpSymbols.Text = "Bật / Tắt Ký Hiệu Đầu Trục (Symbols / Bubbles 4 Hướng)";
-            grpSymbols.Location = new System.Drawing.Point(15, 378);
+            grpSymbols.Location = new System.Drawing.Point(15, 396);
             grpSymbols.Size = new System.Drawing.Size(485, 78);
             grpSymbols.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Bold);
             grpSymbols.ForeColor = System.Drawing.Color.FromArgb(44, 62, 80);
@@ -319,7 +330,7 @@ namespace HDTool
             btnAuto = new System.Windows.Forms.Button();
             btnAuto.Text = "⚡  TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS THEO CROP VIEW";
             btnAuto.Font = new System.Drawing.Font("Segoe UI", 10.0f, FontStyle.Bold);
-            btnAuto.Location = new System.Drawing.Point(15, 466);
+            btnAuto.Location = new System.Drawing.Point(15, 484);
             btnAuto.Size = new System.Drawing.Size(485, 42);
             btnAuto.BackColor = System.Drawing.Color.FromArgb(39, 174, 96);
             btnAuto.ForeColor = System.Drawing.Color.White;
@@ -331,7 +342,7 @@ namespace HDTool
             btnPick = new System.Windows.Forms.Button();
             btnPick.Text = "🎯  CLICK / QUÉT CHỌN CROP VIEW HOẶC GRIDS (PICK)";
             btnPick.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnPick.Location = new System.Drawing.Point(15, 514);
+            btnPick.Location = new System.Drawing.Point(15, 532);
             btnPick.Size = new System.Drawing.Size(485, 36);
             btnPick.BackColor = System.Drawing.Color.FromArgb(41, 128, 185);
             btnPick.ForeColor = System.Drawing.Color.White;
@@ -343,7 +354,7 @@ namespace HDTool
             btnSwitchLevel = new System.Windows.Forms.Button();
             btnSwitchLevel.Text = "📏  CHUYỂN SANG CĂN LEVEL";
             btnSwitchLevel.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnSwitchLevel.Location = new System.Drawing.Point(15, 556);
+            btnSwitchLevel.Location = new System.Drawing.Point(15, 574);
             btnSwitchLevel.Size = new System.Drawing.Size(238, 34);
             btnSwitchLevel.BackColor = System.Drawing.Color.FromArgb(41, 128, 185);
             btnSwitchLevel.ForeColor = System.Drawing.Color.White;
@@ -355,7 +366,7 @@ namespace HDTool
             btnClose = new System.Windows.Forms.Button();
             btnClose.Text = "Đóng (ESC)";
             btnClose.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Regular);
-            btnClose.Location = new System.Drawing.Point(262, 556);
+            btnClose.Location = new System.Drawing.Point(262, 574);
             btnClose.Size = new System.Drawing.Size(238, 34);
             btnClose.Click += (s, e) => this.Close();
             this.CancelButton = btnClose;
@@ -396,7 +407,7 @@ namespace HDTool
                 }
                 else
                 {
-                    lblViewInfo.Text = string.Format("View: {0} ({1})  |  Tỷ lệ: 1:{2}  |  Tìm thấy: {3} Lưới trục Grids",
+                    lblViewInfo.Text = string.Format("View: {0} ({1})  |  Tỷ lệ: 1:{2}\nTìm thấy: {3} Lưới trục (Tự động khôi phục các trục bị ẩn / kéo xa từ View trước)",
                         _activeView.Name,
                         _activeView.ViewType.ToString(),
                         _activeView.Scale,
@@ -449,20 +460,42 @@ namespace HDTool
 
             try
             {
+                string msg = string.Empty;
+                int count = 0;
+
                 if (_isSheet)
                 {
-                    string msg;
-                    GridCropService.AdjustMultiplePlanViews(_doc, _targetViews, top, bottom, left, right, make2D,
+                    count = GridCropService.AdjustMultiplePlanViews(_doc, _targetViews, top, bottom, left, right, make2D,
                         symTop, symBottom, symLeft, symRight, out msg);
+
+                    _allGrids.Clear();
+                    foreach (Autodesk.Revit.DB.View v in _targetViews)
+                    {
+                        _allGrids.AddRange(GridCropService.GetAllGridsInView(_doc, v));
+                    }
                 }
                 else
                 {
-                    string msg;
-                    GridCropService.AdjustAllGridsInView(_doc, _activeView, top, bottom, left, right, make2D,
+                    count = GridCropService.AdjustAllGridsInView(_doc, _activeView, top, bottom, left, right, make2D,
                         symTop, symBottom, symLeft, symRight, out msg);
+
+                    _allGrids = GridCropService.GetAllGridsInView(_doc, _activeView);
                 }
 
-                // Làm mới khung nhìn Revit tức thì để người dùng thấy trực tiếp thay đổi trên màn hình
+                UpdateViewInfo();
+
+                if (count > 0)
+                {
+                    lblViewInfo.Text = string.Format("✓ ĐÃ CĂN CHỈNH THÀNH CÔNG {0} LƯỚI TRỤC THEO CROP VIEW! ({1})\nĐã tự động co đều 4 hướng cách mép Crop {2}mm.", count, DateTime.Now.ToString("HH:mm:ss"), top);
+                    lblViewInfo.ForeColor = System.Drawing.Color.FromArgb(39, 174, 96);
+                }
+                else
+                {
+                    lblViewInfo.Text = string.Format("⚠ Chưa căn chỉnh được ({0}): {1}", DateTime.Now.ToString("HH:mm:ss"), msg);
+                    lblViewInfo.ForeColor = System.Drawing.Color.FromArgb(231, 76, 60);
+                }
+
+                // Làm mới khung nhìn Revit tức thì để người dùng thấy trực tiếp thay đổi trên màn hình ngay lập tức (không gây vướng thao tác)
                 try
                 {
                     _uidoc.RefreshActiveView();

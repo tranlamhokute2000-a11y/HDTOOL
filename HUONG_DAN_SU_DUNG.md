@@ -39,6 +39,10 @@ Khi trình bày bản vẽ trên Mặt bằng (Floor Plan), Mặt đứng (Eleva
 - **Bên Phải (Right)**: Khoảng cách lưới trục ngang nhô sang phải mép Crop (mặc định: `1500 mm`).
 - **Khóa 4 hướng bằng nhau**: Chỉ cần nhập 1 ô, cả 4 hướng tự động bằng nhau.
 - **Tùy chọn bật/tắt Symbol (Bong bóng trục) độc lập ở cả 4 hướng**: Top, Bottom, Left, Right.
+- **Tự động Unhide & Khôi phục các trục bị ẩn / kéo lệch từ View trước (MỚI)**:
+  - Khi một View bị thiếu trục hoành hoặc trục tung do ở View khác người vẽ đã kéo đầu mút Grid ra ngoài phạm vi hoặc bị ẩn trong View:
+  - HDTOOL tự động quét tìm đường tim Grid của công trình đi qua phạm vi Crop View hiện tại.
+  - Tự động bật Unhide và kéo 2 đầu mút ôm sát 4 cạnh Crop View của bản vẽ hiện tại kèm đầy đủ ký hiệu bong bóng!
 
 ---
 
@@ -401,3 +405,36 @@ HDTOOL/
     ├── app.ico
     └── hadomee_logo.png
 ```
+
+
+---
+
+### PHáº¦N VI: THá»NG KÃŠ KHá»I LÆ¯á»¢NG á»NG GIÃ“ & PHá»¤ KIá»†N HVAC (TCVN 5687:2010 / SMACNA)
+
+CÃ´ng cá»¥ bÃ³c tÃ¡ch khá»‘i lÆ°á»£ng chuyÃªn sÃ¢u dÃ nh riÃªng cho há»‡ thá»‘ng ThÃ´ng giÃ³ & Äiá»u hÃ²a khÃ´ng khÃ­ (HVAC):
+- **NÃºt báº¥m trÃªn Ribbon Revit**: Tab `HDTOOL` -> Panel `Khá»‘i LÆ°á»£ng MEP` -> `Khá»‘i LÆ°á»£ng á»ng GiÃ³`.
+- **TÃ­nh nÄƒng ná»•i báº­t theo lá»‡nh Sáº¿p Há»“**:
+  1. **TÃ­nh Diá»‡n TÃ­ch TÃ´n mÂ² chuáº©n TCVN 5687:2010 & SMACNA**:
+     - á»ng giÃ³ chá»¯ nháº­t: Chu vi $2 \times (W + H) \times L$ (Ä‘Æ¡n vá»‹ mÃ©t).
+     - á»ng giÃ³ trÃ²n xoáº¯n: $\pi \times D \times L$.
+     - Phá»¥ kiá»‡n cÃºt, cÃ´n, lÆ°á»£n, tÃª: TÃ­nh diá»‡n tÃ­ch tÃ´n bá» máº·t ngoÃ i tÆ°Æ¡ng Ä‘Æ°Æ¡ng.
+     - Tá»± Ä‘á»™ng phÃ¢n loáº¡i Ä‘á»™ dÃ y tÃ´n máº¡ káº½m (0.58 mm, 0.75 mm, 1.00 mm, 1.20 mm) theo cáº¡nh lá»›n nháº¥t.
+  2. **Thá»‘ng KÃª Sá»‘ LÆ°á»£ng Chi Tiáº¿t**:
+     - Chiá»u dÃ i tá»•ng cá»™ng vÃ  sá»‘ Ä‘oáº¡n Ä‘á»‘i vá»›i á»‘ng giÃ³ tháº³ng.
+     - Sá»‘ lÆ°á»£ng cÃ¡i/chiáº¿c/bá»™ Ä‘á»‘i vá»›i phá»¥ kiá»‡n cÃºt/cÃ´n/lÆ°á»£n, van giÃ³ VCD/FD vÃ  miá»‡ng giÃ³.
+  3. **PhÃ¢n Loáº¡i Tuyáº¿n Há»‡ Thá»‘ng Chuáº©n Chá»‰**:
+     - Cáº¥p GiÃ³ (SA), Há»“i GiÃ³ (RA), HÃºt KhÃ­ Tháº£i (EA), GiÃ³ TÆ°Æ¡i (OA), HÃºt KhÃ³i (Smoke Exhaust)...
+  4. **Tá»° DO THÃŠM Cá»˜T PARAMETER Dá»° ÃN & Há»† á»NG GIÃ“**:
+     - Báº¥m nÃºt `[âž• ThÃªm Cá»™t Parameter]` Ä‘á»ƒ bá»• sung báº¥t ká»³ Project Parameter, Shared Parameter hay Family Parameter nÃ o (`Comments`, `Mark`, `Loáº¡i Báº£o Ã”n`, `Äá»™ DÃ y Báº£o Ã”n`, `Äá»™ DÃ y TÃ´n`...).
+     - Chá»‰nh sá»­a trá»±c tiáº¿p trÃªn báº£ng vÃ  tá»± Ä‘á»™ng Ä‘á»“ng bá»™ ngÆ°á»£c vÃ o mÃ´ hÃ¬nh Revit.
+     - Tá»± Ä‘á»™ng ghi nhá»› cÃ¡c cá»™t Ä‘Ã£ thÃªm cho cÃ¡c láº§n lÃ m viá»‡c sau!
+  5. **Soi SÃ¡ng Highlight 2 Chiá»u & Xuáº¥t Káº¿t Quáº£**:
+     - Click dÃ²ng trÃªn báº£ng -> Äá»‘i tÆ°á»£ng trÃªn mÃ´ hÃ¬nh 3D/Máº·t báº±ng sÃ¡ng lÃªn mÃ u cam ná»•i báº­t.
+     - Xuáº¥t dá»¯ liá»‡u ra file Excel (.csv / .xlsx) hoáº·c Ä‘Æ°a vÃ o Sheet báº£n váº½.
+  6. **ĐẶT / CẬP NHẬT BẢNG KHỐI LƯỢNG VÀO SHEET BẢN VẼ REVIT**:
+     - Bấm nút [🚀 ĐẶT / CẬP NHẬT VÀO SHEET MONG MUỐN...].
+     - Hộp thoại hiển thị danh sách toàn bộ các Sheet trong dự án, tự động chọn Sheet hiện hành.
+     - Cho phép chọn chế độ đặt:
+       * Tự động căn góc trên bên phải khung tên bản vẽ (TitleBlock) — Đẹp và chuẩn kỹ thuật MEP HadoMEE.
+       * Hoặc click chuột chọn điểm đặt trực tiếp trên Sheet.
+     - Bảng được tạo dưới dạng Legend View (HD_BẢNG KHỐI LƯỢNG ỐNG GIÓ - ...), tự động ôm khít Crop Box và có thể đặt lên nhiều Sheet cùng lúc mà không bị Revit cấm.
