@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
@@ -9,6 +9,10 @@ namespace HDTool
     [Regeneration(RegenerationOption.Manual)]
     public class GridCropCommand : IExternalCommand
     {
+        private static GridCropForm _instance = null;
+        private static HDToolExternalEventHandler _eventHandler = null;
+        private static ExternalEvent _externalEvent = null;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             if (ToolHotReloadManager.HasActiveHotReloadAssembly())
@@ -46,11 +50,21 @@ namespace HDTool
                     return Result.Cancelled;
                 }
 
-                // Mở cửa sổ điều khiển Grid Crop
-                using (GridCropForm form = new GridCropForm(uidoc))
+                if (_eventHandler == null) _eventHandler = new HDToolExternalEventHandler();
+                if (_externalEvent == null) _externalEvent = ExternalEvent.Create(_eventHandler);
+
+                if (_instance != null && !_instance.IsDisposed)
                 {
-                    form.ShowDialog();
+                    _instance.UpdateContext(uidoc);
+                    _instance.WindowState = System.Windows.Forms.FormWindowState.Normal;
+                    _instance.BringToFront();
+                    _instance.Activate();
+                    return Result.Succeeded;
                 }
+
+                _instance = new GridCropForm(uidoc, _externalEvent, _eventHandler);
+                _instance.FormClosed += (s, e) => { _instance = null; };
+                _instance.Show(new RevitWindowWrapper(uiapp.MainWindowHandle));
 
                 return Result.Succeeded;
             }

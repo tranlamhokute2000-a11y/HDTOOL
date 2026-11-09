@@ -111,9 +111,10 @@ namespace HDTool
         /// </summary>
         public string GetGroupingKey()
         {
+            string cleanSize = (Size ?? "").Replace(" ", "").Trim().ToLowerInvariant();
             return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}",
                 (MergedName ?? "").Trim().ToLowerInvariant(),
-                (Size ?? "").Trim().ToLowerInvariant(),
+                cleanSize,
                 (Shape ?? "").Trim().ToLowerInvariant(),
                 (SystemType ?? "").Trim().ToLowerInvariant(),
                 (Thickness ?? "").Trim().ToLowerInvariant(),

@@ -51,7 +51,25 @@ namespace HDTool
                 foreach (ElementId id in customElementIds)
                 {
                     Element el = doc.GetElement(id);
-                    if (el != null) elementsToProcess.Add(el);
+                    if (el != null)
+                    {
+                        List<ElementId> extracted = DuctQuantityCommand.ExtractDuctIdsFromElement(doc, el);
+                        if (extracted != null && extracted.Count > 0)
+                        {
+                            foreach (ElementId subId in extracted)
+                            {
+                                Element subEl = doc.GetElement(subId);
+                                if (subEl != null && !elementsToProcess.Contains(subEl))
+                                {
+                                    elementsToProcess.Add(subEl);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (!elementsToProcess.Contains(el)) elementsToProcess.Add(el);
+                        }
+                    }
                 }
             }
             else if (scopeOption == 0 && activeView != null)
@@ -126,10 +144,8 @@ namespace HDTool
             // 4. Gom nhóm hoặc hiển thị rời rạc
             if (discreteDucts)
             {
-                int stt = 1;
                 foreach (DuctQuantityItem it in filtered)
                 {
-                    it.STT = stt++;
                     it.TotalLengthM = it.LengthM;
                     it.TotalAreaM2 = it.AreaM2;
                     result.Add(it);
@@ -187,15 +203,13 @@ namespace HDTool
                     }
                 }
 
-                int stt = 1;
                 foreach (var kvp in grouped)
                 {
-                    kvp.Value.STT = stt++;
                     result.Add(kvp.Value);
                 }
             }
 
-            return result;
+            return SortDuctQuantityItems(result);
         }
 
         private static void CollectElementsFromView(Document doc, Autodesk.Revit.DB.View view, bool incDuct, bool incFitting, bool incDamper, bool incDiffuser, bool incFlex, List<Element> targetList)
@@ -455,22 +469,8 @@ namespace HDTool
             }
             else if (bic == BuiltInCategory.OST_DuctFitting)
             {
-                // --- PHỤ KIỆN CÚT / CÔN / TÊ / LƯỢN ---
-                item.CategoryKind = "Phụ Kiện Ống Gió";
-                item.Unit = "cái";
-                item.Count = 1;
-                item.LengthM = 0;
-
-                FamilyInstance fi = elem as FamilyInstance;
-                string famName = fi != null && fi.Symbol != null ? fi.Symbol.Family.Name : elem.Name;
-                string typeName = fi != null && fi.Symbol != null ? fi.Symbol.Name : "";
-
-                item.MergedName = StandardizeFittingName(famName, typeName);
-                item.Size = GetFittingSizeString(elem);
-
-                // Diện tích tôn m² của phụ kiện (lấy parameter Area hoặc Solids hoặc công thức tương đương)
-                item.AreaM2 = CalculateFittingAreaM2(elem, item.Size, item.MergedName);
-                item.Thickness = CalculateFittingThickness(item.Size);
+                // --- PHỤ KIỆN CÚT / CÔN / TÊ / LƯỢN (CHUYÊN SÂU THEO LỆNH SẾP HỒ) ---
+                ProcessDuctFittingDetails(elem, item);
             }
             else if (bic == BuiltInCategory.OST_DuctAccessory)
             {
@@ -553,32 +553,492 @@ namespace HDTool
             return "0.75 mm";
         }
 
+        #region ====== XỬ LÝ PHỤ KIỆN ỐNG GIÓ CHUYÊN SÂU (THEO LỆNH SẾP HỒ) ======
+
         /// <summary>
-        /// Tính diện tích tôn m² của phụ kiện theo TCVN 5687 / SMACNA hoặc hình học Solids
+        /// Xử lý chi tiết Fitting ống gió: Phân biệt Cút theo góc độ thực tế & R150,
+        /// Côn thu trích xuất Chiều dài L (khoảng cách 2 đầu kích thước),
+        /// Lượn Z có Chiều dài L và Độ chênh cao Delta H, tính diện tích m² chuẩn TCVN.
         /// </summary>
-        private static double CalculateFittingAreaM2(Element elem, string sizeStr, string fittingName)
+        private static void ProcessDuctFittingDetails(Element elem, DuctQuantityItem item)
         {
-            // 1. Thử lấy từ BuiltInParameter Area nếu Revit có sẵn
+            item.CategoryKind = "Phụ Kiện Ống Gió";
+            item.Unit = "cái";
+            item.Count = 1;
+            item.LengthM = 0;
+
+            FamilyInstance fi = elem as FamilyInstance;
+            string famName = fi != null && fi.Symbol != null ? fi.Symbol.Family.Name : elem.Name;
+            string typeName = fi != null && fi.Symbol != null ? fi.Symbol.Name : "";
+            string combined = (famName + " " + typeName + " " + elem.Name).ToLowerInvariant();
+
+            List<Connector> conns = GetFittingConnectors(elem);
+
+            if (combined.Contains("elbow") || combined.Contains("cút") || combined.Contains("co ") || combined.Contains("bends"))
+            {
+                // 1. CÚT ỐNG GIÓ (ELBOW)
+                double angleDeg = GetFittingAngleDegrees(elem, conns);
+                string baseSize = GetFittingCleanBaseSize(elem, conns);
+                double ductWidth = GetFirstNumberFromSize(baseSize);
+                double radiusMm = GetFittingBendRadiusMm(elem, ductWidth);
+
+                bool hasVane = combined.Contains("vane") || combined.Contains("cánh");
+                if (hasVane)
+                {
+                    item.MergedName = string.Format("Cút {0}° Có Cánh Hướng Dòng (R{1})", angleDeg, radiusMm);
+                }
+                else
+                {
+                    item.MergedName = string.Format("Cút {0}° Tôn Mạ Kẽm (R{1})", angleDeg, radiusMm);
+                }
+
+                item.Size = string.Format("{0} ({1}°, R{2})", baseSize, angleDeg, radiusMm);
+                item.LengthM = 0;
+                item.AreaM2 = CalculateElbowAreaM2(elem, angleDeg, radiusMm, baseSize);
+                item.Thickness = CalculateFittingThickness(baseSize);
+            }
+            else if (combined.Contains("transition") || combined.Contains("côn") || combined.Contains("thu") || combined.Contains("reducer"))
+            {
+                // 2. CÔN THU CHUYỂN TIẾT DIỆN (TRANSITION)
+                double lenMm = GetTransitionLengthMm(elem, conns);
+                double lenM = Math.Round(lenMm / 1000.0, 2);
+                item.LengthM = lenM;
+
+                bool isEccentric = combined.Contains("eccentric") || combined.Contains("lệch");
+                item.MergedName = isEccentric ? "Côn Thu Lệch Tâm" : "Côn Thu Chuyển Tiết Diện";
+
+                string baseSize = GetFittingCleanBaseSize(elem, conns);
+                item.Size = string.Format("{0} (L={1})", baseSize, lenMm);
+                item.AreaM2 = CalculateTransitionAreaM2(elem, lenMm, baseSize);
+                item.Thickness = CalculateFittingThickness(baseSize);
+            }
+            else if (combined.Contains("offset") || combined.Contains("lượn"))
+            {
+                // 3. LƯỢN ỐNG GIÓ CHỮ Z (OFFSET)
+                double lenMm, offsetMm;
+                GetOffsetDetails(elem, conns, out lenMm, out offsetMm);
+                double lenM = Math.Round(lenMm / 1000.0, 2);
+                item.LengthM = lenM;
+
+                item.MergedName = "Lượn Ống Gió Chữ Z";
+                string baseSize = GetFittingCleanBaseSize(elem, conns);
+                item.Size = string.Format("{0} (L={1}, Chênh H={2})", baseSize, lenMm, offsetMm);
+                item.AreaM2 = CalculateOffsetAreaM2(elem, lenMm, offsetMm, baseSize);
+                item.Thickness = CalculateFittingThickness(baseSize);
+            }
+            else if (combined.Contains("tee") || combined.Contains("tê"))
+            {
+                // 4. TÊ ỐNG GIÓ (TEE)
+                item.MergedName = combined.Contains("thu") ? "Tê Thu Ống Gió" : "Tê Đều Ống Gió";
+                string baseSize = GetFittingCleanBaseSize(elem, conns);
+                item.Size = baseSize;
+                item.LengthM = 0;
+                item.AreaM2 = CalculateTeeAreaM2(elem, baseSize);
+                item.Thickness = CalculateFittingThickness(baseSize);
+            }
+            else if (combined.Contains("cap") || combined.Contains("bịt") || combined.Contains("end"))
+            {
+                // 5. NẮP BỊT (END CAP)
+                item.MergedName = "Nắp Bịt Đầu Ống Gió (End Cap)";
+                string baseSize = GetFittingCleanBaseSize(elem, conns);
+                item.Size = baseSize;
+                item.LengthM = 0;
+                item.AreaM2 = 0.10;
+                item.Thickness = CalculateFittingThickness(baseSize);
+            }
+            else
+            {
+                // Phụ kiện khác
+                item.MergedName = !string.IsNullOrEmpty(famName) ? famName : "Phụ Kiện Ống Gió";
+                string baseSize = GetFittingCleanBaseSize(elem, conns);
+                item.Size = baseSize;
+                item.LengthM = 0;
+                item.AreaM2 = 0.25;
+                item.Thickness = CalculateFittingThickness(baseSize);
+            }
+        }
+
+        private static List<Connector> GetFittingConnectors(Element elem)
+        {
+            List<Connector> conns = new List<Connector>();
+            if (elem == null) return conns;
+
+            FamilyInstance fi = elem as FamilyInstance;
+            if (fi != null && fi.MEPModel != null && fi.MEPModel.ConnectorManager != null)
+            {
+                try
+                {
+                    foreach (Connector c in fi.MEPModel.ConnectorManager.Connectors)
+                    {
+                        if (c != null && c.ConnectorType == ConnectorType.End)
+                        {
+                            conns.Add(c);
+                        }
+                    }
+                }
+                catch { }
+            }
+            return conns;
+        }
+
+        private static void GetConnectorSize(Connector conn, out double widthMm, out double heightMm, out double diamMm)
+        {
+            widthMm = 0;
+            heightMm = 0;
+            diamMm = 0;
+            if (conn == null) return;
+
+            try
+            {
+                if (conn.Shape == ConnectorProfileType.Rectangular)
+                {
+                    widthMm = Math.Round(conn.Width * 304.8, 0);
+                    heightMm = Math.Round(conn.Height * 304.8, 0);
+                }
+                else if (conn.Shape == ConnectorProfileType.Round)
+                {
+                    diamMm = Math.Round(conn.Radius * 2.0 * 304.8, 0);
+                }
+            }
+            catch { }
+        }
+
+        private static double GetFittingAngleDegrees(Element elem, List<Connector> conns)
+        {
+            // 1. Thử parameter lookup
+            string[] angleParamNames = new string[] { "Angle", "Góc", "Fitting Angle", "Duct Angle", "Angle 1", "Góc Uốn", "Bend Angle" };
+            foreach (string name in angleParamNames)
+            {
+                Parameter p = elem.LookupParameter(name);
+                if (p == null)
+                {
+                    FamilyInstance fi = elem as FamilyInstance;
+                    if (fi != null && fi.Symbol != null) p = fi.Symbol.LookupParameter(name);
+                }
+                if (p != null && p.HasValue && p.StorageType == StorageType.Double)
+                {
+                    double val = p.AsDouble();
+                    double deg = val * 180.0 / Math.PI;
+                    if (deg > 180.0) deg = val;
+                    if (deg > 5.0 && deg <= 180.0)
+                    {
+                        return NormalizeAngleDegrees(deg);
+                    }
+                }
+            }
+
+            // 3. Phân tích vector giữa 2 connector
+            if (conns != null && conns.Count >= 2)
+            {
+                try
+                {
+                    XYZ dir1 = conns[0].CoordinateSystem.BasisZ;
+                    XYZ dir2 = conns[1].CoordinateSystem.BasisZ;
+                    double dot = Math.Max(-1.0, Math.Min(1.0, dir1.DotProduct(dir2)));
+                    double angleDeg = Math.Acos(-dot) * 180.0 / Math.PI;
+                    if (angleDeg > 5.0 && angleDeg < 175.0)
+                    {
+                        return NormalizeAngleDegrees(angleDeg);
+                    }
+                }
+                catch { }
+            }
+
+            // 4. Tìm trong Type Name hoặc Family Name
+            FamilyInstance inst = elem as FamilyInstance;
+            string fullName = (elem.Name + " " + (inst != null && inst.Symbol != null ? inst.Symbol.Family.Name : "")).ToLowerInvariant();
+            if (fullName.Contains("45")) return 45.0;
+            if (fullName.Contains("60")) return 60.0;
+            if (fullName.Contains("30")) return 30.0;
+            if (fullName.Contains("90")) return 90.0;
+
+            return 90.0; // Fallback chuẩn
+        }
+
+        private static double NormalizeAngleDegrees(double deg)
+        {
+            if (Math.Abs(deg - 90.0) <= 4.0) return 90.0;
+            if (Math.Abs(deg - 45.0) <= 3.0) return 45.0;
+            if (Math.Abs(deg - 60.0) <= 3.0) return 60.0;
+            if (Math.Abs(deg - 30.0) <= 3.0) return 30.0;
+            if (Math.Abs(deg - 22.5) <= 2.0) return 22.5;
+            if (Math.Abs(deg - 15.0) <= 2.0) return 15.0;
+            return Math.Round(deg, 0);
+        }
+
+        private static double GetFittingBendRadiusMm(Element elem, double ductWidthMm)
+        {
+            string[] radiusParamNames = new string[] 
+            { 
+                "Bend Radius", "Inside Radius", "Throat Radius", "Radius", 
+                "Bán Kính Cong", "Bán Kính Trong", "Bán Kính", "R", "Throat" 
+            };
+
+            foreach (string name in radiusParamNames)
+            {
+                Parameter p = elem.LookupParameter(name);
+                if (p == null)
+                {
+                    FamilyInstance fi = elem as FamilyInstance;
+                    if (fi != null && fi.Symbol != null) p = fi.Symbol.LookupParameter(name);
+                }
+                if (p != null && p.HasValue && p.StorageType == StorageType.Double)
+                {
+                    double rFt = p.AsDouble();
+                    if (rFt > 0.05)
+                    {
+                        return Math.Round(rFt * 304.8, 0);
+                    }
+                }
+            }
+
+            Parameter pClr = elem.LookupParameter("Centerline Radius") ?? elem.LookupParameter("Center Line Radius");
+            if (pClr != null && pClr.HasValue && pClr.StorageType == StorageType.Double)
+            {
+                double clrMm = pClr.AsDouble() * 304.8;
+                double rThroat = clrMm - (ductWidthMm / 2.0);
+                if (rThroat > 10) return Math.Round(rThroat, 0);
+            }
+
+            // Tiêu chuẩn HVAC SMACNA / TCVN 5687: R150 (khớp ghi chú bản vẽ Sếp gửi)
+            return 150.0;
+        }
+
+        private static double GetTransitionLengthMm(Element elem, List<Connector> conns)
+        {
+            if (conns != null && conns.Count >= 2)
+            {
+                try
+                {
+                    double distFt = conns[0].Origin.DistanceTo(conns[1].Origin);
+                    double distMm = Math.Round(distFt * 304.8, 0);
+                    if (distMm >= 50 && distMm <= 3000)
+                    {
+                        return distMm;
+                    }
+                }
+                catch { }
+            }
+
+            string[] lenParamNames = new string[] { "Duct Length", "Length", "Chiều Dài", "L", "Transition Length", "Fitting Length" };
+            foreach (string name in lenParamNames)
+            {
+                Parameter p = elem.LookupParameter(name);
+                if (p == null)
+                {
+                    FamilyInstance fi = elem as FamilyInstance;
+                    if (fi != null && fi.Symbol != null) p = fi.Symbol.LookupParameter(name);
+                }
+                if (p != null && p.HasValue && p.StorageType == StorageType.Double)
+                {
+                    double valMm = Math.Round(p.AsDouble() * 304.8, 0);
+                    if (valMm >= 50) return valMm;
+                }
+            }
+
+            return 200.0; // Fallback chuẩn 200mm theo hình ảnh thực tế Sếp gửi
+        }
+
+        private static void GetOffsetDetails(Element elem, List<Connector> conns, out double lengthMm, out double offsetMm)
+        {
+            lengthMm = 600.0;
+            offsetMm = 200.0;
+
+            string[] offParamNames = new string[] { "Duct Offset", "Offset", "Chênh Cao", "Độ Chênh", "Độ Lệch", "Offset Height", "Offset Distance", "H" };
+            foreach (string name in offParamNames)
+            {
+                Parameter p = elem.LookupParameter(name);
+                if (p == null)
+                {
+                    FamilyInstance fi = elem as FamilyInstance;
+                    if (fi != null && fi.Symbol != null) p = fi.Symbol.LookupParameter(name);
+                }
+                if (p != null && p.HasValue && p.StorageType == StorageType.Double)
+                {
+                    double valMm = Math.Round(Math.Abs(p.AsDouble() * 304.8), 0);
+                    if (valMm > 5) { offsetMm = valMm; break; }
+                }
+            }
+
+            string[] lenParamNames = new string[] { "Duct Length", "Length", "Chiều Dài", "L", "Offset Length" };
+            foreach (string name in lenParamNames)
+            {
+                Parameter p = elem.LookupParameter(name);
+                if (p == null)
+                {
+                    FamilyInstance fi = elem as FamilyInstance;
+                    if (fi != null && fi.Symbol != null) p = fi.Symbol.LookupParameter(name);
+                }
+                if (p != null && p.HasValue && p.StorageType == StorageType.Double)
+                {
+                    double valMm = Math.Round(p.AsDouble() * 304.8, 0);
+                    if (valMm >= 50) { lengthMm = valMm; break; }
+                }
+            }
+
+            if (conns != null && conns.Count >= 2)
+            {
+                try
+                {
+                    XYZ p1 = conns[0].Origin;
+                    XYZ p2 = conns[1].Origin;
+                    XYZ diff = p2 - p1;
+
+                    double deltaZMm = Math.Round(Math.Abs(diff.Z) * 304.8, 0);
+                    if (deltaZMm > 5)
+                    {
+                        offsetMm = deltaZMm;
+                    }
+
+                    double distTotalMm = Math.Round(p1.DistanceTo(p2) * 304.8, 0);
+                    if (distTotalMm > offsetMm)
+                    {
+                        double axisLenMm = Math.Round(Math.Sqrt(Math.Max(0, distTotalMm * distTotalMm - offsetMm * offsetMm)), 0);
+                        if (axisLenMm >= 50) lengthMm = axisLenMm;
+                        else lengthMm = distTotalMm;
+                    }
+                    else if (distTotalMm >= 50)
+                    {
+                        lengthMm = distTotalMm;
+                    }
+                }
+                catch { }
+            }
+        }
+
+        private static string GetFittingCleanBaseSize(Element elem, List<Connector> conns)
+        {
+            if (conns != null && conns.Count >= 2)
+            {
+                try
+                {
+                    double w1, h1, d1, w2, h2, d2;
+                    GetConnectorSize(conns[0], out w1, out h1, out d1);
+                    GetConnectorSize(conns[1], out w2, out h2, out d2);
+
+                    string s1 = d1 > 0 ? string.Format("Ø{0}", d1) : (w1 > 0 && h1 > 0 ? string.Format("{0}x{1}", w1, h1) : "");
+                    string s2 = d2 > 0 ? string.Format("Ø{0}", d2) : (w2 > 0 && h2 > 0 ? string.Format("{0}x{1}", w2, h2) : "");
+
+                    if (!string.IsNullOrEmpty(s1) && !string.IsNullOrEmpty(s2))
+                    {
+                        if (string.Equals(s1, s2, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return s1;
+                        }
+                        return string.Format("{0} - {1}", s1, s2);
+                    }
+                    if (!string.IsNullOrEmpty(s1)) return s1;
+                    if (!string.IsNullOrEmpty(s2)) return s2;
+                }
+                catch { }
+            }
+
+            string raw = GetFittingSizeString(elem);
+            if (!string.IsNullOrEmpty(raw) && raw != "-")
+            {
+                string cleaned = raw.Replace("mm", "").Replace("MM", "");
+                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*([xX*×\-])\s*", "$1");
+                return cleaned.Trim();
+            }
+
+            return "Kích Thước Mặc Định";
+        }
+
+        private static double GetFirstNumberFromSize(string sizeStr)
+        {
+            if (string.IsNullOrEmpty(sizeStr)) return 250.0;
+            var m = System.Text.RegularExpressions.Regex.Match(sizeStr, @"\d+");
+            if (m.Success)
+            {
+                double v;
+                if (double.TryParse(m.Value, out v)) return v;
+            }
+            return 250.0;
+        }
+
+        private static double CalculateElbowAreaM2(Element elem, double angleDeg, double radiusMm, string sizeStr)
+        {
             Parameter pArea = elem.get_Parameter(BuiltInParameter.RBS_CURVE_SURFACE_AREA);
             if (pArea != null && pArea.HasValue && pArea.AsDouble() > 0)
             {
                 return Math.Round(pArea.AsDouble() * SqFeetToSqMeter, 2);
             }
 
-            Parameter pAreaCustom = elem.LookupParameter("Area") ?? elem.LookupParameter("Surface Area") ?? elem.LookupParameter("Diện Tích");
-            if (pAreaCustom != null && pAreaCustom.HasValue)
-            {
-                if (pAreaCustom.StorageType == StorageType.Double)
-                {
-                    double sqFt = pAreaCustom.AsDouble();
-                    if (sqFt > 0) return Math.Round(sqFt * SqFeetToSqMeter, 2);
-                }
-            }
-
-            // 2. Tính toán dựa trên kích thước quy cách và loại phụ kiện
             try
             {
-                var nums = System.Text.RegularExpressions.Regex.Matches(sizeStr ?? "", "\\d+")
+                var nums = System.Text.RegularExpressions.Regex.Matches(sizeStr ?? "", @"\d+")
+                    .Cast<System.Text.RegularExpressions.Match>()
+                    .Select(m => double.Parse(m.Value))
+                    .ToList();
+
+                if (nums.Count >= 2)
+                {
+                    double w = nums[0] / 1000.0;
+                    double h = nums[1] / 1000.0;
+                    double r = Math.Max(50.0, radiusMm) / 1000.0;
+
+                    double angleRad = (Math.Max(5.0, angleDeg) * Math.PI) / 180.0;
+                    double curveLen = (r + w / 2.0) * angleRad;
+                    double perim = 2.0 * (w + h);
+                    double area = perim * curveLen + perim * 0.05;
+                    return Math.Max(0.05, Math.Round(area, 2));
+                }
+            }
+            catch { }
+
+            return 0.35;
+        }
+
+        private static double CalculateTransitionAreaM2(Element elem, double lenMm, string sizeStr)
+        {
+            Parameter pArea = elem.get_Parameter(BuiltInParameter.RBS_CURVE_SURFACE_AREA);
+            if (pArea != null && pArea.HasValue && pArea.AsDouble() > 0)
+            {
+                return Math.Round(pArea.AsDouble() * SqFeetToSqMeter, 2);
+            }
+
+            try
+            {
+                var nums = System.Text.RegularExpressions.Regex.Matches(sizeStr ?? "", @"\d+")
+                    .Cast<System.Text.RegularExpressions.Match>()
+                    .Select(m => double.Parse(m.Value))
+                    .ToList();
+
+                if (nums.Count >= 2)
+                {
+                    double w1 = nums[0] / 1000.0;
+                    double h1 = nums[1] / 1000.0;
+                    double w2 = (nums.Count >= 4) ? nums[2] / 1000.0 : w1;
+                    double h2 = (nums.Count >= 4) ? nums[3] / 1000.0 : h1;
+
+                    double p1 = 2.0 * (w1 + h1);
+                    double p2 = 2.0 * (w2 + h2);
+                    double lM = Math.Max(50.0, lenMm) / 1000.0;
+
+                    double dW = Math.Abs(w1 - w2) / 2.0;
+                    double dH = Math.Abs(h1 - h2) / 2.0;
+                    double slant = Math.Sqrt(lM * lM + dW * dW + dH * dH);
+
+                    double area = ((p1 + p2) / 2.0) * slant + ((p1 + p2) / 2.0) * 0.05;
+                    return Math.Max(0.05, Math.Round(area, 2));
+                }
+            }
+            catch { }
+
+            return 0.30;
+        }
+
+        private static double CalculateOffsetAreaM2(Element elem, double lenMm, double offsetMm, string sizeStr)
+        {
+            Parameter pArea = elem.get_Parameter(BuiltInParameter.RBS_CURVE_SURFACE_AREA);
+            if (pArea != null && pArea.HasValue && pArea.AsDouble() > 0)
+            {
+                return Math.Round(pArea.AsDouble() * SqFeetToSqMeter, 2);
+            }
+
+            try
+            {
+                var nums = System.Text.RegularExpressions.Regex.Matches(sizeStr ?? "", @"\d+")
                     .Cast<System.Text.RegularExpressions.Match>()
                     .Select(m => double.Parse(m.Value))
                     .ToList();
@@ -589,64 +1049,212 @@ namespace HDTool
                     double h = nums[1] / 1000.0;
                     double perim = 2.0 * (w + h);
 
-                    string lowerName = (fittingName ?? "").ToLowerInvariant();
+                    double lM = Math.Max(50.0, lenMm) / 1000.0;
+                    double offM = Math.Max(0.0, offsetMm) / 1000.0;
+                    double pathLen = Math.Sqrt(lM * lM + offM * offM);
 
-                    if (lowerName.Contains("cút") || lowerName.Contains("elbow") || lowerName.Contains("co"))
-                    {
-                        // Cút 90 độ: Diện tích ≈ Chu vi * (Bán kính cong R150 + W/2) * π / 2
-                        double r = 0.15;
-                        double curveLen = (r + w / 2.0) * (Math.PI / 2.0);
-                        return Math.Max(0.1, Math.Round(perim * curveLen, 2));
-                    }
-                    else if (lowerName.Contains("côn") || lowerName.Contains("thu") || lowerName.Contains("transition"))
-                    {
-                        // Côn thu: (Chu vi 1 + Chu vi 2)/2 * Chiều dài côn (thường 0.3 - 0.5m)
-                        double perim2 = perim;
-                        if (nums.Count >= 4)
-                        {
-                            perim2 = 2.0 * (nums[2] / 1000.0 + nums[3] / 1000.0);
-                        }
-                        return Math.Max(0.1, Math.Round(((perim + perim2) / 2.0) * 0.45, 2));
-                    }
-                    else if (lowerName.Contains("tê") || lowerName.Contains("tee"))
-                    {
-                        return Math.Max(0.15, Math.Round(perim * 0.6, 2));
-                    }
-                    else if (lowerName.Contains("lượn") || lowerName.Contains("offset"))
-                    {
-                        return Math.Max(0.15, Math.Round(perim * 0.75, 2));
-                    }
-                    else
-                    {
-                        return Math.Max(0.1, Math.Round(perim * 0.4, 2));
-                    }
+                    double area = perim * pathLen + perim * 0.05;
+                    return Math.Max(0.10, Math.Round(area, 2));
                 }
             }
             catch { }
 
-            return 0.35; // Giá trị fallback an toàn
+            return 0.45;
         }
 
-        private static string StandardizeFittingName(string famName, string typeName)
+        private static double CalculateTeeAreaM2(Element elem, string sizeStr)
         {
-            string combined = (famName + " " + typeName).ToLowerInvariant();
-            if (combined.Contains("elbow") || combined.Contains("cút") || combined.Contains("co 90") || combined.Contains("90 deg"))
+            Parameter pArea = elem.get_Parameter(BuiltInParameter.RBS_CURVE_SURFACE_AREA);
+            if (pArea != null && pArea.HasValue && pArea.AsDouble() > 0)
             {
-                if (combined.Contains("vane") || combined.Contains("cánh")) return "Cút 90 Độ Có Cánh Hướng Dòng";
-                return "Cút 90 Độ Tôn Mạ Kẽm";
+                return Math.Round(pArea.AsDouble() * SqFeetToSqMeter, 2);
             }
-            if (combined.Contains("45")) return "Cút 45 Độ Tôn Mạ Kẽm";
-            if (combined.Contains("transition") || combined.Contains("côn") || combined.Contains("thu"))
-            {
-                if (combined.Contains("eccentric") || combined.Contains("lệch")) return "Côn Thu Lệch Tâm";
-                return "Côn Thu Chuyển Tiết Diện";
-            }
-            if (combined.Contains("tee") || combined.Contains("tê")) return "Tê Đều Ống Gió";
-            if (combined.Contains("offset") || combined.Contains("lượn")) return "Lượn Ống Gió Chữ Z";
-            if (combined.Contains("cap") || combined.Contains("bịt") || combined.Contains("end")) return "Nắp Bịt Đầu Ống Gió (End Cap)";
 
-            return !string.IsNullOrEmpty(famName) ? famName : "Phụ Kiện Ống Gió";
+            try
+            {
+                var nums = System.Text.RegularExpressions.Regex.Matches(sizeStr ?? "", @"\d+")
+                    .Cast<System.Text.RegularExpressions.Match>()
+                    .Select(m => double.Parse(m.Value))
+                    .ToList();
+
+                if (nums.Count >= 2)
+                {
+                    double w = nums[0] / 1000.0;
+                    double h = nums[1] / 1000.0;
+                    double perim = 2.0 * (w + h);
+                    return Math.Max(0.15, Math.Round(perim * 0.60, 2));
+                }
+            }
+            catch { }
+
+            return 0.35;
         }
+
+        #endregion
+
+        #region ====== SẮP XẾP BẢNG KHỐI LƯỢNG (THEO LỆNH SẾP HỒ: HẾT ỐNG GIÓ THẲNG TỪ TO ĐẾN NHỎ RỒI MỚI ĐẾN PHỤ KIỆN) ======
+
+        /// <summary>
+        /// Sắp xếp bảng khối lượng ống gió chuẩn chỉ theo lệnh Sếp Hồ:
+        /// 1. Ống Gió Thẳng (kích thước từ TO ĐẾN NHỎ theo diện tích tiết diện)
+        /// 2. Ống Gió Mềm
+        /// 3. Phụ Kiện (Cút từ to đến nhỏ, Côn từ to đến nhỏ, Tê, Lượn Z)
+        /// 4. Van Gió (VCD, FD, NRD)
+        /// 5. Miệng Gió (Diffuser, Slot, Louver)
+        /// Đánh lại STT tuần tự 1, 2, 3...
+        /// </summary>
+        public static List<DuctQuantityItem> SortDuctQuantityItems(IEnumerable<DuctQuantityItem> items)
+        {
+            if (items == null) return new List<DuctQuantityItem>();
+
+            var sorted = items
+                .OrderBy(x => GetCategorySortPriority(x.CategoryKind, x.MergedName))
+                .ThenByDescending(x => GetSizeCrossSectionAreaMm2(x.Size))
+                .ThenByDescending(x => GetMaxWidthMm(x.Size))
+                .ThenByDescending(x => GetMaxHeightMm(x.Size))
+                .ThenByDescending(x => x.TotalLengthM)
+                .ThenBy(x => x.MergedName)
+                .ToList();
+
+            for (int i = 0; i < sorted.Count; i++)
+            {
+                sorted[i].STT = i + 1;
+            }
+
+            return sorted;
+        }
+
+        public static int GetCategorySortPriority(string categoryKind, string mergedName)
+        {
+            string cat = (categoryKind ?? "").Trim().ToLowerInvariant();
+            string name = (mergedName ?? "").Trim().ToLowerInvariant();
+
+            // 1. Ống Gió Thẳng luôn đứng đầu bảng
+            if (cat.Contains("thẳng") || cat.Contains("duct curves") || (cat.Contains("ống gió") && !cat.Contains("mềm") && !cat.Contains("phụ kiện")))
+            {
+                return 10;
+            }
+
+            // 2. Ống Gió Mềm
+            if (cat.Contains("mềm") || cat.Contains("flex"))
+            {
+                return 20;
+            }
+
+            // 3. Phụ Kiện Ống Gió
+            if (cat.Contains("phụ kiện") || cat.Contains("fitting"))
+            {
+                if (name.Contains("cút") || name.Contains("co ") || name.Contains("elbow")) return 31;
+                if (name.Contains("côn") || name.Contains("thu") || name.Contains("transition")) return 32;
+                if (name.Contains("tê") || name.Contains("tee")) return 33;
+                if (name.Contains("lượn") || name.Contains("offset") || name.Contains("chữ z")) return 34;
+                return 35;
+            }
+
+            // 4. Van Gió
+            if (cat.Contains("van") || cat.Contains("accessory") || cat.Contains("vcd") || cat.Contains("fd"))
+            {
+                return 40;
+            }
+
+            // 5. Miệng Gió
+            if (cat.Contains("miệng") || cat.Contains("terminal") || cat.Contains("diffuser") || cat.Contains("louver"))
+            {
+                return 50;
+            }
+
+            return 60;
+        }
+
+        public static double GetSizeCrossSectionAreaMm2(string sizeStr)
+        {
+            if (string.IsNullOrEmpty(sizeStr)) return 0;
+
+            try
+            {
+                var matchRound = System.Text.RegularExpressions.Regex.Match(sizeStr, @"[ØødD]\s*(\d+)");
+                if (matchRound.Success)
+                {
+                    double d = double.Parse(matchRound.Groups[1].Value);
+                    return Math.PI * d * d / 4.0;
+                }
+
+                var matches = System.Text.RegularExpressions.Regex.Matches(sizeStr, @"(\d+)\s*[xX*×]\s*(\d+)");
+                if (matches.Count > 0)
+                {
+                    double maxArea = 0;
+                    foreach (System.Text.RegularExpressions.Match m in matches)
+                    {
+                        double w = double.Parse(m.Groups[1].Value);
+                        double h = double.Parse(m.Groups[2].Value);
+                        double a = w * h;
+                        if (a > maxArea) maxArea = a;
+                    }
+                    return maxArea;
+                }
+
+                var nums = System.Text.RegularExpressions.Regex.Matches(sizeStr, @"\d+")
+                    .Cast<System.Text.RegularExpressions.Match>()
+                    .Select(m => double.Parse(m.Value))
+                    .ToList();
+
+                if (nums.Count >= 2)
+                {
+                    return nums[0] * nums[1];
+                }
+                else if (nums.Count == 1)
+                {
+                    return nums[0];
+                }
+            }
+            catch { }
+
+            return 0;
+        }
+
+        public static double GetMaxWidthMm(string sizeStr)
+        {
+            if (string.IsNullOrEmpty(sizeStr)) return 0;
+            try
+            {
+                var matches = System.Text.RegularExpressions.Regex.Matches(sizeStr, @"(\d+)\s*[xX*×]\s*(\d+)");
+                if (matches.Count > 0)
+                {
+                    double maxW = 0;
+                    foreach (System.Text.RegularExpressions.Match m in matches)
+                    {
+                        double w = double.Parse(m.Groups[1].Value);
+                        if (w > maxW) maxW = w;
+                    }
+                    return maxW;
+                }
+            }
+            catch { }
+            return 0;
+        }
+
+        public static double GetMaxHeightMm(string sizeStr)
+        {
+            if (string.IsNullOrEmpty(sizeStr)) return 0;
+            try
+            {
+                var matches = System.Text.RegularExpressions.Regex.Matches(sizeStr, @"(\d+)\s*[xX*×]\s*(\d+)");
+                if (matches.Count > 0)
+                {
+                    double maxH = 0;
+                    foreach (System.Text.RegularExpressions.Match m in matches)
+                    {
+                        double h = double.Parse(m.Groups[2].Value);
+                        if (h > maxH) maxH = h;
+                    }
+                    return maxH;
+                }
+            }
+            catch { }
+            return 0;
+        }
+
+        #endregion
 
         private static string StandardizeAccessoryName(string famName, string elemName)
         {
@@ -942,6 +1550,7 @@ namespace HDTool
         public static string ExportToCsv(List<DuctQuantityItem> items, List<string> customParams, string filePath = null)
         {
             if (items == null || items.Count == 0) return null;
+            items = SortDuctQuantityItems(items);
 
             if (string.IsNullOrEmpty(filePath))
             {
@@ -1047,6 +1656,8 @@ namespace HDTool
                 resultMessage = "Không có dữ liệu khối lượng ống gió để tạo bảng.";
                 return false;
             }
+
+            items = SortDuctQuantityItems(items);
 
             char[] forbiddenChars = new char[] { '\\', ':', '{', '}', '[', ']', '|', ';', '<', '>', '?', '*' };
             string cleanTitle = !string.IsNullOrWhiteSpace(tableName) ? tableName.Trim() : "BANG THONG KE KHOI LUONG ONG GIO HVAC";

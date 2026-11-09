@@ -34,6 +34,9 @@ namespace HDTool
     [Regeneration(RegenerationOption.Manual)]
     public class DuctQuantityCommand : IExternalCommand
     {
+        private static DuctQuantityForm _instance = null;
+        private static HDToolExternalEventHandler _eventHandler = null;
+        private static ExternalEvent _externalEvent = null;
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             if (ToolHotReloadManager.HasActiveHotReloadAssembly())
@@ -62,10 +65,18 @@ namespace HDTool
 
                 Document doc = uidoc.Document;
 
+                if (_eventHandler == null)
+                {
+                    _eventHandler = new HDToolExternalEventHandler();
+                }
+                if (_externalEvent == null)
+                {
+                    _externalEvent = ExternalEvent.Create(_eventHandler);
+                }
+
                 List<ElementId> currentCustomSelection = new List<ElementId>();
                 bool forceSelectionScope = false;
 
-                // Nhan dien selection co san truoc khi mo tool
                 try
                 {
                     ICollection<ElementId> initSel = uidoc.Selection.GetElementIds();
@@ -74,19 +85,12 @@ namespace HDTool
                         foreach (ElementId id in initSel)
                         {
                             Element el = doc.GetElement(id);
-                            if (el != null && el.Category != null)
+                            if (el != null)
                             {
-                                BuiltInCategory bic = (BuiltInCategory)el.Category.Id.IntegerValue;
-                                if (bic == BuiltInCategory.OST_DuctCurves ||
-                                    bic == BuiltInCategory.OST_DuctFitting ||
-                                    bic == BuiltInCategory.OST_DuctAccessory ||
-                                    bic == BuiltInCategory.OST_DuctTerminal ||
-                                    bic == BuiltInCategory.OST_FlexDuctCurves)
-                                {
-                                    currentCustomSelection.Add(id);
-                                }
+                                currentCustomSelection.AddRange(ExtractDuctIdsFromElement(doc, el));
                             }
                         }
+                        currentCustomSelection = currentCustomSelection.Distinct().ToList();
                         if (currentCustomSelection.Count > 0)
                         {
                             forceSelectionScope = true;
@@ -95,42 +99,23 @@ namespace HDTool
                 }
                 catch { }
 
-                // Vong lap Modal an toan tuyet doi: Giai phong hoan toan Revit UI giup quet chuot 60 FPS khong bao gio do lag
-                while (true)
+                // Neu form da mo roi thi kich hoat lai va cap nhat View / Selection moi nhat
+                if (_instance != null && !_instance.IsDisposed)
                 {
-                    using (DuctQuantityForm form = new DuctQuantityForm(doc, uidoc, currentCustomSelection, forceSelectionScope))
-                    {
-                        DialogResult res = form.ShowDialog();
-
-                        if (res == DialogResult.Retry)
-                        {
-                            DuctPickMode mode = form.RequestedPickMode;
-                            List<ElementId> pickedIds = PerformRevitDuctPick(uidoc, doc, mode);
-
-                            if (pickedIds != null && pickedIds.Count > 0)
-                            {
-                                if (mode == DuctPickMode.AppendArea)
-                                {
-                                    foreach (ElementId pid in pickedIds)
-                                    {
-                                        if (!currentCustomSelection.Contains(pid)) currentCustomSelection.Add(pid);
-                                    }
-                                }
-                                else
-                                {
-                                    currentCustomSelection = pickedIds.Distinct().ToList();
-                                }
-                                forceSelectionScope = true;
-                            }
-
-                            // Mo lai form voi vung vua quet
-                            continue;
-                        }
-
-                        // Nguoi dung dong form binh thuong
-                        break;
-                    }
+                    _instance.UpdateContext(doc, uidoc, currentCustomSelection, forceSelectionScope);
+                    _instance.WindowState = FormWindowState.Normal;
+                    _instance.BringToFront();
+                    _instance.Activate();
+                    return Result.Succeeded;
                 }
+
+                // Mo Form dang MODELESS gan vao cua so chinh Revit:
+                // Nguoi dung co the vua mo tool vua thao tac ban ve (Pan, Zoom, Select...) thoai mai 100%!
+                _instance = new DuctQuantityForm(doc, uidoc, _externalEvent, _eventHandler, currentCustomSelection, forceSelectionScope);
+                _instance.FormClosed += (s, e) => { _instance = null; };
+
+                IntPtr revitHwnd = uiapp.MainWindowHandle;
+                _instance.Show(new RevitWindowWrapper(revitHwnd));
 
                 return Result.Succeeded;
             }
@@ -142,7 +127,106 @@ namespace HDTool
             }
         }
 
-        private static List<ElementId> PerformRevitDuctPick(UIDocument uidoc, Document doc, DuctPickMode mode)
+        public static bool IsDuctCategory(Category cat)
+        {
+            if (cat == null) return false;
+            try
+            {
+                int catId = cat.Id.IntegerValue;
+                return catId == (int)BuiltInCategory.OST_DuctCurves ||
+                       catId == (int)BuiltInCategory.OST_DuctFitting ||
+                       catId == (int)BuiltInCategory.OST_DuctAccessory ||
+                       catId == (int)BuiltInCategory.OST_DuctTerminal ||
+                       catId == (int)BuiltInCategory.OST_FlexDuctCurves ||
+                       catId == (int)BuiltInCategory.OST_PlaceHolderDucts ||
+                       catId == (int)BuiltInCategory.OST_FabricationDuctwork;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static List<ElementId> ExtractDuctIdsFromElement(Document doc, Element elem)
+        {
+            List<ElementId> ids = new List<ElementId>();
+            if (doc == null || elem == null) return ids;
+
+            try
+            {
+                // 1. Group -> Giai nen tat ca member trong Group
+                if (elem is Group)
+                {
+                    Group grp = elem as Group;
+                    ICollection<ElementId> memberIds = grp.GetMemberIds();
+                    if (memberIds != null)
+                    {
+                        foreach (ElementId mId in memberIds)
+                        {
+                            Element member = doc.GetElement(mId);
+                            if (member != null)
+                            {
+                                ids.AddRange(ExtractDuctIdsFromElement(doc, member));
+                            }
+                        }
+                    }
+                    return ids;
+                }
+
+                // 2. Bao on / Lot tieu am -> Lay host duct
+                if (elem is InsulationLiningBase)
+                {
+                    InsulationLiningBase ins = elem as InsulationLiningBase;
+                    if (ins.HostElementId != null && ins.HostElementId != ElementId.InvalidElementId)
+                    {
+                        Element host = doc.GetElement(ins.HostElementId);
+                        if (host != null)
+                        {
+                            ids.AddRange(ExtractDuctIdsFromElement(doc, host));
+                        }
+                    }
+                    return ids;
+                }
+
+                // 3. Viewport tren Sheet
+                if (elem is Viewport)
+                {
+                    Viewport vp = elem as Viewport;
+                    Autodesk.Revit.DB.View targetV = doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
+                    if (targetV != null)
+                    {
+                        ids.AddRange(DuctQuantityForm.CollectElementIdsFromTargetView(doc, targetV));
+                    }
+                    return ids;
+                }
+
+                // 4. Kiem tra Category
+                if (elem.Category != null)
+                {
+                    int catId = elem.Category.Id.IntegerValue;
+                    if (catId == (int)BuiltInCategory.OST_DuctInsulations || catId == (int)BuiltInCategory.OST_DuctLinings)
+                    {
+                        Parameter pHost = elem.get_Parameter(BuiltInParameter.HOST_ID_PARAM);
+                        if (pHost != null && pHost.HasValue)
+                        {
+                            Element host = doc.GetElement(pHost.AsElementId());
+                            if (host != null) ids.AddRange(ExtractDuctIdsFromElement(doc, host));
+                        }
+                        return ids;
+                    }
+
+                    if (IsDuctCategory(elem.Category))
+                    {
+                        ids.Add(elem.Id);
+                    }
+                }
+            }
+            catch { }
+
+            return ids;
+        }
+
+        public static List<ElementId> PerformRevitDuctPick(UIDocument uidoc, Document doc, DuctPickMode mode)
         {
             List<ElementId> result = new List<ElementId>();
             if (uidoc == null || doc == null) return result;
@@ -161,28 +245,33 @@ namespace HDTool
                     if (pickedRef != null && pickedRef.ElementId != ElementId.InvalidElementId)
                     {
                         Element el = doc.GetElement(pickedRef.ElementId);
-                        if (el is Viewport)
+                        if (el != null)
                         {
-                            Viewport vp = el as Viewport;
-                            Autodesk.Revit.DB.View targetV = doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
-                            if (targetV != null)
-                            {
-                                result = DuctQuantityForm.CollectElementIdsFromTargetView(doc, targetV);
-                            }
-                        }
-                        else if (el != null && el.Category != null)
-                        {
-                            result.Add(el.Id);
+                            result.AddRange(ExtractDuctIdsFromElement(doc, el));
                         }
                     }
                 }
                 else if (activeV is View3D)
                 {
-                    // 2. TRONG VIEW 3D: Dùng PickObjects với bộ lọc chính xác, click hoặc quét chọn mượt mà
+                    // 2. TRONG VIEW 3D:
+                    // Huong dan ro rang de Sep biet bam [Finish] tren Options Bar, khong bao gio bi do may!
+                    TaskDialog td3D = new TaskDialog("HDTOOL - BÓC KHỐI LƯỢNG VIEW 3D");
+                    td3D.MainInstruction = "Chế độ quét chọn ống gió trong không gian 3D";
+                    td3D.MainContent = "Cách chọn cực dễ:\n" +
+                                       "1. Dùng chuột click hoặc quét chọn các ống gió / phụ kiện trên mô hình 3D.\n" +
+                                       "2. Sau khi chọn xong, BẤM NÚT [FINISH] MÀU XANH trên thanh Options Bar (dưới thanh Ribbon) để hoàn tất.\n\n" +
+                                       "(Sếp cũng có thể quét chọn ống gió ngoài Revit trước rồi mở HDTOOL nhé!)";
+                    td3D.CommonButtons = TaskDialogCommonButtons.Ok | TaskDialogCommonButtons.Cancel;
+                    td3D.DefaultButton = TaskDialogResult.Ok;
+                    if (td3D.Show() == TaskDialogResult.Cancel)
+                    {
+                        return result;
+                    }
+
                     IList<Reference> pickedRefs = uidoc.Selection.PickObjects(
                         ObjectType.Element,
                         new DuctSelectionFilter(doc),
-                        "HDTOOL (View 3D): Click hoặc quét chọn các ống gió/phụ kiện (Bấm Finish trên thanh Options Bar khi xong):"
+                        "HDTOOL (View 3D): Chọn các ống gió/phụ kiện -> Bấm [Finish] trên thanh Options Bar:"
                     );
                     if (pickedRefs != null && pickedRefs.Count > 0)
                     {
@@ -190,7 +279,11 @@ namespace HDTool
                         {
                             if (r != null && r.ElementId != ElementId.InvalidElementId)
                             {
-                                result.Add(r.ElementId);
+                                Element el = doc.GetElement(r.ElementId);
+                                if (el != null)
+                                {
+                                    result.AddRange(ExtractDuctIdsFromElement(doc, el));
+                                }
                             }
                         }
                     }
@@ -208,7 +301,10 @@ namespace HDTool
                         {
                             foreach (Element el in picked)
                             {
-                                if (el != null) result.Add(el.Id);
+                                if (el != null)
+                                {
+                                    result.AddRange(ExtractDuctIdsFromElement(doc, el));
+                                }
                             }
                         }
                     }
@@ -223,10 +319,32 @@ namespace HDTool
                         {
                             foreach (Reference r in fallbackRefs)
                             {
-                                if (r != null && r.ElementId != ElementId.InvalidElementId) result.Add(r.ElementId);
+                                if (r != null && r.ElementId != ElementId.InvalidElementId)
+                                {
+                                    Element el = doc.GetElement(r.ElementId);
+                                    if (el != null)
+                                    {
+                                        result.AddRange(ExtractDuctIdsFromElement(doc, el));
+                                    }
+                                }
                             }
                         }
                     }
+                }
+
+                result = result.Distinct().ToList();
+
+                // NẾU QUÉT ĐƯỢC 0 ĐỐI TƯỢNG -> Báo rõ lý do ngay cho Sếp Hồ
+                if (result.Count == 0)
+                {
+                    TaskDialog tdEmpty = new TaskDialog("HDTOOL - KẾT QUẢ QUÉT VÙNG");
+                    tdEmpty.MainInstruction = "Không tìm thấy ống gió nào trong vùng vừa quét!";
+                    tdEmpty.MainContent = "Khu vực Sếp vừa quét không có đối tượng thuộc hệ thống thông gió (hoặc đang ở View Thoát Nước/Cấp Nước/Kiến Trúc).\n\n" +
+                                          "💡 Gợi ý:\n" +
+                                          "• Mở Mặt bằng có ống gió (ví dụ: 'MB ÔNG GIÓ HÀNH LANG TẦNG 2').\n" +
+                                          "• Hoặc Sếp có thể dùng chuột quét chọn ống gió ngoài Revit trước, rồi bấm HDTOOL là tự động nhận diện ngay 100%!";
+                    tdEmpty.CommonButtons = TaskDialogCommonButtons.Ok;
+                    tdEmpty.Show();
                 }
             }
             catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -241,7 +359,6 @@ namespace HDTool
             return result;
         }
     }
-
     /// <summary>
     /// Form Thống Kê Khối Lượng Ống Gió HVAC (Tôn m² & Phụ Kiện Chuẩn TCVN 5687:2010 / SMACNA)
     /// ĐÃ TỐI ƯU HÓA SIÊU TỐC: Không lag đơ máy, không khóa UI, Highlight tức thì 60 FPS
@@ -259,7 +376,12 @@ namespace HDTool
         private HashSet<ElementId> _lastHighlightedIds = new HashSet<ElementId>();
 
         // CỜ KHÓA CHỐNG LẶP SỰ KIỆN & CHỐNG TREO MÁY
-        private bool _isUpdatingGrid = false;
+                private ExternalEvent _externalEvent;
+        private HDToolExternalEventHandler _eventHandler;
+        private System.Windows.Forms.Timer _syncTimer;
+        private CheckBox chkLiveSync;
+        private HashSet<int> _lastKnownSelIds = new HashSet<int>();
+private bool _isUpdatingGrid = false;
         private bool _isUpdatingScope = false;
 
         // Controls
@@ -304,11 +426,19 @@ namespace HDTool
 
         public DuctPickMode RequestedPickMode { get; private set; }
 
-        public DuctQuantityForm(Document doc, UIDocument uidoc, List<ElementId> preSelectedIds = null, bool forceSelectionScope = false)
+        public DuctQuantityForm(
+            Document doc,
+            UIDocument uidoc,
+            ExternalEvent externalEvent = null,
+            HDToolExternalEventHandler eventHandler = null,
+            List<ElementId> preSelectedIds = null,
+            bool forceSelectionScope = false)
         {
             _doc = doc;
             _uidoc = uidoc;
             _activeView = uidoc != null ? uidoc.ActiveView : null;
+            _externalEvent = externalEvent;
+            _eventHandler = eventHandler;
             this.RequestedPickMode = DuctPickMode.None;
 
             if (preSelectedIds != null && preSelectedIds.Count > 0)
@@ -320,7 +450,6 @@ namespace HDTool
                 CheckInitialSelection();
             }
 
-            // Nạp cấu hình các cột Parameter dự án đã lưu từ trước
             try
             {
                 var settings = MepUserSettings.Instance;
@@ -348,6 +477,110 @@ namespace HDTool
             }
 
             LoadDataAndRefreshUi();
+
+            // Khoi chay Live Selection Tracker (tick moi 800ms)
+            _syncTimer = new System.Windows.Forms.Timer();
+            _syncTimer.Interval = 800;
+            _syncTimer.Tick += (s, e) => CheckLiveRevitSelection();
+            _syncTimer.Start();
+        }
+
+        public void UpdateContext(Document doc, UIDocument uidoc, List<ElementId> preSelectedIds = null, bool forceSelectionScope = false)
+        {
+            _doc = doc;
+            _uidoc = uidoc;
+            _activeView = uidoc != null ? uidoc.ActiveView : null;
+
+            if (preSelectedIds != null && preSelectedIds.Count > 0)
+            {
+                _customSelectionIds = new List<ElementId>(preSelectedIds);
+                forceSelectionScope = true;
+            }
+            else
+            {
+                CheckInitialSelection();
+            }
+
+            if (forceSelectionScope && _customSelectionIds.Count > 0)
+            {
+                _isUpdatingScope = true;
+                radSelection.Text = string.Format("Vùng Quét Cục Bộ ({0} đ.tượng)", _customSelectionIds.Count);
+                radSelection.Checked = true;
+                radCurrentView.Checked = false;
+                _isUpdatingScope = false;
+            }
+
+            if (_activeView != null)
+            {
+                radCurrentView.Text = string.Format("Khung Nhìn Hiện Hành ({0})", TruncateString(_activeView.Name, 18));
+            }
+
+            LoadDataAndRefreshUi();
+        }
+
+        private void CheckLiveRevitSelection()
+        {
+            if (_uidoc == null || _doc == null) return;
+            try
+            {
+                if (chkLiveSync == null || !chkLiveSync.Checked) return;
+
+                ICollection<ElementId> sel = _uidoc.Selection.GetElementIds();
+                if (sel == null || sel.Count == 0) return;
+
+                bool changed = false;
+                if (sel.Count != _lastKnownSelIds.Count)
+                {
+                    changed = true;
+                }
+                else
+                {
+                    foreach (ElementId id in sel)
+                    {
+                        if (!_lastKnownSelIds.Contains(id.IntegerValue))
+                        {
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!changed) return;
+
+                _lastKnownSelIds.Clear();
+                foreach (ElementId id in sel) _lastKnownSelIds.Add(id.IntegerValue);
+
+                List<ElementId> ductIds = new List<ElementId>();
+                foreach (ElementId id in sel)
+                {
+                    Element el = _doc.GetElement(id);
+                    if (el != null) ductIds.AddRange(DuctQuantityCommand.ExtractDuctIdsFromElement(_doc, el));
+                }
+
+                ductIds = ductIds.Distinct().ToList();
+                if (ductIds.Count > 0)
+                {
+                    _customSelectionIds = ductIds;
+                    _isUpdatingScope = true;
+                    radSelection.Text = string.Format("Vùng Quét Cục Bộ ({0} đ.tượng)", _customSelectionIds.Count);
+                    radSelection.Checked = true;
+                    radCurrentView.Checked = false;
+                    _isUpdatingScope = false;
+                    LoadDataAndRefreshUi();
+                }
+            }
+            catch { }
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            if (_syncTimer != null)
+            {
+                _syncTimer.Stop();
+                _syncTimer.Dispose();
+                _syncTimer = null;
+            }
+            base.OnFormClosed(e);
         }
 
         private void CheckInitialSelection()
@@ -362,17 +595,8 @@ namespace HDTool
                     foreach (ElementId id in selIds)
                     {
                         Element el = _doc.GetElement(id);
-                        if (el == null || el.Category == null) continue;
-
-                        BuiltInCategory bic = (BuiltInCategory)el.Category.Id.IntegerValue;
-                        if (bic == BuiltInCategory.OST_DuctCurves ||
-                            bic == BuiltInCategory.OST_DuctFitting ||
-                            bic == BuiltInCategory.OST_DuctAccessory ||
-                            bic == BuiltInCategory.OST_DuctTerminal ||
-                            bic == BuiltInCategory.OST_FlexDuctCurves)
-                        {
-                            validIds.Add(id);
-                        }
+                        if (el == null) continue;
+                        validIds.AddRange(DuctQuantityCommand.ExtractDuctIdsFromElement(_doc, el));
                     }
                     if (validIds.Count > 0)
                     {
@@ -567,7 +791,18 @@ namespace HDTool
             btnRefresh.FlatAppearance.BorderSize = 0;
             btnRefresh.Cursor = Cursors.Hand;
             btnRefresh.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnRefresh.Click += (s, e) => LoadDataAndRefreshUi();
+            btnRefresh.Click += (s, e) => {
+                CheckInitialSelection();
+                if (_customSelectionIds != null && _customSelectionIds.Count > 0)
+                {
+                    _isUpdatingScope = true;
+                    radSelection.Text = string.Format("Vùng Quét Cục Bộ ({0} đ.tượng)", _customSelectionIds.Count);
+                    radSelection.Checked = true;
+                    radCurrentView.Checked = false;
+                    _isUpdatingScope = false;
+                }
+                LoadDataAndRefreshUi();
+            };
 
             grpFilter.Controls.Add(radCurrentView);
             grpFilter.Controls.Add(radSelection);
@@ -663,6 +898,17 @@ namespace HDTool
             btnRemoveParamCol.Cursor = Cursors.Hand;
             btnRemoveParamCol.Click += BtnRemoveParamCol_Click;
             toolTip.SetToolTip(btnRemoveParamCol, "Xóa một cột tham số tùy chọn đã thêm khỏi bảng");
+
+            chkLiveSync = new CheckBox();
+            chkLiveSync.Text = "⚡ Tự bóc khi chọn trên Revit";
+            chkLiveSync.Checked = false;
+            chkLiveSync.Location = new Point(540, 9);
+            chkLiveSync.AutoSize = true;
+            chkLiveSync.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+            chkLiveSync.ForeColor = Color.FromArgb(220, 38, 38);
+            chkLiveSync.Cursor = Cursors.Hand;
+            toolTip.SetToolTip(chkLiveSync, "Khi bật: Chỉ cần click hoặc quét chọn bất kỳ ống gió nào trên bản vẽ Revit, HDTOOL sẽ tự động nhận diện và tính toán khối lượng ngay lập tức!");
+            pnlActionToolbar.Controls.Add(chkLiveSync);
 
             pnlActionToolbar.Controls.Add(chkAutoHighlight);
             pnlActionToolbar.Controls.Add(btnHighlightAll);
@@ -1010,7 +1256,7 @@ namespace HDTool
                 );
             }
 
-            List<DuctQuantityItem> displayList = filtered.ToList();
+            List<DuctQuantityItem> displayList = DuctQuantityService.SortDuctQuantityItems(filtered);
 
             _isUpdatingGrid = true;
             dgvItems.SuspendLayout();
@@ -1081,16 +1327,60 @@ namespace HDTool
         // ================= VÁ LỖI QUÉT VÙNG ỐNG GIÓ CỰC BỘ SIÊU MƯỢT KHÔNG LAG =================
         private void BtnPickArea_Click(object sender, EventArgs e)
         {
-            this.RequestedPickMode = DuctPickMode.NewArea;
-            this.DialogResult = DialogResult.Retry;
-            this.Close();
+            ExecutePickMode(DuctPickMode.NewArea);
         }
 
         private void BtnPickAppendArea_Click(object sender, EventArgs e)
         {
-            this.RequestedPickMode = DuctPickMode.AppendArea;
-            this.DialogResult = DialogResult.Retry;
-            this.Close();
+            ExecutePickMode(DuctPickMode.AppendArea);
+        }
+
+        private void ExecutePickMode(DuctPickMode mode)
+        {
+            if (_externalEvent == null || _eventHandler == null)
+            {
+                TaskDialog.Show("HDTOOL", "Không thể chạy chọn vùng (thiếu ExternalEvent).");
+                return;
+            }
+
+            _eventHandler.Run(app =>
+            {
+                UIDocument uidoc = app.ActiveUIDocument;
+                if (uidoc == null) return;
+                Document doc = uidoc.Document;
+
+                List<ElementId> pickedIds = DuctQuantityCommand.PerformRevitDuctPick(uidoc, doc, mode);
+
+                this.BeginInvoke((MethodInvoker)(() =>
+                {
+                    if (pickedIds != null && pickedIds.Count > 0)
+                    {
+                        if (mode == DuctPickMode.AppendArea)
+                        {
+                            foreach (ElementId pid in pickedIds)
+                            {
+                                if (!_customSelectionIds.Contains(pid)) _customSelectionIds.Add(pid);
+                            }
+                        }
+                        else
+                        {
+                            _customSelectionIds = pickedIds.Distinct().ToList();
+                        }
+
+                        _isUpdatingScope = true;
+                        radSelection.Text = string.Format("Vùng Quét Cục Bộ ({0} đ.tượng)", _customSelectionIds.Count);
+                        radSelection.Checked = true;
+                        radCurrentView.Checked = false;
+                        _isUpdatingScope = false;
+
+                        LoadDataAndRefreshUi();
+                    }
+
+                    this.WindowState = FormWindowState.Normal;
+                    this.BringToFront();
+                    this.Activate();
+                }));
+            }, _externalEvent);
         }
 
         public static List<ElementId> CollectElementIdsFromTargetView(Document doc, Autodesk.Revit.DB.View targetV)
@@ -1104,7 +1394,9 @@ namespace HDTool
                 BuiltInCategory.OST_DuctFitting,
                 BuiltInCategory.OST_DuctAccessory,
                 BuiltInCategory.OST_DuctTerminal,
-                BuiltInCategory.OST_FlexDuctCurves
+                BuiltInCategory.OST_FlexDuctCurves,
+                BuiltInCategory.OST_PlaceHolderDucts,
+                BuiltInCategory.OST_FabricationDuctwork
             };
 
             foreach (BuiltInCategory bic in cats)
@@ -1119,10 +1411,23 @@ namespace HDTool
                 }
                 catch { }
             }
-            return ids;
-        }
 
-        // ================= VÁ LỖI HIGHLIGHT: KHÔNG MỞ TRANSACTION LẶP GÂY ĐƠ MÁY =================
+            try
+            {
+                var grpIds = new FilteredElementCollector(doc, targetV.Id)
+                    .OfCategory(BuiltInCategory.OST_IOSModelGroups)
+                    .WhereElementIsNotElementType()
+                    .ToElementIds();
+                foreach (ElementId gid in grpIds)
+                {
+                    Element gEl = doc.GetElement(gid);
+                    if (gEl != null) ids.AddRange(DuctQuantityCommand.ExtractDuctIdsFromElement(doc, gEl));
+                }
+            }
+            catch { }
+
+            return ids.Distinct().ToList();
+        }
         private void DgvItems_SelectionChanged(object sender, EventArgs e)
         {
             if (_isUpdatingGrid || !chkAutoHighlight.Checked || dgvItems.SelectedRows.Count == 0) return;
@@ -1136,24 +1441,45 @@ namespace HDTool
 
             if (targetIds.Count > 0)
             {
-                // HIGHLIGHT BẰNG SELECTION THUẦN REVIT: Tức thì (0.001s), mượt mà 60 FPS, KHÔNG ĐƠ MÁY!
-                try
+                if (_externalEvent != null && _eventHandler != null)
                 {
-                    _uidoc.Selection.SetElementIds(targetIds);
+                    _eventHandler.Run(app =>
+                    {
+                        UIDocument u = app.ActiveUIDocument;
+                        if (u != null)
+                        {
+                            u.Selection.SetElementIds(targetIds);
+                        }
+                    }, _externalEvent);
                 }
-                catch { }
+                else if (_uidoc != null)
+                {
+                    try { _uidoc.Selection.SetElementIds(targetIds); } catch { }
+                }
             }
         }
 
         private void BtnHighlightAll_Click(object sender, EventArgs e)
         {
             List<ElementId> allIds = _allItems.SelectMany(x => x.ElementIds).Distinct().ToList();
-            if (allIds.Count > 0)
-            {
-                // Chọn toàn bộ đối tượng trên Revit
-                _uidoc.Selection.SetElementIds(allIds);
+            if (allIds.Count == 0) return;
 
-                // Đồng thời tô màu cam nổi bật một lần duy nhất
+            if (_externalEvent != null && _eventHandler != null)
+            {
+                _eventHandler.Run(app =>
+                {
+                    UIDocument u = app.ActiveUIDocument;
+                    if (u != null)
+                    {
+                        u.Selection.SetElementIds(allIds);
+                        DuctQuantityService.HighlightElements(u, allIds, new Autodesk.Revit.DB.Color(245, 158, 11), 6, true);
+                        _lastHighlightedIds = new HashSet<ElementId>(allIds);
+                    }
+                }, _externalEvent);
+            }
+            else if (_uidoc != null)
+            {
+                _uidoc.Selection.SetElementIds(allIds);
                 DuctQuantityService.HighlightElements(_uidoc, allIds, new Autodesk.Revit.DB.Color(245, 158, 11), 6, true);
                 _lastHighlightedIds = new HashSet<ElementId>(allIds);
             }
@@ -1161,7 +1487,23 @@ namespace HDTool
 
         private void BtnClearHighlight_Click(object sender, EventArgs e)
         {
-            try
+            if (_externalEvent != null && _eventHandler != null)
+            {
+                _eventHandler.Run(app =>
+                {
+                    UIDocument u = app.ActiveUIDocument;
+                    if (u != null)
+                    {
+                        u.Selection.SetElementIds(new List<ElementId>());
+                        if (_lastHighlightedIds.Count > 0)
+                        {
+                            DuctQuantityService.ClearHighlight(u, _lastHighlightedIds);
+                            _lastHighlightedIds.Clear();
+                        }
+                    }
+                }, _externalEvent);
+            }
+            else if (_uidoc != null)
             {
                 _uidoc.Selection.SetElementIds(new List<ElementId>());
                 if (_lastHighlightedIds.Count > 0)
@@ -1170,7 +1512,6 @@ namespace HDTool
                     _lastHighlightedIds.Clear();
                 }
             }
-            catch { }
         }
 
         private void BtnZoom_Click(object sender, EventArgs e)
@@ -1182,7 +1523,21 @@ namespace HDTool
                 DuctQuantityItem it = row.Tag as DuctQuantityItem;
                 if (it != null && it.ElementIds != null) targetIds.AddRange(it.ElementIds);
             }
-            if (targetIds.Count > 0)
+            if (targetIds.Count == 0) return;
+
+            if (_externalEvent != null && _eventHandler != null)
+            {
+                _eventHandler.Run(app =>
+                {
+                    UIDocument u = app.ActiveUIDocument;
+                    if (u != null)
+                    {
+                        u.Selection.SetElementIds(targetIds);
+                        u.ShowElements(targetIds);
+                    }
+                }, _externalEvent);
+            }
+            else if (_uidoc != null)
             {
                 _uidoc.Selection.SetElementIds(targetIds);
                 _uidoc.ShowElements(targetIds);
@@ -1203,38 +1558,48 @@ namespace HDTool
             string newVal = row.Cells[e.ColumnIndex].Value as string ?? "";
             it.CustomParameters[paramName] = newVal;
 
-            try
+            if (_externalEvent != null && _eventHandler != null)
             {
-                using (Transaction t = new Transaction(_doc, "HDTOOL - Cập nhật tham số " + paramName))
+                _eventHandler.Run(app =>
                 {
-                    t.Start();
-                    foreach (ElementId id in it.ElementIds)
+                    UIDocument uidoc = app.ActiveUIDocument;
+                    if (uidoc == null) return;
+                    Document doc = uidoc.Document;
+
+                    try
                     {
-                        Element el = _doc.GetElement(id);
-                        if (el == null) continue;
-                        Parameter p = el.LookupParameter(paramName);
-                        if (p != null && !p.IsReadOnly)
+                        using (Transaction t = new Transaction(doc, "HDTOOL - Cập nhật tham số " + paramName))
                         {
-                            if (p.StorageType == StorageType.String)
+                            t.Start();
+                            foreach (ElementId id in it.ElementIds)
                             {
-                                p.Set(newVal);
+                                Element el = doc.GetElement(id);
+                                if (el == null) continue;
+                                Parameter p = el.LookupParameter(paramName);
+                                if (p != null && !p.IsReadOnly)
+                                {
+                                    if (p.StorageType == StorageType.String)
+                                    {
+                                        p.Set(newVal);
+                                    }
+                                    else if (p.StorageType == StorageType.Double)
+                                    {
+                                        double dVal;
+                                        if (double.TryParse(newVal, out dVal)) p.Set(dVal);
+                                    }
+                                    else if (p.StorageType == StorageType.Integer)
+                                    {
+                                        int iVal;
+                                        if (int.TryParse(newVal, out iVal)) p.Set(iVal);
+                                    }
+                                }
                             }
-                            else if (p.StorageType == StorageType.Double)
-                            {
-                                double dVal;
-                                if (double.TryParse(newVal, out dVal)) p.Set(dVal);
-                            }
-                            else if (p.StorageType == StorageType.Integer)
-                            {
-                                int iVal;
-                                if (int.TryParse(newVal, out iVal)) p.Set(iVal);
-                            }
+                            t.Commit();
                         }
                     }
-                    t.Commit();
-                }
+                    catch { }
+                }, _externalEvent);
             }
-            catch { }
         }
 
         private void BtnAddParamCol_Click(object sender, EventArgs e)
@@ -1299,7 +1664,7 @@ namespace HDTool
                 return;
             }
 
-            using (DuctPlaceSheetForm form = new DuctPlaceSheetForm(_doc, _uidoc, _allItems, _customParamColumns, _activeView))
+            using (DuctPlaceSheetForm form = new DuctPlaceSheetForm(_doc, _uidoc, _allItems, _customParamColumns, _activeView, _externalEvent, _eventHandler))
             {
                 form.ShowDialog(this);
             }
@@ -1483,14 +1848,6 @@ namespace HDTool
     public class DuctSelectionFilter : ISelectionFilter
     {
         private readonly Document _filterDoc;
-        private static readonly HashSet<int> _allowedCatIds = new HashSet<int>
-        {
-            (int)BuiltInCategory.OST_DuctCurves,
-            (int)BuiltInCategory.OST_DuctFitting,
-            (int)BuiltInCategory.OST_DuctAccessory,
-            (int)BuiltInCategory.OST_DuctTerminal,
-            (int)BuiltInCategory.OST_FlexDuctCurves
-        };
 
         public DuctSelectionFilter(Document doc = null)
         {
@@ -1502,9 +1859,30 @@ namespace HDTool
             if (elem == null) return false;
             try
             {
+                // Cho phep Group de quet duoc cac ong gio ben trong group
+                if (elem is Group) return true;
+
+                // Cho phep Bao on va Lot tieu am
+                if (elem is InsulationLiningBase) return true;
+
+                // Cho phep Viewport tren Sheet
+                if (elem is Viewport) return true;
+
                 Category cat = elem.Category;
                 if (cat == null) return false;
-                return _allowedCatIds.Contains(cat.Id.IntegerValue);
+
+                if (DuctQuantityCommand.IsDuctCategory(cat)) return true;
+
+                int catId = cat.Id.IntegerValue;
+                if (catId == (int)BuiltInCategory.OST_IOSModelGroups ||
+                    catId == (int)BuiltInCategory.OST_DuctInsulations ||
+                    catId == (int)BuiltInCategory.OST_DuctLinings ||
+                    catId == (int)BuiltInCategory.OST_Viewports)
+                {
+                    return true;
+                }
+
+                return false;
             }
             catch
             {
@@ -1523,7 +1901,6 @@ namespace HDTool
             return true;
         }
     }
-
     /// <summary>
     /// Há»™p thoáº¡i chá»n Trang in (Sheet) vÃ  tá»± Ä‘á»™ng Ä‘áº·t Báº£ng Thá»‘ng KÃª Khá»‘i LÆ°á»£ng á»ng GiÃ³ Chuáº©n HadoMEE
     /// </summary>
@@ -1549,13 +1926,18 @@ namespace HDTool
 
         private List<ViewSheet> _allSheets = new List<ViewSheet>();
 
-        public DuctPlaceSheetForm(Document doc, UIDocument uidoc, List<DuctQuantityItem> items, List<string> customParamCols, Autodesk.Revit.DB.View activeView)
+        private ExternalEvent _externalEvent;
+        private HDToolExternalEventHandler _eventHandler;
+
+        public DuctPlaceSheetForm(Document doc, UIDocument uidoc, List<DuctQuantityItem> items, List<string> customParamCols, Autodesk.Revit.DB.View activeView, ExternalEvent externalEvent = null, HDToolExternalEventHandler eventHandler = null)
         {
             _doc = doc;
             _uidoc = uidoc;
             _items = items;
             _customParamCols = customParamCols;
             _activeView = activeView;
+            _externalEvent = externalEvent;
+            _eventHandler = eventHandler;
 
             LoadAllSheets();
             InitializeComponent();
@@ -1751,7 +2133,7 @@ namespace HDTool
         {
             if (lbSheets.SelectedItem == null)
             {
-                TaskDialog.Show("HDTOOL", "Vui lÃ²ng chá»n má»™t Sheet trong danh sÃ¡ch Ä‘á»ƒ Ä‘áº·t báº£ng khá»‘i lÆ°á»£ng.");
+                TaskDialog.Show("HDTOOL", "Vui lòng chọn một Sheet trong danh sách để đặt bảng khối lượng.");
                 return;
             }
 
@@ -1761,81 +2143,71 @@ namespace HDTool
             ViewSheet targetSheet = selItem.Sheet;
             string tTitle = !string.IsNullOrWhiteSpace(txtTableName.Text)
                 ? txtTableName.Text.Trim()
-                : "Báº¢NG THá»NG KÃŠ KHá»I LÆ¯á»¢NG á»NG GIÃ“ & PHá»¤ KIá»†N HVAC";
+                : "BẢNG THỐNG KÊ KHỐI LƯỢNG ỐNG GIÓ & PHỤ KIỆN HVAC";
 
-            XYZ pickPoint = null;
+            bool isPickPoint = radPickPoint.Checked;
+            bool doActivate = chkActivateSheet.Checked;
 
-            if (radPickPoint.Checked)
+            this.Close();
+
+            if (_externalEvent != null && _eventHandler != null)
             {
-                this.Hide();
-                if (this.Owner != null) this.Owner.Hide();
-
-                try
+                _eventHandler.Run(app =>
                 {
-                    _uidoc.ActiveView = targetSheet;
-                    pickPoint = _uidoc.Selection.PickPoint("HDTOOL: Click chá»n Ä‘iá»ƒm trÃªn Sheet Ä‘á»ƒ Ä‘áº·t gÃ³c trÃªn-trÃ¡i Báº£ng Khá»‘i LÆ°á»£ng á»ng GiÃ³:");
-                }
-                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-                {
-                    if (this.Owner != null) { this.Owner.Show(); this.Owner.BringToFront(); }
-                    this.Show();
-                    this.BringToFront();
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    TaskDialog.Show("HDTOOL", "Lá»—i chá»n vá»‹ trÃ­: " + ex.Message);
-                    if (this.Owner != null) { this.Owner.Show(); this.Owner.BringToFront(); }
-                    this.Show();
-                    this.BringToFront();
-                    return;
-                }
-                finally
-                {
-                    if (this.Owner != null) { this.Owner.Show(); this.Owner.BringToFront(); }
-                    this.Show();
-                    this.BringToFront();
-                }
-            }
+                    UIDocument uidoc = app.ActiveUIDocument;
+                    if (uidoc == null) return;
+                    Document doc = uidoc.Document;
 
-            Autodesk.Revit.DB.View createdView;
-            Viewport createdViewport;
-            string msg;
+                    XYZ pickPoint = null;
+                    if (isPickPoint)
+                    {
+                        try
+                        {
+                            uidoc.ActiveView = targetSheet;
+                            pickPoint = uidoc.Selection.PickPoint("HDTOOL: Click chọn điểm trên Sheet để đặt góc trên-trái Bảng Khối Lượng Ống Gió:");
+                        }
+                        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                        {
+                            return;
+                        }
+                    }
 
-            bool success = DuctQuantityService.CreateOrUpdateDuctTableOnSheet(
-                _doc,
-                tTitle,
-                targetSheet,
-                pickPoint,
-                _items,
-                _customParamCols,
-                out createdView,
-                out createdViewport,
-                out msg
-            );
+                    Autodesk.Revit.DB.View createdView;
+                    Viewport createdViewport;
+                    string msg;
 
-            if (success)
-            {
-                if (chkActivateSheet.Checked)
-                {
-                    try { _uidoc.ActiveView = targetSheet; } catch { }
-                }
+                    bool success = DuctQuantityService.CreateOrUpdateDuctTableOnSheet(
+                        doc,
+                        tTitle,
+                        targetSheet,
+                        pickPoint,
+                        _items,
+                        _customParamCols,
+                        out createdView,
+                        out createdViewport,
+                        out msg
+                    );
 
-                TaskDialog.Show("HDTOOL â€” ThÃ nh CÃ´ng",
-                    string.Format("ðŸŽ‰ ÄÃƒ Äáº¶T THÃ€NH CÃ”NG Báº¢NG KHá»I LÆ¯á»¢NG á»NG GIÃ“ VÃ€O SHEET!\n\n" +
-                                  "â€¢ Sheet: {0} - {1}\n" +
-                                  "â€¢ TÃªn Báº£ng: {2}\n" +
-                                  "â€¢ Tá»•ng dÃ²ng: {3} dÃ²ng\n" +
-                                  "â€¢ Loáº¡i báº£ng: Legend View (CÃ³ thá»ƒ dÃ¹ng láº¡i trÃªn nhiá»u Sheet tÃ¹y thÃ­ch!)\n\n" +
-                                  "{4}",
-                                  targetSheet.SheetNumber, targetSheet.Name, tTitle, _items.Count, msg));
+                    if (success)
+                    {
+                        if (doActivate)
+                        {
+                            try { uidoc.ActiveView = targetSheet; } catch { }
+                        }
 
-                this.DialogResult = DialogResult.OK;
-                this.Close();
-            }
-            else
-            {
-                TaskDialog.Show("HDTOOL â€” Tháº¥t Báº¡i", "KhÃ´ng thá»ƒ táº¡o báº£ng trÃªn Sheet:\n" + msg);
+                        TaskDialog.Show("HDTOOL — Thành Công",
+                            string.Format("🎉 ĐÃ ĐẶT THÀNH CÔNG BẢNG KHỐI LƯỢNG ỐNG GIÓ VÀO SHEET!\n\n" +
+                                          "• Sheet: {0} - {1}\n" +
+                                          "• Bảng: {2}\n" +
+                                          "• Tổng số dòng: {3}\n\n" +
+                                          "💡 Bảng được lưu trong Legend Views, có thể đặt vào nhiều Sheet cùng lúc!",
+                                          targetSheet.SheetNumber, targetSheet.Name, tTitle, _items != null ? _items.Count : 0));
+                    }
+                    else
+                    {
+                        TaskDialog.Show("HDTOOL — Lỗi Đặt Bảng", msg ?? "Không thể đặt bảng lên Sheet.");
+                    }
+                }, _externalEvent);
             }
         }
 
