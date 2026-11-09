@@ -9,6 +9,7 @@ using System.Text;
 using System.Windows.Forms;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using Color = System.Drawing.Color;
@@ -376,12 +377,15 @@ namespace HDTool
         private HashSet<ElementId> _lastHighlightedIds = new HashSet<ElementId>();
 
         // CỜ KHÓA CHỐNG LẶP SỰ KIỆN & CHỐNG TREO MÁY
-                private ExternalEvent _externalEvent;
+        private ExternalEvent _externalEvent;
         private HDToolExternalEventHandler _eventHandler;
         private System.Windows.Forms.Timer _syncTimer;
+        private System.Windows.Forms.Timer _autoRefreshDebounceTimer;
+        private bool _isDisposedOrClosing = false;
+        private bool _isRevitEventRegistered = false;
         private CheckBox chkLiveSync;
         private HashSet<int> _lastKnownSelIds = new HashSet<int>();
-private bool _isUpdatingGrid = false;
+        private bool _isUpdatingGrid = false;
         private bool _isUpdatingScope = false;
 
         // Controls
@@ -478,7 +482,23 @@ private bool _isUpdatingGrid = false;
 
             LoadDataAndRefreshUi();
 
-            // Khoi chay Live Selection Tracker (tick moi 800ms)
+            // 1. Khoi tao Debounce Timer tu dong cap nhat khi sua thong so Revit
+            _autoRefreshDebounceTimer = new System.Windows.Forms.Timer();
+            _autoRefreshDebounceTimer.Interval = 300;
+            _autoRefreshDebounceTimer.Tick += (s, e) =>
+            {
+                _autoRefreshDebounceTimer.Stop();
+                if (_isDisposedOrClosing || this.IsDisposed) return;
+                try
+                {
+                    LoadDataAndRefreshUi();
+                }
+                catch { }
+            };
+
+            RegisterRevitEvents();
+
+            // 2. Khoi chay Live Selection Tracker (tick moi 800ms)
             _syncTimer = new System.Windows.Forms.Timer();
             _syncTimer.Interval = 800;
             _syncTimer.Tick += (s, e) => CheckLiveRevitSelection();
@@ -515,7 +535,110 @@ private bool _isUpdatingGrid = false;
                 radCurrentView.Text = string.Format("Khung Nhìn Hiện Hành ({0})", TruncateString(_activeView.Name, 18));
             }
 
+            RegisterRevitEvents();
             LoadDataAndRefreshUi();
+        }
+
+        private void RegisterRevitEvents()
+        {
+            if (_isRevitEventRegistered) return;
+            try
+            {
+                if (_uidoc != null && _uidoc.Application != null && _uidoc.Application.Application != null)
+                {
+                    _uidoc.Application.Application.DocumentChanged += OnRevitDocumentChanged;
+                    _isRevitEventRegistered = true;
+                }
+            }
+            catch { }
+        }
+
+        private void UnregisterRevitEvents()
+        {
+            if (!_isRevitEventRegistered) return;
+            try
+            {
+                if (_uidoc != null && _uidoc.Application != null && _uidoc.Application.Application != null)
+                {
+                    _uidoc.Application.Application.DocumentChanged -= OnRevitDocumentChanged;
+                }
+            }
+            catch { }
+            finally
+            {
+                _isRevitEventRegistered = false;
+            }
+        }
+
+        private void OnRevitDocumentChanged(object sender, DocumentChangedEventArgs e)
+        {
+            if (_isDisposedOrClosing || this.IsDisposed || _doc == null) return;
+            try
+            {
+                Document doc = e.GetDocument();
+                if (doc == null) return;
+
+                // Bo qua cac transaction noi bo cua chinh HDTOOL de tranh vong lap
+                IList<string> trans = e.GetTransactionNames();
+                if (trans != null && trans.Count > 0)
+                {
+                    string tName = trans[0] ?? "";
+                    if (tName.StartsWith("HDTOOL")) return;
+                }
+
+                ICollection<ElementId> mod = e.GetModifiedElementIds();
+                ICollection<ElementId> add = e.GetAddedElementIds();
+                ICollection<ElementId> del = e.GetDeletedElementIds();
+
+                int changeCount = (mod != null ? mod.Count : 0) + (add != null ? add.Count : 0) + (del != null ? del.Count : 0);
+                if (changeCount == 0) return;
+
+                bool isRelevant = false;
+
+                // Neu dang o che do Vung quet cuc bo: kiem tra xem phan tu bi sua co nam trong vung quet khong
+                if (radSelection != null && radSelection.Checked && _customSelectionIds != null && _customSelectionIds.Count > 0)
+                {
+                    if (mod != null)
+                    {
+                        foreach (ElementId id in mod)
+                        {
+                            if (_customSelectionIds.Contains(id)) { isRelevant = true; break; }
+                        }
+                    }
+                    if (!isRelevant && del != null)
+                    {
+                        foreach (ElementId id in del)
+                        {
+                            if (_customSelectionIds.Contains(id)) { isRelevant = true; break; }
+                        }
+                    }
+                    if (!isRelevant && add != null && add.Count > 0)
+                    {
+                        isRelevant = true;
+                    }
+                }
+                else
+                {
+                    // Che do Khung nhin hien hanh hoac Toan bo du an: Luon cap nhat tu dong khi co thay doi
+                    isRelevant = true;
+                }
+
+                if (isRelevant)
+                {
+                    if (this.IsHandleCreated && !this.IsDisposed)
+                    {
+                        this.BeginInvoke((Action)(() =>
+                        {
+                            if (_autoRefreshDebounceTimer != null)
+                            {
+                                _autoRefreshDebounceTimer.Stop();
+                                _autoRefreshDebounceTimer.Start();
+                            }
+                        }));
+                    }
+                }
+            }
+            catch { }
         }
 
         private void CheckLiveRevitSelection()
@@ -574,6 +697,16 @@ private bool _isUpdatingGrid = false;
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
+            _isDisposedOrClosing = true;
+            UnregisterRevitEvents();
+
+            if (_autoRefreshDebounceTimer != null)
+            {
+                _autoRefreshDebounceTimer.Stop();
+                _autoRefreshDebounceTimer.Dispose();
+                _autoRefreshDebounceTimer = null;
+            }
+
             if (_syncTimer != null)
             {
                 _syncTimer.Stop();

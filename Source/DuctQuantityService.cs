@@ -622,7 +622,7 @@ namespace HDTool
 
                 item.MergedName = "Lượn Ống Gió Chữ Z";
                 string baseSize = GetFittingCleanBaseSize(elem, conns);
-                item.Size = string.Format("{0} (L={1}, Chênh H={2})", baseSize, lenMm, offsetMm);
+                item.Size = string.Format("{0} (L={1}, H={2})", baseSize, lenMm, offsetMm);
                 item.AreaM2 = CalculateOffsetAreaM2(elem, lenMm, offsetMm, baseSize);
                 item.Thickness = CalculateFittingThickness(baseSize);
             }

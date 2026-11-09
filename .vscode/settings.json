@@ -1,0 +1,7 @@
+{
+  "dotnet.showProjectInitializationNotification": false,
+  "csharp.showOmnisharpLogOnError": false,
+  "csharp.suppressDotnetInstallWarning": true,
+  "csharp.suppressHiddenDiagnostics": true
+}
+
