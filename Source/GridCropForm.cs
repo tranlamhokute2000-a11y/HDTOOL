@@ -690,18 +690,13 @@ namespace HDTool
 
         private void BtnSwitchLevel_Click(object sender, EventArgs e)
         {
-            this.Hide();
-            try
-            {
-                using (LevelCropForm form = new LevelCropForm(_uidoc, new List<Level>()))
-                {
-                    form.ShowDialog();
-                }
-            }
-            finally
-            {
-                this.Close();
-            }
+            HDToolModelessHost.EnsureInitialized();
+            IntPtr hMain = IntPtr.Zero;
+            try { hMain = _uidoc.Application.MainWindowHandle; } catch { }
+
+            LevelCropForm form = new LevelCropForm(_uidoc, new List<Level>());
+            HDToolModelessHost.ShowModeless(form, hMain);
+            this.Close();
         }
     }
 }

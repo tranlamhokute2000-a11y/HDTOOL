@@ -48,11 +48,18 @@ Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong
 
 ---
 
-## 3. ĐỒNG BỘ TÀI LIỆU VÀ KỸ NĂNG
+## 3. QUY TẮC ĐÚC KẾT & TINH LỌC KỸ NĂNG (SKILL) TỨC THÌ (BẮT BUỘC THEO LỆNH SẾP HỒ)
 
-- Khi thêm tính năng mới hoặc thay đổi giao diện/phím tắt, tự động cập nhật:
+- **Đúc kết thành Skill tức thì sau mỗi lần cập nhật / bổ sung tính năng**:
+  - Mỗi lần cập nhật, cải tiến hay bổ sung bất kỳ tính năng nào cho công cụ, **NGAY LẬP TỨC đúc kết toàn bộ logic, công thức, quy trình thành kỹ năng (Skill)** tại:
+    * `.agents/skills/hdtool/SKILL.md`
+    * `SKILL.md` (thư mục gốc dự án)
+- **LOẠI BỎ TRIỆT ĐỂ NHỮNG THỨ ĐÃ BỎ / KHÔNG CÒN TRONG TOOL**:
+  - Những thứ gì bỏ đi, không còn tồn tại trong tính năng của tool thì trong Skill **CŨNG BỎ ĐI NGAY LẬP TỨC, TUYỆT ĐỐI KHÔNG CẦN GHI NHỚ LÀM GÌ**.
+  - Giữ cho Skill luôn tinh gọn, sắc bén, phản ánh chính xác 100% hiện trạng thực tế công cụ đang hoạt động.
+- **Đồng bộ song song**:
   - `HUONG_DAN_SU_DUNG.md`
-  - `SKILL.md` và `.agents/skills/hdtool/SKILL.md`
+  - `.agents/SESSION_STATE.md`
 
 ---
 
@@ -80,3 +87,20 @@ Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong
 - **CHỈ ĐẨY LÊN GITHUB KHI SẾP HỒ ĐỒNG Ý / YÊU CẦU**:
   - CHỈ ĐƯỢC PHÉP ĐẨY LÊN GITHUB KHI SẾP HỒ CÓ LỆNH RÕ RÀNG (ví dụ: *"đẩy lên github"*, *"push github"*, *"publish"*, hoặc trả lời *"đồng ý"* khi được nhắc vào 16h15).
   - **KHI SẾP CHƯA ĐỒNG Ý THÌ TUYỆT ĐỐI KHÔNG PUSH**: Tuyệt đối không tự tiện chạy `git push`.
+
+---
+
+## 6. QUY TẮC HIỂN THỊ GIAO DIỆN RÕ RÀNG, KHÔNG CHE KHUẤT (BẮT BUỘC THEO LỆNH SẾP HỒ)
+
+- **Mọi thông tin trên thanh công cụ và Form phải đầy đủ, rõ ràng 100%**:
+  - Khi thêm hoặc sửa đổi bất kỳ tính năng nào: Toàn bộ văn bản, nhãn chữ, nút bấm, giá trị, thông báo trên thanh Ribbon và hộp thoại Form **PHẢI hiển thị đầy đủ, rõ ràng, không bao giờ bị che khuất, đè lên nhau hay bị cắt xén chữ** ở mọi độ phân giải và tỷ lệ DPI Windows.
+  - Bắt buộc dùng `this.ClientSize` thay cho `this.Size` khi định kích thước WinForms; tắt AutoSize = false với TrackBar trước khi đặt chiều cao; tạo khoảng đệm thoáng rộng giữa các control và kiểm tra kỹ trên Preview Studio trước khi chốt.
+
+---
+
+## 7. QUY TẮC MỌI TÍNH NĂNG ĐỀU PHẢI THAO TÁC ĐƯỢC TRÊN BẢN VẼ (MODELESS DIALOG 100% - LỆNH SẾP HỒ)
+
+- **Từ bây giờ trở đi, TẤT CẢ các chức năng / cửa sổ của HDTOOL khi mở lên để sử dụng thì MỌI THAO TÁC ĐỀU LÀM ĐƯỢC TRÊN BẢN VẼ**:
+  - Khi người dùng mở bất kỳ cửa sổ nào của HDTOOL (Tự Động Crop View, Căn Chỉnh Grids / Level, Thống Kê Ống Nước, Khối Lượng Ống Gió, Xuất Danh Mục Bản Vẽ, Cập Nhật Danh Mục, Menu HDTOOL, Cập Nhật Tool...): Người dùng **VẪN PHẢI THAO TÁC HOÀN TOÀN TỰ DO TRÊN BẢN VẼ REVIT** (Pan, Zoom, xoay 3D Isometric, click chọn đối tượng, chuyển Tab View / Sheet khác...).
+  - **Bắt buộc 100% kiến trúc Modeless Dialog**: Mở cửa sổ bằng `form.Show(new RevitWindowWrapper(revitHwnd))` kết hợp `HDToolModelessHost.Run` / `ExternalEvent`.
+  - **TUYỆT ĐỐI CẤM SỬ DỤNG `ShowDialog()`** cho các cửa sổ chức năng của HDTOOL vì `ShowDialog()` sẽ khóa cứng màn hình Revit, không cho kỹ sư thao tác trên bản vẽ.

@@ -405,60 +405,78 @@ namespace HDTool
             this.Cursor = Cursors.WaitCursor;
             btnStartExport.Enabled = false;
 
-            try
-            {
-                string resultMsg;
-                bool success = false;
+            bool isPdf = radPdf.Checked;
+            string fileName = txtPdfFileName.Text.Trim();
+            bool combine = chkPdfCombine.Checked;
+            bool cadCombineOne = chkCadCombineOne.Checked;
+            string cadFileName = txtCadFileName.Text.Trim();
+            bool openFolderAfter = chkOpenFolderAfter.Checked;
+            bool mergeViews = chkCadMerge.Checked;
 
-                if (radPdf.Checked)
+            HDToolModelessHost.Run(uiapp =>
+            {
+                try
                 {
-                    string fileName = txtPdfFileName.Text.Trim();
-                    bool combine = chkPdfCombine.Checked;
-                    success = SheetExportCadPdfService.ExportToPdf(_doc, _sheets, folder, fileName, combine, out resultMsg);
-                }
-                else
-                {
-                    if (chkCadCombineOne.Checked)
+                    string resultMsg;
+                    bool success = false;
+
+                    if (isPdf)
                     {
-                        string safeName = txtCadFileName.Text.Trim();
-                        if (string.IsNullOrEmpty(safeName)) safeName = "HoSoBanVe_TongHop";
-                        if (!safeName.EndsWith(".dwg", StringComparison.OrdinalIgnoreCase)) safeName += ".dwg";
-                        string targetDwg = Path.Combine(folder, safeName);
-                        success = SheetExportCadPdfService.ExportToSingleCombinedCad(_doc, _sheets, targetDwg, chkOpenFolderAfter.Checked, out resultMsg);
+                        success = SheetExportCadPdfService.ExportToPdf(_doc, _sheets, folder, fileName, combine, out resultMsg);
                     }
                     else
                     {
-                        bool mergeViews = chkCadMerge.Checked;
-                        success = SheetExportCadPdfService.ExportToCad(_doc, _sheets, folder, mergeViews, out resultMsg);
-                    }
-                }
-
-                if (success)
-                {
-                    MessageBox.Show(resultMsg, "HDTOOL - Xuất Bản Vẽ Thành Công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    if (chkOpenFolderAfter.Checked && Directory.Exists(folder))
-                    {
-                        try
+                        if (cadCombineOne)
                         {
-                            Process.Start(folder);
+                            string safeName = cadFileName;
+                            if (string.IsNullOrEmpty(safeName)) safeName = "HoSoBanVe_TongHop";
+                            if (!safeName.EndsWith(".dwg", StringComparison.OrdinalIgnoreCase)) safeName += ".dwg";
+                            string targetDwg = Path.Combine(folder, safeName);
+                            success = SheetExportCadPdfService.ExportToSingleCombinedCad(_doc, _sheets, targetDwg, openFolderAfter, out resultMsg);
                         }
-                        catch { }
+                        else
+                        {
+                            success = SheetExportCadPdfService.ExportToCad(_doc, _sheets, folder, mergeViews, out resultMsg);
+                        }
                     }
 
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        this.Cursor = Cursors.Default;
+                        btnStartExport.Enabled = true;
+
+                        if (success)
+                        {
+                            MessageBox.Show(resultMsg, "HDTOOL - Xuất Bản Vẽ Thành Công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            if (openFolderAfter && Directory.Exists(folder))
+                            {
+                                try
+                                {
+                                    Process.Start(folder);
+                                }
+                                catch { }
+                            }
+
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show(resultMsg, "HDTOOL - Lỗi Xuất Bản Vẽ", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    });
                 }
-                else
+                catch (Exception ex)
                 {
-                    MessageBox.Show(resultMsg, "HDTOOL - Lỗi Xuất Bản Vẽ", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        this.Cursor = Cursors.Default;
+                        btnStartExport.Enabled = true;
+                        MessageBox.Show("Lỗi trong quá trình xuất: " + ex.Message, "HDTOOL Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    });
                 }
-            }
-            finally
-            {
-                this.Cursor = Cursors.Default;
-                btnStartExport.Enabled = true;
-            }
+            });
         }
     }
 }

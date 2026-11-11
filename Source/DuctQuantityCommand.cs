@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -63,6 +63,9 @@ namespace HDTool
                     TaskDialog.Show("HDTOOL", "Vui lòng mở một dự án Revit trước khi chạy công cụ này.");
                     return Result.Cancelled;
                 }
+
+                // Tự động kiểm tra và thêm nút Tự Động Crop View vào Ribbon nếu chưa có
+                App.EnsureAutoCropButtonDynamic(uiapp);
 
                 Document doc = uidoc.Document;
 

@@ -17,6 +17,7 @@ namespace HDTool
         private Button btnCancel;
 
         public string SelectedGroupTitle { get; private set; }
+        public event Action<string> GroupTitleConfirmed;
 
         public SetGroupTitleForm(int selectedCount, IEnumerable<string> existingDisciplines, string currentDiscipline)
         {
@@ -111,6 +112,7 @@ namespace HDTool
             btnClear.Click += (s, e) =>
             {
                 SelectedGroupTitle = string.Empty;
+                if (GroupTitleConfirmed != null) GroupTitleConfirmed(SelectedGroupTitle);
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             };
@@ -152,6 +154,7 @@ namespace HDTool
         private void BtnOk_Click(object sender, EventArgs e)
         {
             SelectedGroupTitle = cmbDisciplineName.Text.Trim();
+            if (GroupTitleConfirmed != null) GroupTitleConfirmed(SelectedGroupTitle);
             this.DialogResult = DialogResult.OK;
             this.Close();
         }

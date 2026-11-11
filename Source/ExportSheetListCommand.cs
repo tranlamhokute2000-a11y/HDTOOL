@@ -9,6 +9,8 @@ namespace HDTool
     [Regeneration(RegenerationOption.Manual)]
     public class ExportSheetListCommand : IExternalCommand
     {
+        private static ExportSheetListForm _instance = null;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             if (ToolHotReloadManager.HasActiveHotReloadAssembly())
@@ -36,11 +38,19 @@ namespace HDTool
                 }
 
                 Document doc = uidoc.Document;
+                HDToolModelessHost.EnsureInitialized();
 
-                using (ExportSheetListForm form = new ExportSheetListForm(doc))
+                // Nếu Form Quản lý Danh mục Sheet đã mở -> Đưa lên trước
+                if (_instance != null && !_instance.IsDisposed)
                 {
-                    form.ShowDialog();
+                    HDToolModelessHost.ShowModeless(_instance, uiapp.MainWindowHandle);
+                    return Result.Succeeded;
                 }
+
+                // Mở Modeless Form (Người dùng thoải mái pan, zoom, chuyển Sheet trên Revit)
+                _instance = new ExportSheetListForm(doc);
+                _instance.FormClosed += (s, e) => { _instance = null; };
+                HDToolModelessHost.ShowModeless(_instance, uiapp.MainWindowHandle);
 
                 return Result.Succeeded;
             }

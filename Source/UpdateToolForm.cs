@@ -1,3 +1,5 @@
+﻿using Autodesk.Revit.UI;
+using TextBox = System.Windows.Forms.TextBox;
 using System;
 using System.Drawing;
 using System.IO;
@@ -27,10 +29,12 @@ namespace HDTool
         private Button btnApply;
         private Button btnClose;
 
-        private string _selectedFilePath = string.Empty;
+                private string _selectedFilePath = string.Empty;
+        private UIApplication _uiapp = null;
 
-        public UpdateToolForm()
+        public UpdateToolForm(UIApplication uiapp = null)
         {
+            _uiapp = uiapp;
             InitializeComponent();
             DetectInitialFile();
         }
@@ -322,7 +326,11 @@ namespace HDTool
             }
 
             string statusMsg;
-            bool success = ToolHotReloadManager.ReloadAssembly(_selectedFilePath, out statusMsg);
+                        bool success = ToolHotReloadManager.ReloadAssembly(_selectedFilePath, out statusMsg);
+            if (success && _uiapp != null)
+            {
+                App.EnsureAutoCropButtonDynamic(_uiapp);
+            }
 
             if (success)
             {

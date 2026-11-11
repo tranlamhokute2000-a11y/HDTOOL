@@ -9,6 +9,8 @@ namespace HDTool
     [Regeneration(RegenerationOption.Manual)]
     public class UpdateToolCommand : IExternalCommand
     {
+        private static UpdateToolForm _instance = null;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             if (ToolHotReloadManager.HasActiveHotReloadAssembly())
@@ -27,10 +29,20 @@ namespace HDTool
         {
             try
             {
-                using (UpdateToolForm form = new UpdateToolForm())
+                // Tự động kiểm tra và bơm các nút mới lên thanh Ribbon nếu Revit đang chạy từ trước
+                App.EnsureAutoCropButtonDynamic(commandData.Application);
+                HDToolModelessHost.EnsureInitialized();
+
+                if (_instance != null && !_instance.IsDisposed)
                 {
-                    form.ShowDialog();
+                    HDToolModelessHost.ShowModeless(_instance, commandData.Application.MainWindowHandle);
+                    return Result.Succeeded;
                 }
+
+                _instance = new UpdateToolForm(commandData.Application);
+                _instance.FormClosed += (s, e) => { _instance = null; };
+                HDToolModelessHost.ShowModeless(_instance, commandData.Application.MainWindowHandle);
+
                 return Result.Succeeded;
             }
             catch (Exception ex)

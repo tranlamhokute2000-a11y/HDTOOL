@@ -9,6 +9,8 @@ namespace HDTool
     [Regeneration(RegenerationOption.Manual)]
     public class HDToolMainCommand : IExternalCommand
     {
+        private static HDToolMainForm _instance = null;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             if (ToolHotReloadManager.HasActiveHotReloadAssembly())
@@ -35,10 +37,19 @@ namespace HDTool
                     return Result.Cancelled;
                 }
 
-                using (HDToolMainForm form = new HDToolMainForm(uidoc))
+                // Tự động bơm nút Tự Động Crop View lên thanh Ribbon nếu Revit đang mở
+                App.EnsureAutoCropButtonDynamic(uiapp);
+                HDToolModelessHost.EnsureInitialized();
+
+                if (_instance != null && !_instance.IsDisposed)
                 {
-                    form.ShowDialog();
+                    HDToolModelessHost.ShowModeless(_instance, uiapp.MainWindowHandle);
+                    return Result.Succeeded;
                 }
+
+                _instance = new HDToolMainForm(uidoc);
+                _instance.FormClosed += (s, e) => { _instance = null; };
+                HDToolModelessHost.ShowModeless(_instance, uiapp.MainWindowHandle);
 
                 return Result.Succeeded;
             }

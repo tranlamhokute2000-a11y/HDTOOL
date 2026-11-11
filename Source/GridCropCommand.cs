@@ -39,6 +39,9 @@ namespace HDTool
                     return Result.Cancelled;
                 }
 
+                // Tự động kiểm tra và thêm nút Tự Động Crop View vào Ribbon nếu chưa có
+                App.EnsureAutoCropButtonDynamic(uiapp);
+
                 Document doc = uidoc.Document;
                 Autodesk.Revit.DB.View view = uidoc.ActiveView;
 

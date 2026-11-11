@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 using Autodesk.Revit.UI;
 
 namespace HDTool
@@ -51,6 +52,95 @@ namespace HDTool
         public string GetName()
         {
             return "HDToolExternalEventHandler";
+        }
+    }
+
+    /// <summary>
+    /// Trình quản lý Modeless Host toàn cục của HDTOOL:
+    /// Đảm bảo tất cả các cửa sổ công cụ khi mở lên đều cho phép người dùng
+    /// tự do tương tác, pan/zoom, chọn đối tượng trên bản vẽ Revit mà không bị khóa.
+    /// Mọi lệnh can thiệp dữ liệu Revit API (Transaction, Pick) đều được nạp vào ExternalEvent an toàn.
+    /// </summary>
+    public static class HDToolModelessHost
+    {
+        private static HDToolExternalEventHandler _sharedHandler = null;
+        private static ExternalEvent _sharedExternalEvent = null;
+
+        public static void EnsureInitialized()
+        {
+            if (_sharedHandler == null)
+            {
+                _sharedHandler = new HDToolExternalEventHandler();
+            }
+            if (_sharedExternalEvent == null)
+            {
+                try
+                {
+                    _sharedExternalEvent = ExternalEvent.Create(_sharedHandler);
+                }
+                catch
+                {
+                    // Đã khởi tạo hoặc đang trong luồng không có API context
+                }
+            }
+        }
+
+        public static HDToolExternalEventHandler Handler
+        {
+            get
+            {
+                EnsureInitialized();
+                return _sharedHandler;
+            }
+        }
+
+        public static ExternalEvent ExEvent
+        {
+            get
+            {
+                EnsureInitialized();
+                return _sharedExternalEvent;
+            }
+        }
+
+        public static void Run(Action<UIApplication> action)
+        {
+            if (action == null) return;
+            EnsureInitialized();
+            if (_sharedHandler != null && _sharedExternalEvent != null)
+            {
+                _sharedHandler.Run(action, _sharedExternalEvent);
+            }
+            else
+            {
+                // Fallback nếu không có ExternalEvent (gọi trực tiếp)
+                action(null);
+            }
+        }
+
+        public static void ShowModeless(Form form, IntPtr revitMainHwnd)
+        {
+            if (form == null || form.IsDisposed) return;
+
+            if (form.WindowState == FormWindowState.Minimized)
+            {
+                form.WindowState = FormWindowState.Normal;
+            }
+
+            if (!form.Visible)
+            {
+                if (revitMainHwnd != IntPtr.Zero)
+                {
+                    form.Show(new RevitWindowWrapper(revitMainHwnd));
+                }
+                else
+                {
+                    form.Show();
+                }
+            }
+
+            form.BringToFront();
+            form.Activate();
         }
     }
 }

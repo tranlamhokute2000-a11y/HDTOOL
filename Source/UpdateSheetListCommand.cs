@@ -74,16 +74,12 @@ namespace HDTool
                     return Result.Cancelled;
                 }
 
-                // Hiển thị giao diện xem trước & xác nhận cập nhật
-                using (UpdateSheetListPreviewForm previewForm = new UpdateSheetListPreviewForm(doc, items))
-                {
-                    if (previewForm.ShowDialog() == DialogResult.OK)
-                    {
-                        return Result.Succeeded;
-                    }
-                }
+                HDToolModelessHost.EnsureInitialized();
 
-                return Result.Cancelled;
+                // Hiển thị giao diện xem trước & xác nhận cập nhật dạng Modeless
+                UpdateSheetListPreviewForm previewForm = new UpdateSheetListPreviewForm(doc, items);
+                HDToolModelessHost.ShowModeless(previewForm, commandData.Application.MainWindowHandle);
+                return Result.Succeeded;
             }
             catch (Exception ex)
             {

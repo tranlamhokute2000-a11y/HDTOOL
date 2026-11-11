@@ -1573,6 +1573,163 @@ namespace HDTool
             }
         }
 
+                public static ImageSource CreateAutoCropIcon(int size)
+        {
+            using (Bitmap bmp = new Bitmap(size, size))
+            {
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                    g.Clear(System.Drawing.Color.Transparent);
+
+                    float scale = size / 32.0f;
+
+                    // 1. Khung viền Crop Box nét đứt màu đỏ / trắng ôm sát
+                    using (Pen cropPen = new Pen(System.Drawing.Color.FromArgb(239, 68, 68), 1.8f * scale))
+                    {
+                        cropPen.DashStyle = DashStyle.Dash;
+                        g.DrawRectangle(cropPen, 3f * scale, 3f * scale, 26f * scale, 26f * scale);
+                    }
+
+                    // 4 góc tay nắm Crop Box Handles
+                    using (SolidBrush handleBrush = new SolidBrush(System.Drawing.Color.FromArgb(239, 68, 68)))
+                    {
+                        g.FillRectangle(handleBrush, 2f * scale, 2f * scale, 3f * scale, 3f * scale);
+                        g.FillRectangle(handleBrush, 27f * scale, 2f * scale, 3f * scale, 3f * scale);
+                        g.FillRectangle(handleBrush, 2f * scale, 27f * scale, 3f * scale, 3f * scale);
+                        g.FillRectangle(handleBrush, 27f * scale, 27f * scale, 3f * scale, 3f * scale);
+                    }
+
+                    // 2. Hệ thống ống mô hình 3D bên trong (Màu tím Plumbing)
+                    using (Pen pipePen = new Pen(System.Drawing.Color.FromArgb(192, 132, 252), 2.5f * scale))
+                    {
+                        pipePen.StartCap = LineCap.Round;
+                        pipePen.EndCap = LineCap.Round;
+                        // Trục đứng
+                        g.DrawLine(pipePen, 16f * scale, 8f * scale, 16f * scale, 24f * scale);
+                        // Nhánh rẽ ngang
+                        g.DrawLine(pipePen, 16f * scale, 14f * scale, 23f * scale, 10f * scale);
+                        g.DrawLine(pipePen, 23f * scale, 10f * scale, 23f * scale, 6f * scale);
+                        // Nhánh rẽ trái
+                        g.DrawLine(pipePen, 16f * scale, 18f * scale, 8f * scale, 14f * scale);
+                    }
+
+                    // Ký hiệu phụ kiện cút / tê tròn nhỏ
+                    using (SolidBrush fitBrush = new SolidBrush(System.Drawing.Color.FromArgb(244, 114, 182)))
+                    {
+                        g.FillEllipse(fitBrush, 14.5f * scale, 12.5f * scale, 3f * scale, 3f * scale);
+                        g.FillEllipse(fitBrush, 14.5f * scale, 16.5f * scale, 3f * scale, 3f * scale);
+                        g.FillEllipse(fitBrush, 21.5f * scale, 8.5f * scale, 3f * scale, 3f * scale);
+                    }
+
+                    // 3. Huy hiệu tia sét Auto ⚡ ở góc phải
+                    using (SolidBrush flashBg = new SolidBrush(System.Drawing.Color.FromArgb(245, 158, 11)))
+                    using (Pen flashBorder = new Pen(System.Drawing.Color.White, 1.0f * scale))
+                    {
+                        g.FillEllipse(flashBg, 18f * scale, 18f * scale, 12f * scale, 12f * scale);
+                        g.DrawEllipse(flashBorder, 18f * scale, 18f * scale, 12f * scale, 12f * scale);
+                    }
+                    // Vẽ tia sét ⚡ bằng Vector Polygon chuẩn nét
+                    using (SolidBrush flashB = new SolidBrush(System.Drawing.Color.White))
+                    {
+                        PointF[] bolt = new PointF[] {
+                            new PointF(24.5f * scale, 19f * scale),
+                            new PointF(21.5f * scale, 24f * scale),
+                            new PointF(23.5f * scale, 24f * scale),
+                            new PointF(22f * scale, 29f * scale),
+                            new PointF(26.5f * scale, 23.5f * scale),
+                            new PointF(24.5f * scale, 23.5f * scale)
+                        };
+                        g.FillPolygon(flashB, bolt);
+                    }
+                }
+
+                return ConvertToImageSource(bmp);
+            }
+        }
+
+        /// <summary>
+        /// Tạo icon vector cho công cụ Dựng Ống Gió Từ CAD Link
+        /// </summary>
+        public static ImageSource CreateCadToDuctIcon(int size)
+        {
+            using (Bitmap bmp = new Bitmap(size, size))
+            {
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                    g.Clear(System.Drawing.Color.Transparent);
+
+                    float s = size / 32.0f;
+
+                    // 1. Thân ống gió chữ nhật 3D (Xanh Cyan)
+                    using (SolidBrush ductBrush = new SolidBrush(System.Drawing.Color.FromArgb(14, 165, 233)))
+                    using (Pen ductPen = new Pen(System.Drawing.Color.FromArgb(3, 105, 161), 1.2f * s))
+                    {
+                        g.FillRectangle(ductBrush, 3f * s, 10f * s, 17f * s, 13f * s);
+                        g.DrawRectangle(ductPen, 3f * s, 10f * s, 17f * s, 13f * s);
+                    }
+
+                    // Đường tim ống nét đứt màu trắng
+                    using (Pen centerPen = new Pen(System.Drawing.Color.White, 1.0f * s))
+                    {
+                        centerPen.DashStyle = DashStyle.Dash;
+                        g.DrawLine(centerPen, 3f * s, 16.5f * s, 20f * s, 16.5f * s);
+                    }
+
+                    // 2. Chân rẽ Tap (màu cam Amber) đâm ra
+                    using (SolidBrush tapBrush = new SolidBrush(System.Drawing.Color.FromArgb(245, 158, 11)))
+                    using (Pen tapPen = new Pen(System.Drawing.Color.FromArgb(217, 119, 6), 1.0f * s))
+                    {
+                        PointF[] tapPts = new PointF[] {
+                            new PointF(20f * s, 13f * s),
+                            new PointF(27f * s, 7f * s),
+                            new PointF(30f * s, 7f * s),
+                            new PointF(30f * s, 12f * s),
+                            new PointF(20f * s, 19f * s)
+                        };
+                        g.FillPolygon(tapBrush, tapPts);
+                        g.DrawPolygon(tapPen, tapPts);
+                    }
+
+                    // 3. Nhánh rẽ đâm xuống (Màu xanh ngọc Emerald)
+                    using (SolidBrush brBrush = new SolidBrush(System.Drawing.Color.FromArgb(16, 185, 129)))
+                    using (Pen brPen = new Pen(System.Drawing.Color.FromArgb(5, 150, 105), 1.0f * s))
+                    {
+                        g.FillRectangle(brBrush, 10f * s, 23f * s, 7f * s, 8f * s);
+                        g.DrawRectangle(brPen, 10f * s, 23f * s, 7f * s, 8f * s);
+                    }
+
+                    // 4. Khung nhãn CAD nhỏ màu xanh Navy ở góc trái
+                    using (SolidBrush cadBg = new SolidBrush(System.Drawing.Color.FromArgb(15, 23, 42)))
+                    using (Pen cadBorder = new Pen(System.Drawing.Color.FromArgb(56, 189, 248), 1.0f * s))
+                    using (Font font = new Font("Segoe UI", 5.5f * s, FontStyle.Bold))
+                    using (SolidBrush textBrush = new SolidBrush(System.Drawing.Color.White))
+                    {
+                        g.FillRectangle(cadBg, 3.5f * s, 12.5f * s, 15f * s, 8f * s);
+                        g.DrawRectangle(cadBorder, 3.5f * s, 12.5f * s, 15f * s, 8f * s);
+                        g.DrawString("CAD", font, textBrush, 3.5f * s, 12f * s);
+                    }
+
+                    // 5. Mũi tên 3D đỏ chuyển đổi sang Revit
+                    using (Pen arrowPen = new Pen(System.Drawing.Color.FromArgb(239, 68, 68), 1.5f * s))
+                    {
+                        g.DrawLine(arrowPen, 22f * s, 24f * s, 28f * s, 24f * s);
+                        g.DrawLine(arrowPen, 28f * s, 24f * s, 25f * s, 21f * s);
+                        g.DrawLine(arrowPen, 28f * s, 24f * s, 25f * s, 27f * s);
+                    }
+                }
+
+                return ConvertToImageSource(bmp);
+            }
+        }
+
         private static ImageSource ConvertToImageSource(Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())

@@ -41,7 +41,21 @@ namespace HDTool
         // TabControl
         private TabControl tabControl;
         private TabPage tabGrids;
-        private TabPage tabLevel;
+                private TabPage tabLevel;
+        private TabPage tabAutoCrop;
+
+        // AutoCrop Controls
+        private GroupBox grpCropInfo;
+        private Label lblCropViewName;
+        private Label lblCropElemCount;
+        private GroupBox grpCropPadding;
+        private NumericUpDown numCropPadding;
+        private TrackBar trackCropPadding;
+        private CheckBox chkCropVisible;
+        private CheckBox chkCropSectionBox;
+        private CheckBox chkCropMepOnly;
+        private Button btnCropAuto;
+        private Button btnCropPick;
 
         // --- Grids Controls ---
         private GroupBox grpGridInputs;
@@ -103,6 +117,25 @@ namespace HDTool
 
             LoadContextData();
             InitializeComponent();
+        }
+
+        public void UpdateContext(UIDocument uidoc)
+        {
+            if (uidoc == null) return;
+            _uidoc = uidoc;
+            _doc = uidoc.Document;
+            _activeView = uidoc.ActiveView;
+            _isSheet = (_activeView is ViewSheet);
+            LoadContextData();
+            try
+            {
+                if (lblCurrentView != null && _activeView != null)
+                {
+                    lblCurrentView.Text = string.Format("View: {0} ({1})  |  Tỷ lệ: 1:{2}  |  Grids: {3}  |  Levels: {4}",
+                        _activeView.Name, _activeView.ViewType.ToString(), _activeView.Scale, _allGrids.Count, _allLevels.Count);
+                }
+            }
+            catch { }
         }
 
         private void LoadContextData()
@@ -240,11 +273,18 @@ namespace HDTool
             // Build Tab 2: Level
             BuildTabLevel();
 
+            BuildTabAutoCrop();
+
             tabControl.TabPages.Add(tabGrids);
             tabControl.TabPages.Add(tabLevel);
+            tabControl.TabPages.Add(tabAutoCrop);
 
             // Auto-select tab based on view
-            if (LevelCropService.IsViewApplicable(_activeView))
+            if (_activeView is View3D)
+            {
+                tabControl.SelectedTab = tabAutoCrop;
+            }
+            else if (LevelCropService.IsViewApplicable(_activeView))
             {
                 tabControl.SelectedTab = tabLevel;
             }
@@ -695,7 +735,72 @@ namespace HDTool
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        // ======================= ACTION HANDLERS =======================
+        // ======================= ACTION HANDLERS (MODELESS EXTERNALEVENT) =======================
+
+        private void SyncContextFromApp(UIApplication uiapp)
+        {
+            if (uiapp != null && uiapp.ActiveUIDocument != null)
+            {
+                _uidoc = uiapp.ActiveUIDocument;
+                _doc = _uidoc.Document;
+                _activeView = _uidoc.ActiveView;
+                _isSheet = (_activeView is ViewSheet);
+                LoadContextData();
+            }
+        }
+
+        private void SetStatusSafe(Color color, string text)
+        {
+            if (this.IsDisposed) return;
+            Action act = () =>
+            {
+                if (this.IsDisposed) return;
+                lblStatus.ForeColor = color;
+                lblStatus.Text = text;
+                if (lblCurrentView != null && _activeView != null)
+                {
+                    lblCurrentView.Text = string.Format("View: {0} ({1})  |  Tỷ lệ: 1:{2}  |  Grids: {3}  |  Levels: {4}",
+                        _activeView.Name, _activeView.ViewType.ToString(), _activeView.Scale, _allGrids.Count, _allLevels.Count);
+                }
+            };
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke((MethodInvoker)(() => act())); } catch { }
+            }
+            else
+            {
+                act();
+            }
+        }
+
+        private void RunPickSafely(Action<UIApplication> pickAction)
+        {
+            HDToolModelessHost.Run(uiapp =>
+            {
+                SyncContextFromApp(uiapp);
+                try { if (!this.IsDisposed) this.BeginInvoke((MethodInvoker)(() => this.Hide())); } catch { }
+                try
+                {
+                    pickAction(uiapp);
+                }
+                finally
+                {
+                    try
+                    {
+                        if (!this.IsDisposed)
+                        {
+                            this.BeginInvoke((MethodInvoker)(() =>
+                            {
+                                this.Show();
+                                this.BringToFront();
+                                this.Activate();
+                            }));
+                        }
+                    }
+                    catch { }
+                }
+            });
+        }
 
         private void BtnGridAuto_Click(object sender, EventArgs e)
         {
@@ -709,30 +814,32 @@ namespace HDTool
             bool symLeft = chkGridSymLeft.Checked;
             bool symRight = chkGridSymRight.Checked;
 
-            try
+            HDToolModelessHost.Run(uiapp =>
             {
-                string msg;
-                if (_isSheet)
+                try
                 {
-                    GridCropService.AdjustMultiplePlanViews(_doc, _sheetPlanViews, top, bottom, left, right, make2D,
-                        symTop, symBottom, symLeft, symRight, out msg);
+                    SyncContextFromApp(uiapp);
+                    string msg;
+                    if (_isSheet)
+                    {
+                        GridCropService.AdjustMultiplePlanViews(_doc, _sheetPlanViews, top, bottom, left, right, make2D,
+                            symTop, symBottom, symLeft, symRight, out msg);
+                    }
+                    else
+                    {
+                        GridCropService.AdjustAllGridsInView(_doc, _activeView, top, bottom, left, right, make2D,
+                            symTop, symBottom, symLeft, symRight, out msg);
+                    }
+
+                    try { _uidoc.RefreshActiveView(); } catch { }
+                    SetStatusSafe(Color.FromArgb(39, 174, 96),
+                        string.Format("✔ Đã căn chỉnh Grids thành công lúc {0}!", DateTime.Now.ToString("HH:mm:ss")));
                 }
-                else
+                catch (Exception ex)
                 {
-                    GridCropService.AdjustAllGridsInView(_doc, _activeView, top, bottom, left, right, make2D,
-                        symTop, symBottom, symLeft, symRight, out msg);
+                    SetStatusSafe(Color.Red, "Lỗi căn Grids: " + ex.Message);
                 }
-
-                try { _uidoc.RefreshActiveView(); } catch { }
-
-                lblStatus.ForeColor = Color.FromArgb(39, 174, 96);
-                lblStatus.Text = string.Format("✔ Đã căn chỉnh Grids thành công lúc {0}!", DateTime.Now.ToString("HH:mm:ss"));
-            }
-            catch (Exception ex)
-            {
-                lblStatus.ForeColor = Color.Red;
-                lblStatus.Text = "Lỗi căn Grids: " + ex.Message;
-            }
+            });
         }
 
         private void BtnGridPick_Click(object sender, EventArgs e)
@@ -747,99 +854,93 @@ namespace HDTool
             bool symLeft = chkGridSymLeft.Checked;
             bool symRight = chkGridSymRight.Checked;
 
-            this.Hide();
-
-            try
+            RunPickSafely(uiapp =>
             {
-                if (_isSheet)
+                try
                 {
-                    IList<Reference> references = _uidoc.Selection.PickObjects(
-                        ObjectType.Element,
-                        new GridSelectionFilter(true),
-                        "Click chọn các Viewport trên Sheet cần căn chỉnh Grids (nhấn Finish khi xong)");
-
-                    if (references != null && references.Count > 0)
+                    if (_isSheet)
                     {
-                        List<Autodesk.Revit.DB.View> pickedPlanViews = new List<Autodesk.Revit.DB.View>();
-                        foreach (Reference r in references)
+                        IList<Reference> references = _uidoc.Selection.PickObjects(
+                            ObjectType.Element,
+                            new GridSelectionFilter(true),
+                            "Click chọn các Viewport trên Sheet cần căn chỉnh Grids (nhấn Finish khi xong)");
+
+                        if (references != null && references.Count > 0)
                         {
-                            Element elem = _doc.GetElement(r);
-                            Viewport vp = elem as Viewport;
-                            if (vp != null)
+                            List<Autodesk.Revit.DB.View> pickedPlanViews = new List<Autodesk.Revit.DB.View>();
+                            foreach (Reference r in references)
                             {
-                                Autodesk.Revit.DB.View v = _doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
-                                if (v != null && GridCropService.IsViewApplicableForGrids(v))
+                                Element elem = _doc.GetElement(r);
+                                Viewport vp = elem as Viewport;
+                                if (vp != null)
                                 {
-                                    pickedPlanViews.Add(v);
+                                    Autodesk.Revit.DB.View v = _doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
+                                    if (v != null && GridCropService.IsViewApplicableForGrids(v))
+                                    {
+                                        pickedPlanViews.Add(v);
+                                    }
                                 }
                             }
-                        }
 
-                        if (pickedPlanViews.Count > 0)
-                        {
-                            string msg;
-                            GridCropService.AdjustMultiplePlanViews(_doc, pickedPlanViews, top, bottom, left, right, make2D,
-                                symTop, symBottom, symLeft, symRight, out msg);
-                        }
-                    }
-                }
-                else
-                {
-                    IList<Reference> references = _uidoc.Selection.PickObjects(
-                        ObjectType.Element,
-                        new GridSelectionFilter(false),
-                        "Click chọn Crop View hoặc các Grids cần căn chỉnh (nhấn Finish khi xong)");
-
-                    if (references != null && references.Count > 0)
-                    {
-                        List<Grid> pickedGrids = new List<Grid>();
-                        bool pickedCrop = false;
-
-                        foreach (Reference r in references)
-                        {
-                            Element elem = _doc.GetElement(r);
-                            Grid g = elem as Grid;
-                            if (g != null) pickedGrids.Add(g);
-                            else pickedCrop = true;
-                        }
-
-                        string msg;
-                        if (pickedCrop)
-                        {
-                            List<Grid> all = GridCropService.GetAllGridsInView(_doc, _activeView);
-                            foreach (Grid pg in pickedGrids)
+                            if (pickedPlanViews.Count > 0)
                             {
-                                if (!all.Any(x => x.Id == pg.Id)) all.Add(pg);
+                                string msg;
+                                GridCropService.AdjustMultiplePlanViews(_doc, pickedPlanViews, top, bottom, left, right, make2D,
+                                    symTop, symBottom, symLeft, symRight, out msg);
                             }
-                            GridCropService.AdjustGrids(_doc, _activeView, all, top, bottom, left, right, make2D,
-                                symTop, symBottom, symLeft, symRight, out msg);
-                        }
-                        else if (pickedGrids.Count > 0)
-                        {
-                            GridCropService.AdjustGrids(_doc, _activeView, pickedGrids, top, bottom, left, right, make2D,
-                                symTop, symBottom, symLeft, symRight, out msg);
                         }
                     }
+                    else
+                    {
+                        IList<Reference> references = _uidoc.Selection.PickObjects(
+                            ObjectType.Element,
+                            new GridSelectionFilter(false),
+                            "Click chọn Crop View hoặc các Grids cần căn chỉnh (nhấn Finish khi xong)");
+
+                        if (references != null && references.Count > 0)
+                        {
+                            List<Grid> pickedGrids = new List<Grid>();
+                            bool pickedCrop = false;
+
+                            foreach (Reference r in references)
+                            {
+                                Element elem = _doc.GetElement(r);
+                                Grid g = elem as Grid;
+                                if (g != null) pickedGrids.Add(g);
+                                else pickedCrop = true;
+                            }
+
+                            string msg;
+                            if (pickedCrop)
+                            {
+                                List<Grid> all = GridCropService.GetAllGridsInView(_doc, _activeView);
+                                foreach (Grid pg in pickedGrids)
+                                {
+                                    if (!all.Any(x => x.Id == pg.Id)) all.Add(pg);
+                                }
+                                GridCropService.AdjustGrids(_doc, _activeView, all, top, bottom, left, right, make2D,
+                                    symTop, symBottom, symLeft, symRight, out msg);
+                            }
+                            else if (pickedGrids.Count > 0)
+                            {
+                                GridCropService.AdjustGrids(_doc, _activeView, pickedGrids, top, bottom, left, right, make2D,
+                                    symTop, symBottom, symLeft, symRight, out msg);
+                            }
+                        }
+                    }
+
+                    try { _uidoc.RefreshActiveView(); } catch { }
+                    SetStatusSafe(Color.FromArgb(39, 174, 96),
+                        string.Format("✔ Đã áp dụng các đối tượng Grids vừa chọn lúc {0}!", DateTime.Now.ToString("HH:mm:ss")));
                 }
-
-                try { _uidoc.RefreshActiveView(); } catch { }
-
-                lblStatus.ForeColor = Color.FromArgb(39, 174, 96);
-                lblStatus.Text = string.Format("✔ Đã áp dụng các đối tượng Grids vừa chọn lúc {0}!", DateTime.Now.ToString("HH:mm:ss"));
-            }
-            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-            {
-                // Esc
-            }
-            catch (Exception ex)
-            {
-                lblStatus.ForeColor = Color.Red;
-                lblStatus.Text = "Lỗi pick Grids: " + ex.Message;
-            }
-            finally
-            {
-                this.Show();
-            }
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                {
+                }
+                catch (Exception ex)
+                {
+                    SetStatusSafe(Color.Red, "Lỗi pick Grids: " + ex.Message);
+                }
+            });
         }
 
         private void BtnLevelAuto_Click(object sender, EventArgs e)
@@ -850,45 +951,53 @@ namespace HDTool
             bool symLeft = chkLevelSymLeft.Checked;
             bool symRight = chkLevelSymRight.Checked;
 
-            try
+            List<int> checkedIndices = new List<int>();
+            if (_isSheet && lstLevelViews != null)
             {
-                List<Autodesk.Revit.DB.View> targetViews = new List<Autodesk.Revit.DB.View>();
-
-                if (_isSheet && lstLevelViews != null)
+                for (int i = 0; i < lstLevelViews.Items.Count; i++)
                 {
-                    for (int i = 0; i < lstLevelViews.Items.Count; i++)
+                    if (lstLevelViews.GetItemChecked(i)) checkedIndices.Add(i);
+                }
+            }
+
+            HDToolModelessHost.Run(uiapp =>
+            {
+                try
+                {
+                    SyncContextFromApp(uiapp);
+                    List<Autodesk.Revit.DB.View> targetViews = new List<Autodesk.Revit.DB.View>();
+
+                    if (_isSheet && _sheetSectionViews != null)
                     {
-                        if (lstLevelViews.GetItemChecked(i) && i < _sheetSectionViews.Count)
+                        foreach (int idx in checkedIndices)
                         {
-                            targetViews.Add(_sheetSectionViews[i]);
+                            if (idx >= 0 && idx < _sheetSectionViews.Count)
+                                targetViews.Add(_sheetSectionViews[idx]);
                         }
                     }
+                    else
+                    {
+                        targetViews.Add(_activeView);
+                    }
+
+                    if (targetViews.Count == 0)
+                    {
+                        SetStatusSafe(Color.OrangeRed, "Vui lòng tích chọn ít nhất 1 View trong danh sách!");
+                        return;
+                    }
+
+                    string summaryMsg;
+                    int count = LevelCropService.AdjustMultipleViews(_doc, targetViews, offsetLeft, offsetRight, make2D, symLeft, symRight, out summaryMsg);
+
+                    try { _uidoc.RefreshActiveView(); } catch { }
+                    SetStatusSafe(Color.FromArgb(41, 128, 185),
+                        string.Format("✔ Đã căn chỉnh thành công {0} Level ({1} View) lúc {2}!", count, targetViews.Count, DateTime.Now.ToString("HH:mm:ss")));
                 }
-                else
+                catch (Exception ex)
                 {
-                    targetViews.Add(_activeView);
+                    SetStatusSafe(Color.Red, "Lỗi căn Level: " + ex.Message);
                 }
-
-                if (targetViews.Count == 0)
-                {
-                    lblStatus.ForeColor = Color.OrangeRed;
-                    lblStatus.Text = "Vui lòng tích chọn ít nhất 1 View trong danh sách!";
-                    return;
-                }
-
-                string summaryMsg;
-                int count = LevelCropService.AdjustMultipleViews(_doc, targetViews, offsetLeft, offsetRight, make2D, symLeft, symRight, out summaryMsg);
-
-                try { _uidoc.RefreshActiveView(); } catch { }
-
-                lblStatus.ForeColor = Color.FromArgb(41, 128, 185);
-                lblStatus.Text = string.Format("✔ Đã căn chỉnh thành công {0} Level ({1} View) lúc {2}!", count, targetViews.Count, DateTime.Now.ToString("HH:mm:ss"));
-            }
-            catch (Exception ex)
-            {
-                lblStatus.ForeColor = Color.Red;
-                lblStatus.Text = "Lỗi căn Level: " + ex.Message;
-            }
+            });
         }
 
         private void BtnLevelPick_Click(object sender, EventArgs e)
@@ -899,89 +1008,353 @@ namespace HDTool
             bool symLeft = chkLevelSymLeft.Checked;
             bool symRight = chkLevelSymRight.Checked;
 
-            this.Hide();
-
-            try
+            RunPickSafely(uiapp =>
             {
-                if (_isSheet)
+                try
                 {
-                    IList<Reference> references = _uidoc.Selection.PickObjects(
-                        ObjectType.Element,
-                        new LevelSelectionFilter(true),
-                        "Click chọn các Viewport trên Sheet cần căn chỉnh Level (nhấn Finish khi xong)");
-
-                    if (references != null && references.Count > 0)
+                    if (_isSheet)
                     {
-                        List<Autodesk.Revit.DB.View> pickedViews = new List<Autodesk.Revit.DB.View>();
-                        foreach (Reference r in references)
+                        IList<Reference> references = _uidoc.Selection.PickObjects(
+                            ObjectType.Element,
+                            new LevelSelectionFilter(true),
+                            "Click chọn các Viewport trên Sheet cần căn chỉnh Level (nhấn Finish khi xong)");
+
+                        if (references != null && references.Count > 0)
                         {
-                            Element elem = _doc.GetElement(r);
-                            Viewport vp = elem as Viewport;
-                            if (vp != null)
+                            List<Autodesk.Revit.DB.View> pickedViews = new List<Autodesk.Revit.DB.View>();
+                            foreach (Reference r in references)
                             {
-                                Autodesk.Revit.DB.View v = _doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
-                                if (v != null && LevelCropService.IsViewApplicable(v))
+                                Element elem = _doc.GetElement(r);
+                                Viewport vp = elem as Viewport;
+                                if (vp != null)
                                 {
-                                    pickedViews.Add(v);
+                                    Autodesk.Revit.DB.View v = _doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
+                                    if (v != null && LevelCropService.IsViewApplicable(v))
+                                    {
+                                        pickedViews.Add(v);
+                                    }
                                 }
                             }
-                        }
 
-                        if (pickedViews.Count > 0)
-                        {
-                            string summaryMsg;
-                            LevelCropService.AdjustMultipleViews(_doc, pickedViews, offsetLeft, offsetRight, make2D, symLeft, symRight, out summaryMsg);
+                            if (pickedViews.Count > 0)
+                            {
+                                string summaryMsg;
+                                LevelCropService.AdjustMultipleViews(_doc, pickedViews, offsetLeft, offsetRight, make2D, symLeft, symRight, out summaryMsg);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    IList<Reference> references = _uidoc.Selection.PickObjects(
-                        ObjectType.Element,
-                        new LevelSelectionFilter(false),
-                        "Click chọn Crop View hoặc các Level cần căn chỉnh (nhấn Finish khi xong)");
-
-                    if (references != null && references.Count > 0)
+                    else
                     {
-                        List<Level> pickedLevels = new List<Level>();
-                        foreach (Reference r in references)
-                        {
-                            Element elem = _doc.GetElement(r);
-                            Level l = elem as Level;
-                            if (l != null) pickedLevels.Add(l);
-                        }
+                        IList<Reference> references = _uidoc.Selection.PickObjects(
+                            ObjectType.Element,
+                            new LevelSelectionFilter(false),
+                            "Click chọn Crop View hoặc các Level cần căn chỉnh (nhấn Finish khi xong)");
 
-                        string msg;
-                        if (pickedLevels.Count > 0)
+                        if (references != null && references.Count > 0)
                         {
-                            LevelCropService.AdjustLevels(_doc, _activeView, pickedLevels, offsetLeft, offsetRight, make2D, symLeft, symRight, out msg);
+                            List<Level> pickedLevels = new List<Level>();
+                            foreach (Reference r in references)
+                            {
+                                Element elem = _doc.GetElement(r);
+                                Level l = elem as Level;
+                                if (l != null) pickedLevels.Add(l);
+                            }
+
+                            string msg;
+                            if (pickedLevels.Count > 0)
+                            {
+                                LevelCropService.AdjustLevels(_doc, _activeView, pickedLevels, offsetLeft, offsetRight, make2D, symLeft, symRight, out msg);
+                            }
+                            else
+                            {
+                                List<Level> all = LevelCropService.GetAllLevelsInView(_doc, _activeView);
+                                LevelCropService.AdjustLevels(_doc, _activeView, all, offsetLeft, offsetRight, make2D, symLeft, symRight, out msg);
+                            }
+                        }
+                    }
+
+                    try { _uidoc.RefreshActiveView(); } catch { }
+                    SetStatusSafe(Color.FromArgb(41, 128, 185),
+                        string.Format("✔ Đã áp dụng các đối tượng Level vừa chọn lúc {0}!", DateTime.Now.ToString("HH:mm:ss")));
+                }
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                {
+                }
+                catch (Exception ex)
+                {
+                    SetStatusSafe(Color.Red, "Lỗi pick Level: " + ex.Message);
+                }
+            });
+        }
+
+        private void BuildTabAutoCrop()
+        {
+            tabAutoCrop = new TabPage();
+            tabAutoCrop.Text = " 🔲  TỰ ĐỘNG CROP VIEW ";
+            tabAutoCrop.BackColor = Color.FromArgb(250, 252, 254);
+            tabAutoCrop.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
+
+            // 1. Group Info
+            grpCropInfo = new GroupBox();
+            grpCropInfo.Text = "Khung Nhìn Mục Tiêu (Target View)";
+            grpCropInfo.Location = new Point(12, 12);
+            grpCropInfo.Size = new Size(484, 85);
+            grpCropInfo.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+            grpCropInfo.ForeColor = Color.FromArgb(44, 62, 80);
+
+            lblCropViewName = new Label();
+            lblCropViewName.Location = new Point(15, 24);
+            lblCropViewName.Size = new Size(454, 22);
+            lblCropViewName.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+            lblCropViewName.ForeColor = Color.FromArgb(2, 132, 199);
+            if (_activeView != null)
+            {
+                lblCropViewName.Text = string.Format("View: {0} ({1}) - Tỷ lệ 1:{2}", _activeView.Name, _activeView.ViewType.ToString(), _activeView.Scale);
+            }
+
+            lblCropElemCount = new Label();
+            lblCropElemCount.Location = new Point(15, 50);
+            lblCropElemCount.Size = new Size(454, 22);
+            lblCropElemCount.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
+            lblCropElemCount.ForeColor = Color.FromArgb(16, 185, 129);
+            try
+            {
+                List<Element> list = AutoCropService.GetModelElementsInView(_doc, _activeView);
+                lblCropElemCount.Text = string.Format("Phát hiện {0} đối tượng mô hình trong View (Pipes, Ducts, Fittings...)", list != null ? list.Count : 0);
+            }
+            catch
+            {
+                lblCropElemCount.Text = "Sẵn sàng tính toán Bounding Box ôm khít toàn bộ đối tượng.";
+            }
+
+            grpCropInfo.Controls.Add(lblCropViewName);
+            grpCropInfo.Controls.Add(lblCropElemCount);
+
+            // 2. Group Padding
+            grpCropPadding = new GroupBox();
+            grpCropPadding.Text = "Khoảng Đệm Viền Ngoài Mô Hình (Padding / Margin mm)";
+            grpCropPadding.Location = new Point(12, 105);
+            grpCropPadding.Size = new Size(484, 125);
+            grpCropPadding.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+            grpCropPadding.ForeColor = Color.FromArgb(44, 62, 80);
+
+            Label lblPad = new Label();
+            lblPad.Text = "Khoảng đệm lề (mm):";
+            lblPad.Location = new Point(15, 25);
+            lblPad.Size = new Size(140, 22);
+            lblPad.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
+
+            numCropPadding = new NumericUpDown();
+            numCropPadding.Location = new Point(160, 23);
+            numCropPadding.Size = new Size(85, 23);
+            numCropPadding.Minimum = 10;
+            numCropPadding.Maximum = 5000;
+            numCropPadding.Value = 150;
+            numCropPadding.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+
+            trackCropPadding = new TrackBar();
+            trackCropPadding.AutoSize = false;
+            trackCropPadding.Height = 26;
+            trackCropPadding.Location = new Point(15, 50);
+            trackCropPadding.Size = new Size(454, 26);
+            trackCropPadding.Minimum = 20;
+            trackCropPadding.Maximum = 600;
+            trackCropPadding.Value = 150;
+            trackCropPadding.TickFrequency = 50;
+
+            numCropPadding.ValueChanged += (s, e) => {
+                int val = (int)numCropPadding.Value;
+                if (val >= trackCropPadding.Minimum && val <= trackCropPadding.Maximum) trackCropPadding.Value = val;
+            };
+            trackCropPadding.Scroll += (s, e) => {
+                numCropPadding.Value = trackCropPadding.Value;
+            };
+
+            // Nút bấm nhanh mm
+            System.Windows.Forms.Panel pnlQ = new System.Windows.Forms.Panel();
+            pnlQ.Location = new Point(15, 84);
+            pnlQ.Size = new Size(454, 30);
+
+            int[] quicks = new int[] { 50, 100, 150, 200, 300 };
+            int qPos = 0;
+            foreach (int q in quicks)
+            {
+                Button bq = new Button();
+                bq.Text = string.Format("{0}mm", q);
+                bq.Size = new Size(68, 26);
+                bq.Location = new Point(qPos, 0);
+                bq.Font = new Font("Segoe UI", 8.0f, FontStyle.Bold);
+                bq.BackColor = (q == 150) ? Color.FromArgb(16, 185, 129) : Color.FromArgb(236, 240, 241);
+                bq.ForeColor = (q == 150) ? Color.White : Color.Black;
+                bq.FlatStyle = FlatStyle.Flat;
+                int currentQ = q;
+                bq.Click += (s, e) => { numCropPadding.Value = currentQ; };
+                pnlQ.Controls.Add(bq);
+                qPos += 68;
+            }
+
+            grpCropPadding.Controls.Add(lblPad);
+            grpCropPadding.Controls.Add(numCropPadding);
+            grpCropPadding.Controls.Add(trackCropPadding);
+            grpCropPadding.Controls.Add(pnlQ);
+
+            // 3. Checkboxes
+            chkCropMepOnly = new CheckBox();
+            chkCropMepOnly.Text = "Ưu tiên ôm khít hệ thống MEP (Ống nước, ống gió, thiết bị - Cắt gọn sàn/vách)";
+            chkCropMepOnly.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+            chkCropMepOnly.ForeColor = Color.FromArgb(217, 119, 6); // Amber
+            chkCropMepOnly.Location = new Point(15, 235);
+            chkCropMepOnly.Size = new Size(454, 22);
+            chkCropMepOnly.Checked = true;
+
+            chkCropVisible = new CheckBox();
+            chkCropVisible.Text = "Hiển thị đường viền Crop View (Crop Region Visible)";
+            chkCropVisible.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
+            chkCropVisible.ForeColor = Color.FromArgb(52, 73, 94);
+            chkCropVisible.Location = new Point(15, 258);
+            chkCropVisible.Size = new Size(454, 22);
+            chkCropVisible.Checked = true;
+
+            chkCropSectionBox = new CheckBox();
+            chkCropSectionBox.Text = "Đồng bộ khớp cả Section Box 3D (nếu đang bật trong View 3D)";
+            chkCropSectionBox.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
+            chkCropSectionBox.ForeColor = Color.FromArgb(100, 116, 139);
+            chkCropSectionBox.Location = new Point(15, 281);
+            chkCropSectionBox.Size = new Size(454, 20);
+            chkCropSectionBox.Checked = false;
+
+            // 4. Action Buttons
+            btnCropAuto = new Button();
+            btnCropAuto.Location = new Point(12, 308);
+            btnCropAuto.Size = new Size(484, 48);
+            btnCropAuto.BackColor = Color.FromArgb(225, 29, 72); // Rose Red
+            btnCropAuto.ForeColor = Color.White;
+            btnCropAuto.FlatStyle = FlatStyle.Flat;
+            btnCropAuto.FlatAppearance.BorderSize = 0;
+            btnCropAuto.Cursor = Cursors.Hand;
+            btnCropAuto.Font = new Font("Segoe UI", 10.0f, FontStyle.Bold);
+            btnCropAuto.Text = "⚡  TỰ ĐỘNG FIT CROP VIEW (ÔM KHÍT TOÀN BỘ ĐỐI TƯỢNG)";
+            btnCropAuto.Click += BtnCropAuto_Click;
+
+            btnCropPick = new Button();
+            btnCropPick.Location = new Point(12, 362);
+            btnCropPick.Size = new Size(484, 42);
+            btnCropPick.BackColor = Color.FromArgb(14, 116, 144); // Cyan 700
+            btnCropPick.ForeColor = Color.White;
+            btnCropPick.FlatStyle = FlatStyle.Flat;
+            btnCropPick.FlatAppearance.BorderSize = 0;
+            btnCropPick.Cursor = Cursors.Hand;
+            btnCropPick.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+            btnCropPick.Text = "🎯  CLICK / QUÉT CHỌN CỤM ĐỐI TƯỢNG CẦN CROP (PICK)";
+            btnCropPick.Click += BtnCropPick_Click;
+
+            tabAutoCrop.Controls.Add(grpCropInfo);
+            tabAutoCrop.Controls.Add(grpCropPadding);
+            tabAutoCrop.Controls.Add(chkCropMepOnly);
+            tabAutoCrop.Controls.Add(chkCropVisible);
+            tabAutoCrop.Controls.Add(chkCropSectionBox);
+            tabAutoCrop.Controls.Add(btnCropAuto);
+            tabAutoCrop.Controls.Add(btnCropPick);
+        }
+
+        private void BtnCropAuto_Click(object sender, EventArgs e)
+        {
+            double pad = (double)numCropPadding.Value;
+            bool sec = chkCropSectionBox.Checked;
+            bool vis = chkCropVisible.Checked;
+            bool mepOnly = chkCropMepOnly.Checked;
+
+            HDToolModelessHost.Run(uiapp =>
+            {
+                try
+                {
+                    SyncContextFromApp(uiapp);
+                    string msg;
+                    bool ok = AutoCropService.ApplyAutoCrop(_uidoc, out msg, pad, sec, vis, null, true, mepOnly, true);
+                    if (ok)
+                    {
+                        SetStatusSafe(Color.FromArgb(39, 174, 96),
+                            string.Format("✔ Đã Fit Crop View thành công lúc {0}!", DateTime.Now.ToString("HH:mm:ss")));
+                    }
+                    else
+                    {
+                        SetStatusSafe(Color.Red, msg);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    SetStatusSafe(Color.Red, "Lỗi Crop View: " + ex.Message);
+                }
+            });
+        }
+
+        private void BtnCropPick_Click(object sender, EventArgs e)
+        {
+            double pad = (double)numCropPadding.Value;
+            bool sec = chkCropSectionBox.Checked;
+            bool vis = chkCropVisible.Checked;
+            bool mepOnly = chkCropMepOnly.Checked;
+
+            RunPickSafely(uiapp =>
+            {
+                try
+                {
+                    IList<Reference> refs = _uidoc.Selection.PickObjects(
+                        ObjectType.Element,
+                        "HDTOOL: Quét chọn các đối tượng cần tạo Crop View bao quanh:"
+                    );
+
+                    if (refs != null && refs.Count > 0)
+                    {
+                        string msg = string.Empty;
+                        bool ok = false;
+
+                        if (_isSheet)
+                        {
+                            List<Autodesk.Revit.DB.View> vpViews = new List<Autodesk.Revit.DB.View>();
+                            foreach (Reference r in refs)
+                            {
+                                Viewport vp = _doc.GetElement(r.ElementId) as Viewport;
+                                if (vp != null)
+                                {
+                                    Autodesk.Revit.DB.View tv = _doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
+                                    if (tv != null && !vpViews.Any(x => x.Id == tv.Id)) vpViews.Add(tv);
+                                }
+                            }
+                            if (vpViews.Count > 0)
+                            {
+                                int cnt = AutoCropService.ApplyAutoCropToViews(_uidoc, vpViews, out msg, pad, true, mepOnly, true, sec, vis, null);
+                                ok = cnt > 0;
+                            }
+                            else
+                            {
+                                msg = "Vui lòng chọn ít nhất 1 Viewport trên Sheet.";
+                            }
                         }
                         else
                         {
-                            List<Level> all = LevelCropService.GetAllLevelsInView(_doc, _activeView);
-                            LevelCropService.AdjustLevels(_doc, _activeView, all, offsetLeft, offsetRight, make2D, symLeft, symRight, out msg);
+                            List<ElementId> ids = new List<ElementId>();
+                            foreach (Reference r in refs) ids.Add(r.ElementId);
+                            ok = AutoCropService.ApplyAutoCrop(_uidoc, out msg, pad, sec, vis, ids, true, mepOnly, true);
+                        }
+
+                        if (ok)
+                        {
+                            SetStatusSafe(Color.FromArgb(39, 174, 96),
+                                string.Format("✔ Đã Fit Crop View thành công lúc {0}!", DateTime.Now.ToString("HH:mm:ss")));
+                        }
+                        else
+                        {
+                            SetStatusSafe(Color.Red, msg);
                         }
                     }
                 }
-
-                try { _uidoc.RefreshActiveView(); } catch { }
-
-                lblStatus.ForeColor = Color.FromArgb(41, 128, 185);
-                lblStatus.Text = string.Format("✔ Đã áp dụng các đối tượng Level vừa chọn lúc {0}!", DateTime.Now.ToString("HH:mm:ss"));
-            }
-            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-            {
-                // Esc
-            }
-            catch (Exception ex)
-            {
-                lblStatus.ForeColor = Color.Red;
-                lblStatus.Text = "Lỗi pick Level: " + ex.Message;
-            }
-            finally
-            {
-                this.Show();
-            }
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException) { }
+                catch (Exception ex)
+                {
+                    SetStatusSafe(Color.Red, "Lỗi pick đối tượng: " + ex.Message);
+                }
+            });
         }
     }
 }

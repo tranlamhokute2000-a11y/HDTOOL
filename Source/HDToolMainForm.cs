@@ -23,6 +23,8 @@ namespace HDTool
         private GroupBox grpInfo;
         private Label lblCurrentView;
 
+        private Button btnAutoCrop;
+        private Button btnCadToDuct;
         private Button btnGrids;
         private Button btnLevel;
         private Button btnMepQuantity;
@@ -116,9 +118,25 @@ namespace HDTool
             }
             grpInfo.Controls.Add(lblCurrentView);
 
-            // 3. Button 1: Căn Chỉnh Grids
+            // 3. Button 0: Tự Động Crop View (MỚI THEO LỆNH SẾP HỒ)
+            btnAutoCrop = new Button();
+            btnAutoCrop.Location = new Point(16, 150);
+            btnAutoCrop.Size = new Size(492, 54);
+            btnAutoCrop.BackColor = Color.FromArgb(225, 29, 72); // Rose 600
+            btnAutoCrop.ForeColor = Color.White;
+            btnAutoCrop.FlatStyle = FlatStyle.Flat;
+            btnAutoCrop.FlatAppearance.BorderSize = 0;
+            btnAutoCrop.Cursor = Cursors.Hand;
+            btnAutoCrop.TextAlign = ContentAlignment.MiddleLeft;
+            btnAutoCrop.Padding = new Padding(15, 0, 0, 0);
+            btnAutoCrop.Text = "🔲  1. TỰ ĐỘNG CROP VIEW (AUTO CROP BOX - MỚI)\r\n" +
+                               "      Tự động tính Bounding Box ôm khít toàn bộ đối tượng trong View vừa tạo (SĐKG 3D, Plan)";
+            btnAutoCrop.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+            btnAutoCrop.Click += BtnAutoCrop_Click;
+
+            // 4. Button 1: Căn Chỉnh Grids
             btnGrids = new Button();
-            btnGrids.Location = new Point(16, 150);
+            btnGrids.Location = new Point(16, 210);
             btnGrids.Size = new Size(492, 54);
             btnGrids.BackColor = Color.FromArgb(39, 174, 96);
             btnGrids.ForeColor = Color.White;
@@ -134,7 +152,7 @@ namespace HDTool
 
             // 4. Button 2: Căn Chỉnh Level
             btnLevel = new Button();
-            btnLevel.Location = new Point(16, 210);
+            btnLevel.Location = new Point(16, 270);
             btnLevel.Size = new Size(492, 54);
             btnLevel.BackColor = Color.FromArgb(41, 128, 185);
             btnLevel.ForeColor = Color.White;
@@ -150,7 +168,7 @@ namespace HDTool
 
             // 5. Button 3: Thống Kê Khối Lượng Ống Nước & Phụ Kiện (Tính Năng Mới)
             btnMepQuantity = new Button();
-            btnMepQuantity.Location = new Point(16, 270);
+            btnMepQuantity.Location = new Point(16, 330);
             btnMepQuantity.Size = new Size(492, 56);
             btnMepQuantity.BackColor = Color.FromArgb(2, 132, 199); // Sky Blue Accent
             btnMepQuantity.ForeColor = Color.White;
@@ -166,7 +184,7 @@ namespace HDTool
 
             // 6. Button 4: Xuất Danh Mục Bản Vẽ
             btnSheetList = new Button();
-            btnSheetList.Location = new Point(16, 332);
+            btnSheetList.Location = new Point(16, 390);
             btnSheetList.Size = new Size(492, 54);
             btnSheetList.BackColor = Color.FromArgb(22, 160, 133);
             btnSheetList.ForeColor = Color.White;
@@ -182,7 +200,7 @@ namespace HDTool
 
             // 7. Button 5: Cập Nhật Danh Mục Từ Excel
             btnUpdateSheetList = new Button();
-            btnUpdateSheetList.Location = new Point(16, 392);
+            btnUpdateSheetList.Location = new Point(16, 450);
             btnUpdateSheetList.Size = new Size(492, 54);
             btnUpdateSheetList.BackColor = Color.FromArgb(211, 84, 0); // Orange Accent
             btnUpdateSheetList.ForeColor = Color.White;
@@ -198,7 +216,7 @@ namespace HDTool
 
             // 8. Button 6: Cập Nhật Tính Năng Mới (Hot Reload)
             btnReloadTool = new Button();
-            btnReloadTool.Location = new Point(16, 452);
+            btnReloadTool.Location = new Point(16, 510);
             btnReloadTool.Size = new Size(492, 54);
             btnReloadTool.BackColor = Color.FromArgb(100, 116, 139); // Slate Grey
             btnReloadTool.ForeColor = Color.White;
@@ -214,7 +232,7 @@ namespace HDTool
 
             // 9. Button 7: Tự Động Theo View
             btnSmart = new Button();
-            btnSmart.Location = new Point(16, 512);
+            btnSmart.Location = new Point(16, 570);
             btnSmart.Size = new Size(492, 44);
             btnSmart.BackColor = Color.FromArgb(142, 68, 173); // Purple Accent
             btnSmart.ForeColor = Color.White;
@@ -228,10 +246,26 @@ namespace HDTool
             btnSmart.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
             btnSmart.Click += BtnSmart_Click;
 
+            // Button 8: Dựng Ống Gió 3D Từ CAD Link
+            btnCadToDuct = new Button();
+            btnCadToDuct.Location = new Point(16, 622);
+            btnCadToDuct.Size = new Size(492, 52);
+            btnCadToDuct.BackColor = Color.FromArgb(12, 74, 110); // Deep Sky Navy
+            btnCadToDuct.ForeColor = Color.White;
+            btnCadToDuct.FlatStyle = FlatStyle.Flat;
+            btnCadToDuct.FlatAppearance.BorderSize = 0;
+            btnCadToDuct.Cursor = Cursors.Hand;
+            btnCadToDuct.TextAlign = ContentAlignment.MiddleLeft;
+            btnCadToDuct.Padding = new Padding(15, 0, 0, 0);
+            btnCadToDuct.Text = "💨  8. DỰNG MÔ HÌNH ỐNG GIÓ 3D TỪ BẢN VẼ CAD LINK\r\n" +
+                                "      Nhận diện WxH, Côn đồng tâm, Cút, Chân rẽ Tap & Lan truyền BFS";
+            btnCadToDuct.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+            btnCadToDuct.Click += BtnCadToDuct_Click;
+
             // 10. Button Close
             btnClose = new Button();
             btnClose.Text = "Đóng (ESC)";
-            btnClose.Location = new Point(16, 572);
+            btnClose.Location = new Point(16, 682);
             btnClose.Size = new Size(492, 38);
             btnClose.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             btnClose.Click += (s, e) => this.Close();
@@ -239,6 +273,7 @@ namespace HDTool
 
             this.Controls.Add(pnlHeader);
             this.Controls.Add(grpInfo);
+            this.Controls.Add(btnAutoCrop);
             this.Controls.Add(btnGrids);
             this.Controls.Add(btnLevel);
             this.Controls.Add(btnMepQuantity);
@@ -246,31 +281,58 @@ namespace HDTool
             this.Controls.Add(btnUpdateSheetList);
             this.Controls.Add(btnReloadTool);
             this.Controls.Add(btnSmart);
+            this.Controls.Add(btnCadToDuct);
             this.Controls.Add(btnClose);
 
-            this.ClientSize = new Size(524, 625);
+            this.ClientSize = new Size(524, 736);
             this.ResumeLayout(false);
+        }
+
+        private void BtnCadToDuct_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                HDToolModelessHost.EnsureInitialized();
+                CadToDuctForm form = new CadToDuctForm(_uidoc);
+                OpenChildModeless(form);
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("HDTOOL", "Lỗi mở Dựng Ống Gió Từ CAD: " + ex.Message);
+            }
+        }
+
+        private void OpenChildModeless(System.Windows.Forms.Form childForm)
+        {
+            HDToolModelessHost.EnsureInitialized();
+            IntPtr mainHwnd = IntPtr.Zero;
+            try { mainHwnd = _uidoc.Application.MainWindowHandle; } catch { }
+            this.Close();
+            HDToolModelessHost.ShowModeless(childForm, mainHwnd);
+        }
+
+        private void BtnAutoCrop_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                HDToolModelessHost.EnsureInitialized();
+                AutoCropForm form = new AutoCropForm(_uidoc, HDToolModelessHost.ExEvent, HDToolModelessHost.Handler);
+                OpenChildModeless(form);
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("HDTOOL CROP VIEW", "Lỗi mở giao diện Tự Động Crop View: " + ex.Message);
+            }
         }
 
         private void BtnMepQuantity_Click(object sender, EventArgs e)
         {
-            this.Close();
-
             try
             {
                 MepInspectorExternalEventHandler handler = new MepInspectorExternalEventHandler();
                 ExternalEvent extEvent = ExternalEvent.Create(handler);
                 MepQuantityInspectorForm form = new MepQuantityInspectorForm(_uidoc, extEvent, handler);
-
-                IntPtr mainHwnd = _uidoc.Application.MainWindowHandle;
-                if (mainHwnd != IntPtr.Zero)
-                {
-                    form.Show(new RevitWindowWrapper(mainHwnd));
-                }
-                else
-                {
-                    form.Show();
-                }
+                OpenChildModeless(form);
             }
             catch (Exception ex)
             {
@@ -290,23 +352,19 @@ namespace HDTool
 
         private void BtnReloadTool_Click(object sender, EventArgs e)
         {
-            this.Hide();
             try
             {
-                using (UpdateToolForm form = new UpdateToolForm())
-                {
-                    form.ShowDialog();
-                }
+                UpdateToolForm form = new UpdateToolForm(_uidoc.Application);
+                OpenChildModeless(form);
             }
-            finally
+            catch (Exception ex)
             {
-                this.Close();
+                TaskDialog.Show("HDTOOL", "Lỗi mở cập nhật tool: " + ex.Message);
             }
         }
 
         private void BtnUpdateSheetList_Click(object sender, EventArgs e)
         {
-            this.Hide();
             try
             {
                 OpenFileDialog ofd = new OpenFileDialog();
@@ -327,10 +385,9 @@ namespace HDTool
                         List<SheetUpdateItem> items = UpdateSheetListService.MatchAndCompare(_doc, rawRows);
                         if (items.Count > 0)
                         {
-                            using (UpdateSheetListPreviewForm preview = new UpdateSheetListPreviewForm(_doc, items))
-                            {
-                                preview.ShowDialog();
-                            }
+                            UpdateSheetListPreviewForm preview = new UpdateSheetListPreviewForm(_doc, items);
+                            OpenChildModeless(preview);
+                            return;
                         }
                         else
                         {
@@ -347,90 +404,76 @@ namespace HDTool
             {
                 TaskDialog.Show("Lỗi Cập Nhật", "Lỗi: " + ex.Message);
             }
-            finally
-            {
-                this.Close();
-            }
+            this.Close();
         }
 
         private void BtnSheetList_Click(object sender, EventArgs e)
         {
-            this.Hide();
             try
             {
-                using (ExportSheetListForm form = new ExportSheetListForm(_doc))
-                {
-                    form.ShowDialog();
-                }
+                ExportSheetListForm form = new ExportSheetListForm(_doc);
+                OpenChildModeless(form);
             }
-            finally
+            catch (Exception ex)
             {
-                this.Close();
+                TaskDialog.Show("HDTOOL", "Lỗi mở Danh mục bản vẽ: " + ex.Message);
             }
         }
 
         private void BtnGrids_Click(object sender, EventArgs e)
         {
-            this.Hide();
             try
             {
-                using (GridCropForm form = new GridCropForm(_uidoc))
-                {
-                    form.ShowDialog();
-                }
+                HDToolModelessHost.EnsureInitialized();
+                GridCropForm form = new GridCropForm(_uidoc, HDToolModelessHost.ExEvent, HDToolModelessHost.Handler);
+                OpenChildModeless(form);
             }
-            finally
+            catch (Exception ex)
             {
-                this.Close();
+                TaskDialog.Show("HDTOOL", "Lỗi mở Căn Grids: " + ex.Message);
             }
         }
 
         private void BtnLevel_Click(object sender, EventArgs e)
         {
-            this.Hide();
             try
             {
-                using (LevelCropForm form = new LevelCropForm(_uidoc, new List<Level>()))
-                {
-                    form.ShowDialog();
-                }
+                LevelCropForm form = new LevelCropForm(_uidoc, new List<Level>());
+                OpenChildModeless(form);
             }
-            finally
+            catch (Exception ex)
             {
-                this.Close();
+                TaskDialog.Show("HDTOOL", "Lỗi mở Căn Level: " + ex.Message);
             }
         }
 
         private void BtnSmart_Click(object sender, EventArgs e)
         {
-            this.Hide();
             try
             {
                 if (GridCropService.IsPlanView(_activeView) || _activeView is ViewSheet)
                 {
-                    using (GridCropForm form = new GridCropForm(_uidoc))
-                    {
-                        form.ShowDialog();
-                    }
+                    HDToolModelessHost.EnsureInitialized();
+                    GridCropForm form = new GridCropForm(_uidoc, HDToolModelessHost.ExEvent, HDToolModelessHost.Handler);
+                    OpenChildModeless(form);
                     return;
                 }
 
                 string errorMsg;
                 if (LevelCropService.IsValidContext(_activeView, out errorMsg))
                 {
-                    using (LevelCropForm form = new LevelCropForm(_uidoc, new List<Level>()))
-                    {
-                        form.ShowDialog();
-                    }
+                    LevelCropForm form = new LevelCropForm(_uidoc, new List<Level>());
+                    OpenChildModeless(form);
                     return;
                 }
 
                 TaskDialog.Show("HDTOOL", errorMsg);
             }
-            finally
+            catch (Exception ex)
             {
-                this.Close();
+                TaskDialog.Show("HDTOOL", "Lỗi: " + ex.Message);
             }
+            this.Close();
         }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -806,21 +806,12 @@ namespace HDTool
 
         private static double GetTransitionLengthMm(Element elem, List<Connector> conns)
         {
-            if (conns != null && conns.Count >= 2)
-            {
-                try
-                {
-                    double distFt = conns[0].Origin.DistanceTo(conns[1].Origin);
-                    double distMm = Math.Round(distFt * 304.8, 0);
-                    if (distMm >= 50 && distMm <= 3000)
-                    {
-                        return distMm;
-                    }
-                }
-                catch { }
-            }
-
-            string[] lenParamNames = new string[] { "Duct Length", "Length", "Chiều Dài", "L", "Transition Length", "Fitting Length" };
+            // 1. ƯU TIÊN 1: Đọc trực tiếp Parameter kích thước Chiều dài chuẩn của Fitting Transition trong Revit (như dim 200mm của Sếp Hồ)
+            string[] lenParamNames = new string[] 
+            { 
+                "Length", "Duct Length", "Transition Length", "Chiều Dài", "L", 
+                "Fitting Length", "Body Length", "Std Length", "Standard Length" 
+            };
             foreach (string name in lenParamNames)
             {
                 Parameter p = elem.LookupParameter(name);
@@ -832,11 +823,46 @@ namespace HDTool
                 if (p != null && p.HasValue && p.StorageType == StorageType.Double)
                 {
                     double valMm = Math.Round(p.AsDouble() * 304.8, 0);
-                    if (valMm >= 50) return valMm;
+                    if (valMm >= 30 && valMm <= 3000) return valMm;
                 }
             }
 
-            return 200.0; // Fallback chuẩn 200mm theo hình ảnh thực tế Sếp gửi
+            Parameter pCurveLen = elem.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH);
+            if (pCurveLen != null && pCurveLen.HasValue && pCurveLen.StorageType == StorageType.Double)
+            {
+                double valMm = Math.Round(pCurveLen.AsDouble() * 304.8, 0);
+                if (valMm >= 30 && valMm <= 3000) return valMm;
+            }
+
+            // 2. ƯU TIÊN 2: Chiếu khoảng cách giữa 2 Connector theo trục dòng chảy (BasisZ của connector)
+            if (conns != null && conns.Count >= 2)
+            {
+                try
+                {
+                    XYZ p1 = conns[0].Origin;
+                    XYZ p2 = conns[1].Origin;
+                    XYZ normal = conns[0].CoordinateSystem.BasisZ;
+
+                    // Chiều dài dọc trục dòng chảy
+                    double axialFt = Math.Abs((p2 - p1).DotProduct(normal));
+                    double axialMm = Math.Round(axialFt * 304.8, 0);
+                    if (axialMm >= 30 && axialMm <= 3000)
+                    {
+                        return axialMm;
+                    }
+
+                    // Nếu trục Z không khớp, thử khoảng cách 3D
+                    double distFt = p1.DistanceTo(p2);
+                    double distMm = Math.Round(distFt * 304.8, 0);
+                    if (distMm >= 30 && distMm <= 3000)
+                    {
+                        return distMm;
+                    }
+                }
+                catch { }
+            }
+
+            return 200.0; // Fallback chuẩn 200mm theo đúng kích thước thực tế Sếp Hồ dim
         }
 
         private static void GetOffsetDetails(Element elem, List<Connector> conns, out double lengthMm, out double offsetMm)

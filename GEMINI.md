@@ -14,15 +14,28 @@ Tài liệu này kích hoạt chế độ ghi nhớ trạng thái làm việc li
 2. **Cập nhật trạng thái sau mỗi bước**:
    - Sau khi hoàn thành hoặc sửa đổi bất kỳ mã nguồn nào, Antigravity tự động cập nhật `.agents/SESSION_STATE.md` để đảm bảo dù người dùng đóng hay mở lại Antigravity, phiên làm việc luôn được tiếp nối chính xác ở trạng thái gần nhất.
 
-3. **Quy trình Preview Studio trước khi làm giao diện Add-in**:
+3. **Đúc kết & Tinh lọc Kỹ năng (Skill) tức thì (BẮT BUỘC THEO LỆNH SẾP HỒ)**:
+   - Mỗi lần cập nhật hay bổ sung tính năng mới -> **NGAY LẬP TỨC đúc kết luôn thành Skill cập nhật** tại `.agents/skills/hdtool/SKILL.md` và `SKILL.md`.
+   - **Những thứ gì bỏ đi không còn trong tính năng tool thì Skill CŨNG BỎ ĐI NGAY LẬP TỨC, KHÔNG CẦN GHI NHỚ LÀM GÌ**. Giữ Skill luôn tinh gọn, sắc bén, phản ánh đúng 100% hiện trạng thực tế công cụ.
+
+4. **Quy trình Preview Studio trước khi làm giao diện Add-in**:
    - Mỗi lần sửa đổi, bổ sung cho dự án HDTOOL, bắt buộc tạo/mở Preview Studio với giao diện trực quan cho Sếp Hồ xem trước, kéo thả điều chỉnh sắp xếp công cụ trước khi chốt update Add-in.
 
-4. **Tự động tăng phiên bản Version (+1) & Quy tắc lưu trữ theo lệnh Sếp Hồ**:
+5. **Tự động tăng phiên bản Version (+1) & Quy tắc lưu trữ theo lệnh Sếp Hồ**:
    - Mỗi lần hoàn thành sửa đổi, bổ sung và chạy biên dịch `Build.ps1`, hệ thống tự động tăng Version (+1): Version 5 -> Version 6 -> Version 7...
    - **Tuyệt đối KHÔNG sinh tệp ra Desktop**: Mọi file cài đặt `.exe`, `.zip` CHỈ ĐƯỢC PHÉP SINH RA TRONG THƯ MỤC ĐANG LÀM VIỆC (`c:\Users\Nguye\Desktop\ADDIN REVIT`), giữ Desktop của Sếp sạch đẹp 100%.
    - **CHỈ GIỮ LẠI ĐÚNG 2 VERSION GẦN NHẤT**: Hệ thống tự động xóa sạch toàn bộ các file của các version cũ hơn (`v1`, `v2`, `v3`... đến `{N-2}`) để thư mục luôn tinh gọn.
    - **Chỉ giữ định dạng tên duy nhất `HDTOOL_Setup_Version_{N}.exe`**: Xóa sạch toàn bộ các file viết tắt `_v{N}` và các file trùng lặp để thư mục ngăn nắp 100%.
 
-5. **Quy tắc Git, GitHub & Lịch nhắc 16h15 hàng ngày theo lệnh Sếp Hồ**:
+6. **Quy tắc Git, GitHub & Lịch nhắc 16h15 hàng ngày theo lệnh Sếp Hồ**:
    - **Lịch nhắc nhở 16h15 hàng ngày**: Cứ đúng 16h15 mỗi ngày, Antigravity chủ động nhắc Sếp Hồ: *"Sếp Hồ ơi, đã 16h15 rồi, Sếp có muốn em cập nhật (push) toàn bộ code, tài liệu và tri thức mới nhất hôm nay lên GitHub không ạ?"*
    - CHỈ ĐẨY LÊN GITHUB KHI CÓ LỆNH RÕ RÀNG HOẶC ĐƯỢC SẾP ĐỒNG Ý. Tuyệt đối không tự tiện chạy `git push`.
+
+7. **Quy tắc hiển thị giao diện rõ ràng, không che khuất (Lệnh Sếp Hồ)**:
+   - Khi thêm tính năng mới, mọi thông tin, nhãn chữ, nút bấm trên thanh công cụ Ribbon và Form **PHẢI đầy đủ, rõ ràng 100%, tuyệt đối không bị che khuất, đè nhau hay cắt xén chữ** (sử dụng ClientSize, tắt AutoSize ở TrackBar, kiểm tra kỹ trên Preview Studio).
+
+
+8. **Quy tắc mọi tính năng đều phải thao tác được trên bản vẽ (Modeless Dialog 100% - Lệnh Sếp Hồ)**:
+   - Từ bây giờ trở đi, TẤT CẢ các chức năng / cửa sổ của HDTOOL khi mở lên để sử dụng thì **MỌI THAO TÁC ĐỀU PHẢI LÀM ĐƯỢC TRÊN BẢN VẼ** (Pan, Zoom, xoay 3D, click chọn ống, chuyển Tab View/Sheet).
+   - Bắt buộc 100% dùng kiến trúc **Modeless Dialog (`Show(new RevitWindowWrapper(hwnd))` + `HDToolModelessHost.Run` / `ExternalEvent`)**.
+   - **TUYỆT ĐỐI KHÔNG DÙNG `ShowDialog()`** làm khóa cứng giao diện bản vẽ Revit của Sếp Hồ.

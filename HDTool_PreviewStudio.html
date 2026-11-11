@@ -3,1377 +3,1036 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HDTOOL PREVIEW STUDIO - GIAO DIỆN WINDOWS 11 FLUENT (AUTODESK REVIT 2024/2025)</title>
+  <title>HDTOOL PREVIEW STUDIO - BẢNG PREVIEW PALETTE THỜI GIAN THỰC (AUTODESK REVIT 2024/2025/2026)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
     :root {
-      --win11-bg: #1e2229;
-      --win11-surface: #2b303c;
-      --win11-border: rgba(255, 255, 255, 0.12);
-      --win11-accent: #0078d4;
-      --win11-accent-hover: #1084d9;
-      --revit-ribbon-bg: #2d323e;
-      --revit-panel-bg: #262a34;
-      --revit-panel-border: rgba(255, 255, 255, 0.08);
-      --revit-tab-active: #262a34;
-      --revit-tab-inactive: #1a1e27;
-      --revit-btn-hover: rgba(255, 255, 255, 0.08);
-      --revit-btn-active: rgba(255, 255, 255, 0.14);
-      --revit-text: #f3f4f6;
-      --revit-text-muted: #9ca3af;
+      --primary-color: #182B49;
+      --accent-color: #F59E0B;
+      --accent-hover: #D97706;
+      --emerald-accent: #10B981;
+      --cyan-accent: #0284C7;
+      --bg-dark: #0F172A;
+      --surface-dark: #1E293B;
+      --border-dark: #334155;
+      --text-dark: #F8FAFC;
+      --text-muted: #94A3B8;
     }
 
-    body.light-theme {
-      --win11-bg: #f3f3f3;
-      --win11-surface: #ffffff;
-      --win11-border: rgba(0, 0, 0, 0.12);
-      --win11-accent: #0067b8;
-      --win11-accent-hover: #107cdd;
-      --revit-ribbon-bg: #f8f9fa;
-      --revit-panel-bg: #f1f3f5;
-      --revit-panel-border: rgba(0, 0, 0, 0.1);
-      --revit-tab-active: #ffffff;
-      --revit-tab-inactive: #e9ecef;
-      --revit-btn-hover: rgba(0, 0, 0, 0.06);
-      --revit-btn-active: rgba(0, 0, 0, 0.1);
-      --revit-text: #1f2937;
-      --revit-text-muted: #6b7280;
+    body.light-mode {
+      --bg-dark: #F1F5F9;
+      --surface-dark: #FFFFFF;
+      --border-dark: #CBD5E1;
+      --text-dark: #0F172A;
+      --text-muted: #64748B;
     }
 
-    * { box-sizing: border-box; user-select: none; }
+    * { box-sizing: border-box; }
     body {
-      background-color: var(--win11-bg);
-      color: var(--revit-text);
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
       margin: 0;
       padding: 0;
+      min-height: 100vh;
       overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
 
-    /* Windows 11 Title Bar */
-    .win11-titlebar {
-      height: 36px;
-      background: rgba(20, 24, 33, 0.95);
-      border-bottom: 1px solid var(--win11-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      font-size: 12px;
-      font-weight: 500;
-      color: #94a3b8;
-    }
-    .win11-controls {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
-    .win-btn {
-      width: 44px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 11px;
-      color: #cbd5e1;
-      transition: all 0.15s;
-    }
-    .win-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
-    .win-btn-close:hover { background: #e81123 !important; color: #fff !important; }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748B; }
 
-    /* Revit 2024/2025 Ribbon Tabs */
-    .ribbon-tabs-bar {
-      height: 34px;
-      background: var(--revit-tab-inactive);
-      display: flex;
-      align-items: flex-end;
-      padding: 0 8px;
-      border-bottom: 1px solid var(--revit-panel-border);
-      overflow-x: auto;
+    /* Ribbon Styles */
+    .revit-ribbon {
+      background: #2D323E;
+      border-bottom: 1px solid #1E2229;
     }
-    .ribbon-tab {
-      padding: 6px 14px;
-      font-size: 11.5px;
-      font-weight: 500;
-      color: var(--revit-text-muted);
-      cursor: pointer;
-      border-top-left-radius: 4px;
-      border-top-right-radius: 4px;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .ribbon-tab:hover {
-      background: var(--revit-btn-hover);
-      color: var(--revit-text);
-    }
-    .ribbon-tab.active {
-      background: var(--revit-ribbon-bg);
-      color: #38bdf8;
-      font-weight: 700;
-      border-top: 2.5px solid #0284c7;
+    .light-mode .revit-ribbon {
+      background: #F8F9FA;
+      border-bottom: 1px solid #E2E8F0;
     }
 
-    /* Revit Ribbon Body */
-    .ribbon-container {
-      background: var(--revit-ribbon-bg);
-      border-bottom: 2px solid var(--revit-panel-border);
-      padding: 6px 12px;
-      display: flex;
-      align-items: stretch;
-      gap: 8px;
-      overflow-x: auto;
-      min-height: 104px;
+    .ribbon-tab-active {
+      background: #262A34;
+      border-top: 3px solid var(--accent-color);
+      color: #FFFFFF;
     }
-    .ribbon-panel {
-      background: var(--revit-panel-bg);
-      border: 1px solid var(--revit-panel-border);
-      border-radius: 6px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      min-width: 130px;
-      transition: all 0.2s;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
-    .ribbon-panel.drag-over {
-      border: 2px dashed #38bdf8;
-      background: rgba(56, 189, 248, 0.08);
-      transform: scale(1.01);
-    }
-    .ribbon-panel-content {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 8px;
-      flex: 1;
-    }
-    .ribbon-panel-footer {
-      font-size: 10.5px;
-      font-weight: 600;
-      text-align: center;
-      color: var(--revit-text-muted);
-      padding: 3px 0 4px 0;
-      border-top: 1px solid var(--revit-panel-border);
-      background: rgba(0, 0, 0, 0.1);
-      letter-spacing: 0.3px;
+    .light-mode .ribbon-tab-active {
+      background: #FFFFFF;
+      border-top: 3px solid var(--accent-color);
+      color: #0F172A;
     }
 
-    /* Ribbon Button */
-    .revit-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 5px 6px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: all 0.15s;
-      border: 1px solid transparent;
-      min-width: 68px;
-      height: 70px;
-      text-align: center;
-      position: relative;
+    .ribbon-btn {
+      transition: all 0.15s ease;
     }
-    .revit-btn:hover {
-      background: var(--revit-btn-hover);
-      border-color: rgba(255, 255, 255, 0.18);
+    .ribbon-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
     }
-    .revit-btn.selected {
-      background: rgba(2, 132, 199, 0.22);
-      border-color: #38bdf8;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-    }
-    .revit-btn-icon {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 3px;
-    }
-    .revit-btn-label {
-      font-size: 10.5px;
-      font-weight: 600;
-      line-height: 1.25;
-      color: var(--revit-text);
-      white-space: pre-line;
-      text-align: center;
+    .light-mode .ribbon-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
     }
 
-    /* Split Button Dropdown arrow */
-    .split-arrow {
-      position: absolute;
-      bottom: 2px;
-      right: 4px;
-      font-size: 8px;
-      color: var(--revit-text-muted);
+    /* Fluent Shadow */
+    .fluent-shadow {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
     }
 
-    /* Action bar */
-    .action-bar {
-      background: rgba(15, 23, 42, 0.9);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 8px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+    /* Live pulse indicator */
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
     }
-
-    /* Studio Layout Main */
-    .studio-layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      height: calc(100vh - 180px);
-    }
-    .viewport-canvas {
-      background: #1b1f28;
-      overflow-y: auto;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-    }
-    .inspector-panel {
-      background: rgba(24, 30, 42, 0.95);
-      border-left: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 18px;
-      overflow-y: auto;
+    .live-dot {
+      animation: pulse-dot 1.8s infinite ease-in-out;
     }
   </style>
 </head>
-<body>
+<body class="dark-mode flex flex-col min-h-screen">
 
-  <!-- ================= WINDOWS 11 TITLE BAR ================= -->
-  <div class="win11-titlebar">
-    <div class="flex items-center gap-2">
-      <span class="text-sky-400 font-bold text-sm">R</span>
-      <span class="font-semibold text-slate-200">Autodesk Revit 2025</span>
-      <span class="text-slate-500">─</span>
-      <span>Dự Án Cấp Thoát Nước TN3.rvt</span>
-      <span class="text-slate-500">─</span>
-      <span class="text-slate-400">[Mặt Bằng Tầng 4 - Khối Lượng Ống Nước]</span>
-    </div>
-    <div class="win11-controls">
-      <div class="win-btn" title="Thu nhỏ">─</div>
-      <div class="win-btn" title="Phóng to">□</div>
-      <div class="win-btn win-btn-close" title="Đóng">✕</div>
-    </div>
-  </div>
-
-  <!-- ================= REVIT 2024/2025 RIBBON TABS ================= -->
-  <div class="ribbon-tabs-bar">
-    <div class="ribbon-tab">Architecture</div>
-    <div class="ribbon-tab">Structure</div>
-    <div class="ribbon-tab">Steel</div>
-    <div class="ribbon-tab">Precast</div>
-    <div class="ribbon-tab">Systems</div>
-    <div class="ribbon-tab">Insert</div>
-    <div class="ribbon-tab">Annotate</div>
-    <div class="ribbon-tab">Analyze</div>
-    <div class="ribbon-tab">Massing & Site</div>
-    <div class="ribbon-tab">Collaborate</div>
-    <div class="ribbon-tab">View</div>
-    <div class="ribbon-tab">Manage</div>
-    <div class="ribbon-tab">Add-Ins</div>
-    <div class="ribbon-tab">ATool</div>
-    <div class="ribbon-tab active">HDTOOL</div>
-    <div class="ribbon-tab">Modify | Viewports</div>
-  </div>
-
-  <!-- ================= REVIT RIBBON BODY (TAB HDTOOL 100% THỰC TẾ) ================= -->
-  <div class="ribbon-container" id="ribbonContainer">
-    <!-- Render động từ dữ liệu panels -->
-  </div>
-
-  <!-- ================= ACTION BAR ĐIỀU HÀNH ================= -->
-  <div class="action-bar">
+  <!-- ================= TOP APP BAR / BRANDING ================= -->
+  <header class="bg-[#182B49] border-b border-slate-700/80 px-4 py-2.5 flex items-center justify-between shadow-lg sticky top-0 z-50">
     <div class="flex items-center gap-3">
-      <span class="text-xs font-bold text-sky-400 bg-sky-950/60 border border-sky-800 px-2.5 py-1 rounded-full">
-        WINDOWS 11 FLUENT STUDIO
-      </span>
-      <span class="text-xs text-slate-400">
-        Click vào bất kỳ nút nào trên Ribbon để xem trước Form Windows 11 thực tế tương ứng!
-      </span>
-    </div>
-    <div class="flex items-center gap-2">
-      <button class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-3 py-1.5 rounded text-xs font-semibold" onclick="toggleTheme()">
-        🌓 Chuyển Theme Sáng/Tối
-      </button>
-      <button class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-3 py-1.5 rounded text-xs font-semibold" onclick="resetDefaultLayout()">
-        🔄 Khôi Phục Mặc Định
-      </button>
-      <button class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-4 py-1.5 rounded text-xs shadow-lg shadow-emerald-900/40" onclick="exportCSharpCode()">
-        💾 CHỐT & XUẤT CẤU HÌNH C#
-      </button>
-    </div>
-  </div>
-
-  <!-- ================= STUDIO LAYOUT MAIN ================= -->
-  <div class="studio-layout">
-
-    <!-- KHU VỰC XEM TRƯỚC FORM WINDOWS 11 CHUẨN THỰC TẾ -->
-    <div class="viewport-canvas">
-      <div class="w-full max-w-4xl" id="dialogPreviewViewport">
-        <!-- Render Form xem trước của công cụ đang được chọn -->
+      <div class="bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-xs px-2.5 py-1 rounded shadow-md tracking-wider flex items-center gap-1.5">
+        <span>★</span> HadoMEE
+      </div>
+      <div>
+        <h1 class="text-sm font-bold text-white tracking-wide flex items-center gap-2">
+          <span>HDTOOL PREVIEW STUDIO</span>
+          <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/40 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot"></span> REALTIME PALETTE (v66)
+          </span>
+        </h1>
+        <p class="text-[11px] text-slate-300 font-medium">Bảng Xem Trước Trực Quan Thời Gian Thực Theo Lệnh Sếp Hồ | Autodesk Revit 2024 - 2027</p>
       </div>
     </div>
 
-    <!-- KHU VỰC INSPECTOR CHỈNH SỬA & SẮP XẾP NÚT -->
-    <div class="inspector-panel">
-      <h3 class="text-sm font-bold text-slate-200 border-b border-slate-700 pb-2 mb-4 flex items-center justify-between">
-        <span>⚙️ THUỘC TÍNH CÔNG CỤ</span>
-        <span class="text-[11px] text-sky-400 font-mono" id="propBtnId">cmdHDToolMepQuantity</span>
-      </h3>
+    <!-- Nút hành động nhanh -->
+    <div class="flex items-center gap-2.5">
+      <!-- Bộ đổi theme -->
+      <button onclick="toggleTheme()" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-600/80 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition font-medium">
+        <span id="themeIcon">🌓</span> <span id="themeLabel">Dark / Light</span>
+      </button>
 
-      <div class="space-y-4 text-xs">
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Tên Nút Hiển Thị (Label):</label>
-          <input type="text" id="propBtnName" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 focus:border-sky-500 outline-none" oninput="updateCurrentButton()">
-          <p class="text-[10px] text-slate-500 mt-0.5">Dùng \n để ngắt dòng (ví dụ: Thống Kê\nỐng Nước)</p>
+      <!-- Nút Chốt Giao Diện -->
+      <button onclick="confirmLayoutCommit()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-900/40 flex items-center gap-1.5 transition hover:scale-[1.02]">
+        <span>✔</span> CHỐT GIAO DIỆN & NẠP CODE
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= PALETTE CHUYỂN ĐỔI CÔNG CỤ THỜI GIAN THỰC ================= -->
+  <nav class="bg-[#1E293B] border-b border-slate-700 px-4 py-2 flex items-center justify-between text-xs sticky top-[53px] z-40 overflow-x-auto">
+    <div class="flex items-center gap-1.5" id="toolTabs">
+      <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px] mr-2">Xem Trước:</span>
+
+            <button onclick="switchView('autocrop')" id="tab-autocrop" class="px-3 py-1.5 rounded-md font-bold text-white bg-blue-600 shadow flex items-center gap-1.5 transition animate-pulse">
+        <span>🔲</span> Tự Động Crop View (MỚI)
+      </button>
+
+      <button onclick="switchView('duct')" id="tab-duct" class="px-3 py-1.5 rounded-md font-bold text-white bg-blue-600 shadow flex items-center gap-1.5 transition">
+        <span>💨</span> Khối Lượng Ống Gió HVAC (TCVN 5687)
+      </button>
+
+      <button onclick="switchView('grid')" id="tab-grid" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white hover:bg-slate-700/60 flex items-center gap-1.5 transition">
+        <span>📐</span> Căn Grids & Level (Crop View)
+      </button>
+
+      <button onclick="switchView('sheet')" id="tab-sheet" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white hover:bg-slate-700/60 flex items-center gap-1.5 transition">
+        <span>📋</span> Quản Lý Bản Vẽ (Sheet List)
+      </button>
+
+      <button onclick="switchView('mep')" id="tab-mep" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white hover:bg-slate-700/60 flex items-center gap-1.5 transition">
+        <span>💧</span> Khối Lượng Ống Nước MEP
+      </button>
+
+      <button onclick="switchView('ribbon')" id="tab-ribbon" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white hover:bg-slate-700/60 flex items-center gap-1.5 transition">
+        <span>🖥️</span> Thanh Ribbon Revit (HDTOOL Tab)
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2 text-slate-400 text-[11px] font-mono">
+      <span>FPS: <strong class="text-emerald-400">60 FPS</strong></span>
+      <span>|</span>
+      <span>Modeless: <strong class="text-sky-400">Active</strong></span>
+    </div>
+  </nav>
+
+  <!-- ================= MAIN PREVIEW CANVAS ================= -->
+  <main class="flex-1 p-4 md:p-6 flex flex-col items-center justify-center">
+
+        <!-- VIEW 0: TỰ ĐỘNG CROP VIEW (AUTO CROP BOX - THEO HÌNH ẢNH SẾP HỒ) -->
+    <section id="view-autocrop" class="w-full max-w-6xl transition-all duration-300">
+      <div class="bg-[#1E293B] rounded-xl border border-slate-700 shadow-2xl overflow-hidden fluent-shadow">
+        
+        <!-- Titlebar Modeless Dialog -->
+        <div class="bg-[#0F172A] px-3.5 py-2.5 flex items-center justify-between border-b border-slate-700/80">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+            <span class="font-bold text-xs text-white uppercase tracking-wider">HDTOOL — TỰ ĐỘNG TẠO & CĂN CHỈNH CROP VIEW (AUTO CROP BOX 60 FPS)</span>
+            <span class="bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30 font-semibold">★ THEO YÊU CẦU SẾP HỒ ★</span>
+          </div>
+          <div class="flex items-center gap-3 text-slate-400 text-xs font-mono">
+            <span>Modeless Live Tracking</span>
+            <span class="text-slate-600">|</span>
+            <span class="hover:text-white cursor-pointer">─</span>
+            <span class="hover:text-white cursor-pointer">□</span>
+            <span class="hover:text-red-400 cursor-pointer">✕</span>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Panel Chứa Nút:</label>
-          <select id="propBtnPanel" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 focus:border-sky-500 outline-none" onchange="moveCurrentButtonToPanel(this.value)">
-            <!-- Danh sách panel -->
-          </select>
+        <!-- Nội dung chính chia 2 cột: Bảng điều khiển Form & Canvas mô phỏng Revit trực quan -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+          
+          <!-- CỘT TRÁI: FORM ĐIỀU KHIỂN CÔNG CỤ (4 CỘT) -->
+          <div class="lg:col-span-5 p-4 bg-[#182234] border-r border-slate-700 flex flex-col justify-between text-xs">
+            <div>
+              <!-- Thông tin View mục tiêu -->
+              <div class="bg-[#0F172A] p-3 rounded-lg border border-slate-700/80 mb-3 shadow-inner">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span>Khung Nhìn Nhận Diện</span>
+                  <span class="bg-sky-500/20 text-sky-300 text-[10px] px-1.5 py-0.2 rounded font-mono">View3D</span>
+                </div>
+                <div class="text-white font-bold text-sm text-sky-400 flex items-center gap-1.5">
+                  <span>📐</span> SĐKG TRỤC THOÁT BẾP CĂN HỘ PH-5
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800 text-[11px] text-slate-300">
+                  <div>Tỷ lệ View: <strong class="text-amber-400 font-mono">1:40 (Custom)</strong></div>
+                  <div>Hệ thống: <strong class="text-purple-400 font-mono">Plumbing</strong></div>
+                  <div>Đối tượng mô hình: <strong class="text-emerald-400 font-mono">28 ống & phụ kiện</strong></div>
+                  <div>Trạng thái: <strong class="text-sky-300 font-mono">Active Viewport</strong></div>
+                </div>
+              </div>
+
+              <!-- Thiết lập Khoảng đệm (Margin / Padding) -->
+              <div class="bg-[#1E293B] p-3 rounded-lg border border-slate-700 mb-3">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="font-bold text-slate-200">Khoảng Đệm Viền Crop (Padding / Margin):</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="cropPaddingInput" value="150" min="0" max="1000" step="10" oninput="updateCropPadding(this.value)" class="w-16 px-2 py-0.5 bg-[#0F172A] border border-slate-600 rounded text-right text-emerald-400 font-bold font-mono focus:border-emerald-500 focus:outline-none">
+                    <span class="text-slate-400 font-mono">mm</span>
+                  </div>
+                </div>
+                
+                <!-- Range Slider -->
+                <input type="range" id="cropPaddingRange" min="20" max="500" value="150" step="10" oninput="updateCropPadding(this.value)" class="w-full accent-emerald-500 cursor-pointer mb-2">
+
+                <!-- Nút chọn nhanh mm -->
+                <div class="flex items-center gap-1.5 pt-1">
+                  <span class="text-[10px] text-slate-400 mr-1">Nhanh:</span>
+                  <button onclick="updateCropPadding(50)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-600 text-[10px]">50mm</button>
+                  <button onclick="updateCropPadding(100)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-600 text-[10px]">100mm</button>
+                  <button onclick="updateCropPadding(150)" class="px-2 py-0.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded border border-emerald-500 text-[10px]">150mm</button>
+                  <button onclick="updateCropPadding(200)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-600 text-[10px]">200mm</button>
+                  <button onclick="updateCropPadding(300)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-600 text-[10px]">300mm</button>
+                </div>
+              </div>
+
+              <!-- Tùy chọn nâng cao -->
+              <div class="space-y-2 mb-4 bg-[#1E293B] p-3 rounded-lg border border-slate-700">
+                <label class="flex items-center gap-2 cursor-pointer text-amber-300 font-bold hover:text-amber-200">
+                  <input type="checkbox" id="chkMepOnlyPreview" checked class="accent-amber-500 w-4 h-4 rounded">
+                  <span>Ưu tiên ôm khít hệ thống MEP (Cắt gọn nền sàn/vách kiến trúc)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                  <input type="checkbox" id="chkCropActive" checked class="accent-emerald-500 w-4 h-4 rounded">
+                  <span>Bật tính năng Crop View (<code class="text-sky-300">Crop View Active</code>)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                  <input type="checkbox" id="chkCropVisible" checked class="accent-emerald-500 w-4 h-4 rounded">
+                  <span>Hiển thị viền Crop (<code class="text-sky-300">Crop Region Visible</code>)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                  <input type="checkbox" id="chkSectionBox" checked class="accent-emerald-500 w-4 h-4 rounded">
+                  <span>Đồng bộ khớp cả Section Box 3D (<code class="text-sky-300">Fit Section Box</code>)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                  <input type="checkbox" id="chkSelectedOnly" class="accent-emerald-500 w-4 h-4 rounded">
+                  <span>Chỉ bao quanh các đối tượng đang chọn (nếu có quét chọn)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Nút hành động chính -->
+            <div class="space-y-2 pt-2 border-t border-slate-700">
+              <button onclick="triggerAutoCropEffect()" class="w-full py-2.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white font-bold rounded-lg shadow-lg shadow-red-900/40 flex items-center justify-center gap-2 transition hover:scale-[1.01]">
+                <span class="text-base">⚡</span> TỰ ĐỘNG FIT CROP VIEW (ÔM KHÍT ĐỐI TƯỢNG)
+              </button>
+              
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="resetCropDemo()" class="py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-center font-medium transition">
+                  ↺ Xem Trước Khi Chưa Crop
+                </button>
+                <button onclick="triggerAutoCropEffect()" class="py-1.5 bg-sky-700 hover:bg-sky-600 text-white rounded text-center font-bold transition">
+                  ✔ Áp Dụng Ngay Lập Tức
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CỘT PHẢI: MÔ PHỎNG MÔ HÌNH REVIT THỜI GIAN THỰC (7 CỘT - GIỐNG 100% ẢNH SẾP GỬI) -->
+          <div class="lg:col-span-7 p-6 bg-[#0B0F19] flex flex-col items-center justify-center relative min-h-[460px] overflow-hidden select-none">
+            
+            <!-- Revit Viewport Title (Góc dưới) -->
+            <div class="absolute bottom-4 left-6 flex items-center gap-2 z-20">
+              <div class="w-5 h-5 rounded-full border border-sky-400 text-sky-400 font-bold flex items-center justify-center text-[10px] bg-slate-900 shadow">
+                5
+              </div>
+              <div class="flex flex-col">
+                <span class="text-[11px] font-bold text-sky-400 tracking-wide">SĐKG TRỤC THOÁT BẾP CĂN HỘ PH-5</span>
+                <div class="w-48 h-0.5 bg-gradient-to-r from-sky-500 to-transparent"></div>
+              </div>
+            </div>
+
+            <!-- Huy hiệu chỉ báo trạng thái -->
+            <div class="absolute top-4 right-4 z-20 bg-slate-900/80 border border-slate-700 px-2.5 py-1 rounded-full text-[10px] text-slate-300 flex items-center gap-1.5 backdrop-blur-sm">
+              <span id="cropStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
+              <span id="cropStatusText">Trạng thái: Đã Tự Động Fit Crop Box (Padding 150mm)</span>
+            </div>
+
+            <!-- KHUNG CANVAS BẢN VẼ MÔ PHỎNG REVIT -->
+            <div class="relative w-full h-[380px] flex items-center justify-center">
+              
+              <!-- Khung viền Crop Box viền đỏ/trắng tự động co dãn theo Slider -->
+              <div id="cropBoxBorder" class="absolute border-2 border-red-500 bg-red-500/5 transition-all duration-300 rounded shadow-[0_0_20px_rgba(239,68,68,0.25)] flex items-start justify-end p-1" style="width: 290px; height: 320px;">
+                <span class="text-[9px] font-mono text-red-400 bg-slate-950/90 px-1 py-0.2 rounded border border-red-500/40">Crop Box: 290x320</span>
+              </div>
+
+              <!-- Khung viền Crop Region gốc (Màu trắng mờ) -->
+              <div id="cropBoxWhite" class="absolute border border-slate-300/80 transition-all duration-300 pointer-events-none" style="width: 280px; height: 310px;"></div>
+
+              <!-- HỆ THỐNG ĐỐI TƯỢNG MÔ HÌNH 3D REVIT (ỐNG THOÁT NƯỚC MÀU TÍM) -->
+              <svg id="mepModelSvg" class="relative z-10 w-full h-full" viewBox="0 0 400 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Đường nét sàn / tường tham chiếu mờ -->
+                <path d="M120 280 L200 320 L280 280" stroke="#334155" stroke-width="1.2" stroke-dasharray="4 4" />
+                <path d="M120 180 L200 140 L280 180" stroke="#334155" stroke-width="1.2" stroke-dasharray="4 4" />
+                <path d="M120 180 L120 280" stroke="#334155" stroke-width="1" stroke-dasharray="4 4" />
+                <path d="M280 180 L280 280" stroke="#334155" stroke-width="1" stroke-dasharray="4 4" />
+
+                <!-- ỐNG NƯỚC THOÁT TRỤC ĐỨNG VÀ NHÁNH (MÀU TÍM MAGENTA/PURPLE NHƯ ẢNH SẾP) -->
+                <!-- Trục đứng chính -->
+                <line x1="190" y1="180" x2="190" y2="300" stroke="#C084FC" stroke-width="6" stroke-linecap="round" />
+                <circle cx="190" cy="240" r="4" fill="#E879F9" stroke="#581C87" stroke-width="1.5" />
+                <circle cx="190" cy="275" r="4" fill="#E879F9" stroke="#581C87" stroke-width="1.5" />
+
+                <!-- Nhánh uốn trái sang phải -->
+                <path d="M160 120 L165 170 L190 180" stroke="#C084FC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+                <!-- Cút uốn kép và lượn nhánh -->
+                <path d="M190 180 L205 170 L250 195 L260 180 L260 140" stroke="#C084FC" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                
+                <!-- Nhánh đứng phụ góc trái -->
+                <line x1="160" y1="120" x2="155" y2="105" stroke="#C084FC" stroke-width="4" stroke-linecap="round" />
+
+                <!-- Ký hiệu phụ kiện cút / tê / lượn Z -->
+                <circle cx="160" cy="120" r="3" fill="#F472B6" />
+                <circle cx="165" cy="170" r="3.5" fill="#F472B6" />
+                <circle cx="190" cy="180" r="4.5" fill="#F472B6" />
+                <circle cx="205" cy="170" r="3.5" fill="#F472B6" />
+                <circle cx="250" cy="195" r="3.5" fill="#F472B6" />
+                <circle cx="260" cy="180" r="3" fill="#F472B6" />
+                <circle cx="260" cy="140" r="3" fill="#F472B6" />
+
+                <!-- Chú thích nhãn ống mờ -->
+                <text x="140" y="145" fill="#94A3B8" font-size="8" font-family="monospace">DN100</text>
+                <text x="215" y="185" fill="#94A3B8" font-size="8" font-family="monospace">DN80</text>
+                <text x="198" y="250" fill="#94A3B8" font-size="8" font-family="monospace">D110 PVC</text>
+              </svg>
+            </div>
+
+            <!-- Thanh trạng thái kết quả dưới đáy Canvas -->
+            <div class="w-full mt-2 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <span class="flex items-center gap-1">
+                <span class="text-emerald-400">✔</span> Tự động nhận diện 100% đối tượng mô hình trong View
+              </span>
+              <span class="text-slate-300 font-mono">
+                BoundingBox: <span class="text-sky-300">[X: 120-275, Y: 95-310]</span>
+              </span>
+            </div>
+
+          </div>
         </div>
 
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Kiểu Kích Thước Nút:</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button id="btnSizeLarge" class="bg-sky-600 text-white font-semibold py-1.5 rounded border border-sky-400" onclick="setButtonSize('large')">
-              Nút Lớn (32x32)
+      </div>
+    </section>
+
+    <!-- VIEW 1: FORM BÓC KHỐI LƯỢNG ỐNG GIÓ HVAC (TCVN 5687:2010 / SMACNA) -->
+    <section id="view-duct" class="w-full max-w-6xl transition-all duration-300">
+      <div class="bg-[#1E293B] rounded-xl border border-slate-700 shadow-2xl overflow-hidden fluent-shadow">
+
+        <!-- Titlebar Modeless Dialog -->
+        <div class="bg-[#0F172A] px-3.5 py-2 flex items-center justify-between border-b border-slate-700/80">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+            <span class="font-bold text-xs text-slate-200">HDTOOL — THỐNG KÊ KHỐI LƯỢNG ỐNG GIÓ & PHỤ KIỆN HVAC (TCVN 5687:2010 / SMACNA)</span>
+          </div>
+          <div class="flex items-center gap-3 text-slate-400 text-xs">
+            <span class="hover:text-white cursor-pointer">─</span>
+            <span class="hover:text-white cursor-pointer">□</span>
+            <span class="hover:text-red-400 cursor-pointer">✕</span>
+          </div>
+        </div>
+
+        <!-- Banner Header HadoMEE -->
+        <div class="bg-gradient-to-r from-[#182B49] via-[#1E3A8A] to-[#0F172A] px-5 py-3.5 border-b border-blue-900/60 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="bg-red-700 text-white font-extrabold px-2 py-0.5 rounded text-[10px] tracking-wider uppercase shadow">★ TẤT CẢ VÌ HÀ ĐÔ THÂN YÊU ★</span>
+              <h2 class="text-sm md:text-base font-bold text-white tracking-wide">THỐNG KÊ KHỐI LƯỢNG ỐNG GIÓ & PHỤ KIỆN HVAC (M² TÔN & PHỤ KIỆN)</h2>
+            </div>
+            <p class="text-[11px] text-blue-200">
+              Tự động tính diện tích tôn m² theo TCVN 5687:2010 / SMACNA  |  Phân loại cút, côn, lượn, van VCD/FD, miệng gió  |  Modeless 60 FPS  |  Live Tracking
+            </p>
+          </div>
+          <div class="bg-white/10 px-3.5 py-2 rounded-lg border border-white/20 text-right">
+            <span class="text-[10px] text-slate-300 block">Tiêu Chuẩn Áp Dụng:</span>
+            <span class="text-xs font-bold text-amber-300 font-mono tracking-wide">TCVN 5687:2010 / SMACNA</span>
+          </div>
+        </div>
+
+        <!-- Khối Bộ Lọc Phạm Vi & Hạng Mục HVAC -->
+        <div class="p-3.5 bg-[#182234] border-b border-slate-700 grid grid-cols-1 md:grid-cols-12 gap-3 text-xs">
+          <!-- Phạm vi -->
+          <div class="md:col-span-4 bg-[#0F172A] p-2.5 rounded-lg border border-slate-700 flex flex-col justify-between">
+            <span class="font-bold text-[11px] text-slate-300 block mb-1">Bộ Lọc Phạm Vi Bóc Khối Lượng:</span>
+            <div class="space-y-1 text-[11px]">
+              <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                <input type="radio" name="ductScopeDemo" class="accent-amber-400"> Khung Nhìn Hiện Hành (MẶT BẰNG TỔNG THỂ)
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-amber-400 font-bold">
+                <input type="radio" name="ductScopeDemo" checked class="accent-amber-400"> Vùng Quét Cục Bộ (6 đối tượng)
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+                <input type="radio" name="ductScopeDemo" class="accent-amber-400"> Toàn Bộ Dự Án (All Document)
+              </label>
+            </div>
+          </div>
+
+          <!-- Nút Quét -->
+          <div class="md:col-span-3 flex flex-col justify-center gap-2">
+            <button class="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-2 rounded-lg shadow text-xs flex items-center justify-center gap-1.5 transition">
+              <span>⬛</span> QUÉT VÙNG MỚI (Kéo chuột)
             </button>
-            <button id="btnSizeSmall" class="bg-slate-800 text-slate-400 py-1.5 rounded border border-slate-700" onclick="setButtonSize('small')">
-              Nút Nhỏ (16x16)
+            <button class="w-full bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-600 hover:to-emerald-600 text-white font-bold py-1.5 rounded-lg shadow text-xs flex items-center justify-center gap-1.5 transition">
+              <span>➕</span> Bóc Thêm (Cộng Dồn)
+            </button>
+          </div>
+
+          <!-- Hạng mục & Dropdowns -->
+          <div class="md:col-span-5 bg-[#0F172A] p-2.5 rounded-lg border border-slate-700 flex flex-col justify-between">
+            <div class="grid grid-cols-2 gap-1.5 text-[11px] mb-2">
+              <label class="flex items-center gap-1.5 cursor-pointer text-sky-400 font-semibold">
+                <input type="checkbox" checked class="accent-sky-400"> Ống Gió Thẳng (m² Tôn)
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer text-purple-400 font-semibold">
+                <input type="checkbox" checked class="accent-purple-400"> Phụ Kiện Cút/Côn/Lượn
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer text-amber-400 font-semibold">
+                <input type="checkbox" checked class="accent-amber-400"> Van Gió VCD / FD / NRD
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer text-emerald-400 font-semibold">
+                <input type="checkbox" checked class="accent-emerald-400"> Miệng Gió (Diffuser)
+              </label>
+            </div>
+            <div class="flex items-center gap-2">
+              <select class="bg-slate-800 border border-slate-700 text-slate-200 text-[11px] rounded px-2 py-1 flex-1">
+                <option>Tầng: TẤT CẢ (TẦNG 3)</option>
+              </select>
+              <select class="bg-slate-800 border border-slate-700 text-slate-200 text-[11px] rounded px-2 py-1 flex-1">
+                <option>Hệ Thống: EXHAUST SMOKE</option>
+              </select>
+              <button class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded text-[11px] font-bold">
+                Quét Lại
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="px-3.5 py-2 bg-[#1E293B] border-b border-slate-700 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="flex items-center gap-1.5 cursor-pointer text-sky-300 font-medium bg-slate-800/80 px-2 py-1 rounded border border-slate-700">
+              <input type="checkbox" checked class="accent-sky-400"> ⚡ Tự bóc khi chọn trên Revit (Live Tracking)
+            </label>
+            <button class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-2.5 py-1 rounded shadow flex items-center gap-1">
+              <span>💡</span> Soi Sáng Đã Bóc
+            </button>
+            <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded">Tắt Sáng</button>
+            <button class="bg-sky-700 hover:bg-sky-600 text-white px-2.5 py-1 rounded flex items-center gap-1">
+              <span>🔍</span> Zoom Gần
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="bg-teal-700 hover:bg-teal-600 text-white font-bold px-3 py-1 rounded shadow flex items-center gap-1 text-[11px]">
+              <span>➕</span> Thêm Cột Parameter
+            </button>
+            <button class="bg-red-800/80 hover:bg-red-700 text-white px-2.5 py-1 rounded text-[11px]">
+              Bỏ Xóa Cột
             </button>
           </div>
         </div>
 
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Tooltip Giải Thích (Mô Tả):</label>
-          <textarea id="propBtnTooltip" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 focus:border-sky-500 outline-none text-[11px]" oninput="updateCurrentButton()"></textarea>
+        <!-- BẢNG KHỐI LƯỢNG ỐNG GIÓ CHUẨN KỸ SƯ MEP (SẮP XẾP TỪ TO ĐẾN NHỎ) -->
+        <div class="overflow-x-auto max-h-[360px]">
+          <table class="w-full text-left border-collapse text-xs font-sans">
+            <thead class="bg-[#0F172A] text-slate-300 sticky top-0 border-b border-slate-700 select-none">
+              <tr>
+                <th class="p-2.5 border-r border-slate-700 text-center w-12 font-bold">STT</th>
+                <th class="p-2.5 border-r border-slate-700 min-w-[210px] font-bold">Tên Cấu Kiện / Phụ Kiện</th>
+                <th class="p-2.5 border-r border-slate-700 w-36 font-bold">Quy Cách (WxH / Ø)</th>
+                <th class="p-2.5 border-r border-slate-700 w-24 text-right font-bold text-sky-400">Chiều Dài (m)</th>
+                <th class="p-2.5 border-r border-slate-700 w-24 text-center font-bold text-amber-400">Số Lượng</th>
+                <th class="p-2.5 border-r border-slate-700 w-28 text-right font-bold text-emerald-400">Diện Tích (m²)</th>
+                <th class="p-2.5 border-r border-slate-700 w-32 font-bold">Hệ Thống</th>
+                <th class="p-2.5 border-r border-slate-700 w-20 text-center font-bold">Độ Dày Tôn</th>
+                <th class="p-2.5 border-r border-slate-700 w-20 text-center font-bold">Tầng</th>
+                <th class="p-2.5 font-bold">Chủng Loại</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 font-mono text-[11.5px]" id="ductTableBody">
+              <!-- DÒNG 1: ỐNG THẲNG TO -->
+              <tr class="hover:bg-blue-900/30 bg-[#1E293B] cursor-pointer transition">
+                <td class="p-2 text-center text-slate-400 font-bold">1</td>
+                <td class="p-2 font-sans font-semibold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span> Ống Gió Thẳng Chữ Nhật
+                </td>
+                <td class="p-2 text-blue-300 font-bold">800 x 250</td>
+                <td class="p-2 text-right text-sky-300">2.31</td>
+                <td class="p-2 text-center text-amber-400 font-sans font-bold">3 đoạn</td>
+                <td class="p-2 text-right text-emerald-400 font-bold">4.83</td>
+                <td class="p-2 text-slate-300">EXHAUST SMOKE</td>
+                <td class="p-2 text-center text-slate-400">0.75 mm</td>
+                <td class="p-2 text-center text-slate-400">TẦNG 3</td>
+                <td class="p-2 text-sky-400 font-sans">Ống Gió Thẳng</td>
+              </tr>
+              <!-- DÒNG 2: ỐNG THẲNG NHỎ HƠN -->
+              <tr class="hover:bg-blue-900/30 bg-[#16202E] cursor-pointer transition">
+                <td class="p-2 text-center text-slate-400 font-bold">2</td>
+                <td class="p-2 font-sans font-semibold text-white flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span> Ống Gió Thẳng Chữ Nhật
+                </td>
+                <td class="p-2 text-blue-300 font-bold">500 x 250</td>
+                <td class="p-2 text-right text-sky-300">2.52</td>
+                <td class="p-2 text-center text-amber-400 font-sans font-bold">4 đoạn</td>
+                <td class="p-2 text-right text-emerald-400 font-bold">3.77</td>
+                <td class="p-2 text-slate-300">EXHAUST SMOKE</td>
+                <td class="p-2 text-center text-slate-400">0.75 mm</td>
+                <td class="p-2 text-center text-slate-400">TẦNG 3</td>
+                <td class="p-2 text-sky-400 font-sans">Ống Gió Thẳng</td>
+              </tr>
+              <!-- DÒNG 3: CÚT 45 ĐỘ -->
+              <tr class="hover:bg-purple-900/30 bg-[#1E293B] cursor-pointer transition">
+                <td class="p-2 text-center text-slate-400 font-bold">3</td>
+                <td class="p-2 font-sans font-semibold text-purple-200 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span> Cút 45° Tôn Mạ Kẽm (R150)
+                </td>
+                <td class="p-2 text-purple-300 font-bold">500x250 (45°, R150)</td>
+                <td class="p-2 text-right text-slate-500">-</td>
+                <td class="p-2 text-center text-amber-400 font-sans font-bold">2 cái</td>
+                <td class="p-2 text-right text-emerald-400 font-bold">1.10</td>
+                <td class="p-2 text-slate-300">EXHAUST SMOKE</td>
+                <td class="p-2 text-center text-slate-400">0.75 mm</td>
+                <td class="p-2 text-center text-slate-400">TẦNG 3</td>
+                <td class="p-2 text-purple-400 font-sans">Phụ Kiện Ống Gió</td>
+              </tr>
+              <!-- DÒNG 4: CÚT 90 ĐỘ -->
+              <tr class="hover:bg-purple-900/30 bg-[#16202E] cursor-pointer transition">
+                <td class="p-2 text-center text-slate-400 font-bold">4</td>
+                <td class="p-2 font-sans font-semibold text-purple-200 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span> Cút 90° Tôn Mạ Kẽm (R150)
+                </td>
+                <td class="p-2 text-purple-300 font-bold">500x250 - 800x250 (90°, R150)</td>
+                <td class="p-2 text-right text-slate-500">-</td>
+                <td class="p-2 text-center text-amber-400 font-sans font-bold">1 cái</td>
+                <td class="p-2 text-right text-emerald-400 font-bold">1.02</td>
+                <td class="p-2 text-slate-300">EXHAUST SMOKE</td>
+                <td class="p-2 text-center text-slate-400">0.75 mm</td>
+                <td class="p-2 text-center text-slate-400">TẦNG 3</td>
+                <td class="p-2 text-purple-400 font-sans">Phụ Kiện Ống Gió</td>
+              </tr>
+              <!-- DÒNG 5: CÔN THU CÓ CHIỀU DÀI L -->
+              <tr class="hover:bg-purple-900/30 bg-[#1E293B] cursor-pointer transition">
+                <td class="p-2 text-center text-slate-400 font-bold">5</td>
+                <td class="p-2 font-sans font-semibold text-purple-200 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span> Côn Thu Chuyển Tiết Diện
+                </td>
+                <td class="p-2 text-purple-300 font-bold">500x250 - 800x250 (L=200)</td>
+                <td class="p-2 text-right text-sky-300 font-bold">0.20</td>
+                <td class="p-2 text-center text-amber-400 font-sans font-bold">1 cái</td>
+                <td class="p-2 text-right text-emerald-400 font-bold">0.45</td>
+                <td class="p-2 text-slate-300">EXHAUST SMOKE</td>
+                <td class="p-2 text-center text-slate-400">0.75 mm</td>
+                <td class="p-2 text-center text-slate-400">TẦNG 3</td>
+                <td class="p-2 text-purple-400 font-sans">Phụ Kiện Ống Gió</td>
+              </tr>
+              <!-- DÒNG 6: LƯỢN Z CÓ L VÀ H -->
+              <tr class="hover:bg-purple-900/30 bg-[#16202E] cursor-pointer transition">
+                <td class="p-2 text-center text-slate-400 font-bold">6</td>
+                <td class="p-2 font-sans font-semibold text-purple-200 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span> Lượn Ống Gió Chữ Z
+                </td>
+                <td class="p-2 text-purple-300 font-bold">250x800 (L=555, H=400)</td>
+                <td class="p-2 text-right text-sky-300 font-bold">1.61</td>
+                <td class="p-2 text-center text-amber-400 font-sans font-bold">3 cái</td>
+                <td class="p-2 text-right text-emerald-400 font-bold">4.63</td>
+                <td class="p-2 text-slate-300">EXHAUST SMOKE</td>
+                <td class="p-2 text-center text-slate-400">0.75 mm</td>
+                <td class="p-2 text-center text-slate-400">TẦNG 3</td>
+                <td class="p-2 text-purple-400 font-sans">Phụ Kiện Ống Gió</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Lệnh C# Command Class:</label>
-          <input type="text" id="propBtnClass" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-300 font-mono text-[11px] focus:border-sky-500 outline-none" oninput="updateCurrentButton()">
+        <!-- Footer Summary -->
+        <div class="px-4 py-2.5 bg-[#0F172A] border-t border-slate-700 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div class="flex items-center gap-3 text-slate-300 font-medium">
+            <span class="text-emerald-400 font-bold">📊 TỔNG CỘNG DIỆN TÍCH TÔN: 16.17 m² tôn mạ kẽm</span>
+            <span>|</span>
+            <span class="text-sky-300">6.00 mét dài ống (7 đoạn)</span>
+            <span>|</span>
+            <span class="text-amber-400">7 phụ kiện van/miệng gió</span>
+            <span>|</span>
+            <span class="text-slate-400">6 dòng thống kê</span>
+          </div>
         </div>
 
-        <div class="pt-2 border-t border-slate-700/60 flex items-center justify-between">
-          <button class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 px-3 py-1.5 rounded text-xs font-semibold" onclick="deleteCurrentButton()">
-            🗑️ Xóa Nút Này
+        <!-- Bottom Action Bar -->
+        <div class="p-3 bg-[#182B49] border-t border-blue-900/60 flex items-center justify-between flex-wrap gap-2">
+          <button class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-5 py-2 rounded-lg shadow-lg flex items-center gap-1.5 transition">
+            <span>🚀</span> ĐẶT / CẬP NHẬT VÀO SHEET MONG MUỐN...
           </button>
-          <button class="bg-sky-700 hover:bg-sky-600 text-white px-3 py-1.5 rounded text-xs font-semibold" onclick="addNewButton()">
-            ➕ Thêm Nút Mới
+          <div class="flex items-center gap-2">
+            <button class="bg-emerald-800 hover:bg-emerald-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg flex items-center gap-1">
+              <span>📊</span> Xuất Excel (.csv / .xlsx)
+            </button>
+            <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3.5 py-2 rounded-lg flex items-center gap-1">
+              <span>📋</span> Copy Bảng
+            </button>
+            <button class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2 rounded-lg border border-slate-600">
+              Đóng (ESC)
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VIEW 2: CĂN CHỈNH GRIDS & LEVEL (CROP VIEW) -->
+    <section id="view-grid" class="w-full max-w-3xl hidden transition-all duration-300">
+      <div class="bg-[#1E293B] rounded-xl border border-slate-700 shadow-2xl overflow-hidden">
+        <div class="bg-[#0F172A] px-3.5 py-2 flex items-center justify-between border-b border-slate-700">
+          <span class="font-bold text-xs text-slate-200">HDTOOL — Căn Chỉnh Lưới Trục (Grids) Theo Khung Crop View</span>
+          <span class="text-slate-400 text-xs">✕</span>
+        </div>
+        <div class="p-5 space-y-4 text-xs">
+          <div class="bg-blue-900/30 border border-blue-700/50 p-3 rounded-lg text-blue-200">
+            <strong>Thông Tin View:</strong> MẶT BẰNG THOÁT NƯỚC CĂN HỘ PH4 TẦNG 14 (Tỷ lệ 1:50) | Tìm thấy 11 Lưới trục (tự động khôi phục trục ẩn / kéo xa).
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1">Phía Trên (Top) mm:</label>
+              <input type="number" value="100" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white font-mono font-bold text-sm">
+            </div>
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1">Phía Dưới (Bottom) mm:</label>
+              <input type="number" value="100" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white font-mono font-bold text-sm">
+            </div>
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1">Bên Trái (Left) mm:</label>
+              <input type="number" value="100" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white font-mono font-bold text-sm">
+            </div>
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1">Bên Phải (Right) mm:</label>
+              <input type="number" value="100" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white font-mono font-bold text-sm">
+            </div>
+          </div>
+          <div class="space-y-1.5 pt-2">
+            <label class="flex items-center gap-2 text-sky-400 font-medium">
+              <input type="checkbox" checked class="accent-sky-400"> Khóa cả 4 hướng bằng nhau (Top = Bottom = Left = Right)
+            </label>
+            <label class="flex items-center gap-2 text-emerald-400 font-medium">
+              <input type="checkbox" checked class="accent-emerald-400"> Tự động Unhide & Kéo các trục bị ẩn / kéo lệch về sát Crop View
+            </label>
+          </div>
+          <button class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-sm shadow">
+            ⚡ TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS THEO CROP VIEW
           </button>
         </div>
       </div>
-    </div>
+    </section>
 
-  </div>
-
-  <!-- ================= ICONS SVG CHUẨN CỦA HDTOOL ================= -->
-  <script>
-    const ICONS = {
-      CropAlignCombined: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="4" width="24" height="24" rx="3" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 2" fill="#0f172a" fill-opacity="0.3"/>
-        <line x1="2" y1="16" x2="30" y2="16" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 2"/>
-        <polygon points="28,16 23,12 23,20" fill="#dc2626"/>
-        <line x1="10" y1="2" x2="10" y2="30" stroke="#0284c7" stroke-width="2"/>
-        <line x1="22" y1="2" x2="22" y2="30" stroke="#0284c7" stroke-width="2"/>
-        <circle cx="10" cy="5" r="4" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
-        <text x="10" y="7.5" font-size="5" font-weight="bold" fill="#0284c7" text-anchor="middle">1</text>
-        <circle cx="22" cy="5" r="4" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
-        <text x="22" y="7.5" font-size="5" font-weight="bold" fill="#0284c7" text-anchor="middle">2</text>
-        <path d="M 10 26 L 16 26" stroke="#f97316" stroke-width="1.5"/>
-        <polygon points="16,24.5 19,26 16,27.5" fill="#f97316"/>
-      </svg>`,
-
-      MepQuantity: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="18" width="22" height="7" rx="1.5" fill="#0284c7" stroke="#0369a1" stroke-width="1.2"/>
-        <rect x="18" y="4" width="7" height="16" rx="1.5" fill="#0284c7" stroke="#0369a1" stroke-width="1.2"/>
-        <rect x="1" y="17" width="2.5" height="9" rx="1" fill="#38bdf8"/>
-        <rect x="17" y="3" width="9" height="2.5" rx="1" fill="#38bdf8"/>
-        <path d="M 9 10 C 9 7 12 4 12 4 C 12 4 15 7 15 10 C 15 12 13.5 13.5 12 13.5 C 10.5 13.5 9 12 9 10 Z" fill="#06b6d4" stroke="#ffffff" stroke-width="1"/>
-        <rect x="18" y="19" width="12" height="10" rx="1.5" fill="#f59e0b" stroke="#ffffff" stroke-width="1"/>
-        <line x1="20" y1="22" x2="28" y2="22" stroke="#ffffff" stroke-width="1"/>
-        <line x1="20" y1="25" x2="28" y2="25" stroke="#ffffff" stroke-width="1"/>
-      </svg>`,
-
-      PickTableHighlight: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="3" width="24" height="26" rx="2" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-        <rect x="7" y="7" width="18" height="3" fill="#cbd5e1"/>
-        <rect x="7" y="12" width="18" height="3.5" fill="#f87171" stroke="#dc2626" stroke-width="0.8"/>
-        <rect x="7" y="17.5" width="18" height="3" fill="#e2e8f0"/>
-        <rect x="7" y="22.5" width="18" height="3" fill="#e2e8f0"/>
-        <circle cx="21" cy="13.5" r="5" stroke="#eab308" stroke-width="2" fill="#fef08a" fill-opacity="0.3"/>
-        <line x1="25" y1="17.5" x2="29" y2="21.5" stroke="#ca8a04" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M 17 9 L 14 6" stroke="#eab308" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M 25 9 L 28 6" stroke="#eab308" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>`,
-
-      FitScale: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="4" width="24" height="24" rx="2" stroke="#64748b" stroke-width="1.5" fill="#0f172a" fill-opacity="0.4"/>
-        <rect x="7" y="7" width="18" height="4" fill="#0284c7"/>
-        <rect x="7" y="13" width="18" height="12" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-        <line x1="13" y1="13" x2="13" y2="25" stroke="#334155" stroke-width="1"/>
-        <line x1="19" y1="13" x2="19" y2="25" stroke="#334155" stroke-width="1"/>
-        <line x1="7" y1="19" x2="25" y2="19" stroke="#334155" stroke-width="1"/>
-        <path d="M 2 16 L 6 16 M 4 14 L 4 18" stroke="#38bdf8" stroke-width="1.5"/>
-        <path d="M 26 16 L 30 16 M 28 14 L 28 18" stroke="#38bdf8" stroke-width="1.5"/>
-      </svg>`,
-
-      DuctQuantity: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="5,9 21,5 27,9 11,13" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
-        <polygon points="5,9 11,13 11,25 5,21" fill="#cbd5e1" stroke="#475569" stroke-width="1"/>
-        <polygon points="11,13 27,9 27,21 11,25" fill="#64748b" stroke="#475569" stroke-width="1"/>
-        <circle cx="19" cy="17" r="4.5" fill="#f59e0b" stroke="#ffffff" stroke-width="1"/>
-        <text x="19" y="20" font-size="6" font-weight="bold" fill="#ffffff" text-anchor="middle">m²</text>
-      </svg>`,
-
-      SheetList: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 6 4 C 6 2.8 6.8 2 8 2 L 20 2 L 26 8 L 26 28 C 26 29.2 25.2 30 24 30 L 8 30 C 6.8 30 6 29.2 6 28 Z" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
-        <polygon points="20,2 26,8 20,8" fill="#cbd5e1"/>
-        <rect x="9" y="11" width="14" height="2" fill="#0284c7"/>
-        <rect x="9" y="15" width="14" height="2" fill="#94a3b8"/>
-        <rect x="9" y="19" width="14" height="2" fill="#94a3b8"/>
-        <rect x="9" y="23" width="10" height="2" fill="#94a3b8"/>
-        <circle cx="23" cy="23" r="6" fill="#16a34a" stroke="#ffffff" stroke-width="1.2"/>
-        <text x="23" y="26" font-size="7" font-weight="bold" fill="#ffffff" text-anchor="middle">X</text>
-      </svg>`,
-
-      UpdateSheetList: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 6 4 C 6 2.8 6.8 2 8 2 L 20 2 L 26 8 L 26 28 C 26 29.2 25.2 30 24 30 L 8 30 C 6.8 30 6 29.2 6 28 Z" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
-        <polygon points="20,2 26,8 20,8" fill="#cbd5e1"/>
-        <path d="M 12 18 A 5 5 0 1 1 20 18" stroke="#0284c7" stroke-width="2" stroke-linecap="round"/>
-        <polygon points="19,14 23,17 19,20" fill="#0284c7"/>
-      </svg>`,
-
-      UpdateTool: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="12" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 2"/>
-        <path d="M 11 16 A 5 5 0 1 1 21 16" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
-        <polygon points="20,12 25,16 20,20" fill="#0284c7"/>
-        <circle cx="16" cy="16" r="2" fill="#f59e0b"/>
-      </svg>`,
-
-      HDToolMenu: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="14" fill="#0f172a" stroke="#0284c7" stroke-width="2"/>
-        <text x="16" y="15" font-size="8" font-weight="900" fill="#38bdf8" text-anchor="middle">HD</text>
-        <text x="16" y="23" font-size="6" font-weight="800" fill="#f59e0b" text-anchor="middle">TOOL</text>
-      </svg>`
-    };
-  </script>
-
-  <!-- ================= LAYOUT DỮ LIỆU CHUẨN 100% CỦA TOOL ================= -->
-  <script>
-    // Dữ liệu thanh Ribbon khớp 100% với Source/App.cs đang chạy trên Revit của Sếp Hồ
-    const DEFAULT_LAYOUT = {
-      panels: [
-        {
-          id: "panel_1",
-          name: "Căn Chỉnh Đối Tượng",
-          buttons: [
-            {
-              id: "cmdHDToolCropAlignSplit",
-              name: "Chỉnh Grids / Level",
-              type: "split",
-              commandClass: "HDTool.CropAlignCommand",
-              icon: "CropAlignCombined",
-              tooltip: "[HDTOOL] Bảng điều khiển tích hợp: Căn chỉnh Lưới trục & Cao độ theo khung Crop View.",
-              subButtons: [
-                { id: "cmdCropAlignUnified", name: "Căn Chỉnh Grids / Level", commandClass: "HDTool.CropAlignCommand", icon: "CropAlignCombined" },
-                { id: "cmdGridCrop_Item", name: "Căn Chỉnh Grids", commandClass: "HDTool.GridCropCommand", icon: "CropAlignCombined" },
-                { id: "cmdLevelCrop_Item", name: "Căn Chỉnh Level", commandClass: "HDTool.LevelCropCommand", icon: "CropAlignCombined" }
-              ]
-            }
-          ]
-        },
-        {
-          id: "panel_2",
-          name: "Khối Lượng MEP",
-          buttons: [
-            {
-              id: "cmdHDToolMepQuantity",
-              name: "Thống Kê\nỐng Nước",
-              type: "large",
-              commandClass: "HDTool.MepQuantityCommand",
-              icon: "MepQuantity",
-              tooltip: "[HDTOOL] Thống kê khối lượng ống nước & phụ kiện: Gộp parameter, soi sáng mô hình và đưa vào Sheet."
-            },
-            {
-              id: "cmdHDToolPickTableHighlight",
-              name: "CHECK VAR\nPLUMBING",
-              type: "large",
-              commandClass: "HDTool.PickTableHighlightCommand",
-              icon: "PickTableHighlight",
-              tooltip: "[HDTOOL] CHECK VAR PLUMBING: Đối soát, soi sáng khối lượng ống nước & phụ kiện trực tiếp với mô hình 3D trên Sheet."
-            },
-            {
-              id: "cmdHDToolFitTableScale",
-              name: "Khớp Tỷ Lệ\nBảng Khối Lượng",
-              type: "large",
-              commandClass: "HDTool.FitTableScaleCommand",
-              icon: "FitScale",
-              tooltip: "[HDTOOL] Khớp tỷ lệ bảng khối lượng vừa vặn khung view, tự động co giãn ô bảng tính chuẩn chỉ."
-            },
-            {
-              id: "cmdHDToolDuctQuantity",
-              name: "Khối Lượng\nỐng Gió",
-              type: "large",
-              commandClass: "HDTool.DuctQuantityCommand",
-              icon: "DuctQuantity",
-              tooltip: "[HDTOOL] Thống kê khối lượng ống gió HVAC: Tính diện tích tôn m2, phân loại cút, côn, lượn, van gió VCD và miệng gió."
-            }
-          ]
-        },
-        {
-          id: "panel_3",
-          name: "Quản Lý Bản Vẽ & Sheet",
-          buttons: [
-            {
-              id: "cmdHDToolSheetList",
-              name: "Xuất Danh Mục\nBản Vẽ",
-              type: "large",
-              commandClass: "HDTool.ExportSheetListCommand",
-              icon: "SheetList",
-              tooltip: "[HDTOOL] Xuất danh mục bản vẽ (Sheet List) ra Excel (.xls, .csv) hoặc Clipboard."
-            },
-            {
-              id: "cmdHDToolUpdateSheetList",
-              name: "Cập Nhật\nDanh Mục",
-              type: "large",
-              commandClass: "HDTool.UpdateSheetListCommand",
-              icon: "UpdateSheetList",
-              tooltip: "[HDTOOL] Cập nhật lại tên và thông tin Sheet trong Revit từ file Excel."
-            }
-          ]
-        },
-        {
-          id: "panel_4",
-          name: "Hệ Thống & Menu",
-          buttons: [
-            {
-              id: "cmdHDToolUpdateTool",
-              name: "Cập Nhật\nTool",
-              type: "large",
-              commandClass: "HDTool.UpdateToolCommand",
-              icon: "UpdateTool",
-              tooltip: "[HDTOOL] Nạp lại tính năng mới / Hot Reload trực tiếp không cần tắt Revit."
-            },
-            {
-              id: "cmdHDToolMenu",
-              name: "Menu\nHDTOOL",
-              type: "large",
-              commandClass: "HDTool.HDToolMainCommand",
-              icon: "HDToolMenu",
-              tooltip: "[HDTOOL] Bảng điều khiển trung tâm: Tự do lựa chọn công cụ mong muốn."
-            }
-          ]
-        }
-      ]
-    };
-
-    let layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
-    let selectedButtonId = "cmdHDToolMepQuantity"; // Mặc định mở Form Bóc khối lượng ống nước của Sếp
-
-    function initStudio() {
-      renderRibbon();
-      selectButton(selectedButtonId);
-    }
-
-    // Render Ribbon Panels
-    function renderRibbon() {
-      const container = document.getElementById("ribbonContainer");
-      container.innerHTML = "";
-
-      layout.panels.forEach((p, pIndex) => {
-        const panelEl = document.createElement("div");
-        panelEl.className = "ribbon-panel";
-        panelEl.dataset.panelId = p.id;
-
-        // Content
-        const contentEl = document.createElement("div");
-        contentEl.className = "ribbon-panel-content";
-
-        p.buttons.forEach((b, bIndex) => {
-          const btnEl = document.createElement("div");
-          btnEl.className = `revit-btn ${b.id === selectedButtonId ? 'selected' : ''}`;
-          btnEl.dataset.btnId = b.id;
-          btnEl.draggable = true;
-          btnEl.title = b.tooltip || b.name;
-
-          btnEl.innerHTML = `
-            <div class="revit-btn-icon">${ICONS[b.icon] || ICONS.HDToolMenu}</div>
-            <div class="revit-btn-label">${escapeHtml(b.name)}</div>
-            ${b.type === 'split' ? '<div class="split-arrow">▼</div>' : ''}
-          `;
-
-          btnEl.onclick = () => selectButton(b.id);
-
-          // Drag and Drop
-          btnEl.ondragstart = (e) => {
-            e.dataTransfer.setData("text/plain", JSON.stringify({ panelId: p.id, btnId: b.id }));
-          };
-
-          contentEl.appendChild(btnEl);
-        });
-
-        // Dragover
-        panelEl.ondragover = (e) => { e.preventDefault(); panelEl.classList.add("drag-over"); };
-        panelEl.ondragleave = () => panelEl.classList.remove("drag-over");
-        panelEl.ondrop = (e) => {
-          e.preventDefault();
-          panelEl.classList.remove("drag-over");
-          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
-          moveButton(data.panelId, data.btnId, p.id);
-        };
-
-        panelEl.appendChild(contentEl);
-
-        // Footer
-        const footerEl = document.createElement("div");
-        footerEl.className = "ribbon-panel-footer";
-        footerEl.textContent = p.name;
-        panelEl.appendChild(footerEl);
-
-        container.appendChild(panelEl);
-      });
-    }
-
-    function selectButton(btnId) {
-      selectedButtonId = btnId;
-      renderRibbon();
-
-      const btn = findButton(btnId);
-      if (!btn) return;
-
-      // Cập nhật Inspector
-      document.getElementById("propBtnId").textContent = btn.id;
-      document.getElementById("propBtnName").value = btn.name.replace(/\n/g, "\\n");
-      document.getElementById("propBtnTooltip").value = btn.tooltip || "";
-      document.getElementById("propBtnClass").value = btn.commandClass || "";
-
-      // Panel select
-      const panelSelect = document.getElementById("propBtnPanel");
-      panelSelect.innerHTML = "";
-      layout.panels.forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p.id;
-        opt.textContent = p.name;
-        if (p.buttons.some(b => b.id === btn.id)) opt.selected = true;
-        panelSelect.appendChild(opt);
-      });
-
-      // Size toggle
-      if (btn.type === 'small') {
-        document.getElementById("btnSizeSmall").className = "bg-sky-600 text-white font-semibold py-1.5 rounded border border-sky-400";
-        document.getElementById("btnSizeLarge").className = "bg-slate-800 text-slate-400 py-1.5 rounded border border-slate-700";
-      } else {
-        document.getElementById("btnSizeLarge").className = "bg-sky-600 text-white font-semibold py-1.5 rounded border border-sky-400";
-        document.getElementById("btnSizeSmall").className = "bg-slate-800 text-slate-400 py-1.5 rounded border border-slate-700";
-      }
-
-      // Render Form Preview tương ứng
-      renderDialogPreview(btn);
-    }
-
-    function findButton(btnId) {
-      for (const p of layout.panels) {
-        for (const b of p.buttons) {
-          if (b.id === btnId) return b;
-        }
-      }
-      return null;
-    }
-
-    function updateCurrentButton() {
-      const btn = findButton(selectedButtonId);
-      if (!btn) return;
-
-      btn.name = document.getElementById("propBtnName").value.replace(/\\n/g, "\n");
-      btn.tooltip = document.getElementById("propBtnTooltip").value;
-      btn.commandClass = document.getElementById("propBtnClass").value;
-
-      renderRibbon();
-    }
-
-    function moveCurrentButtonToPanel(targetPanelId) {
-      let foundBtn = null;
-      layout.panels.forEach(p => {
-        const idx = p.buttons.findIndex(b => b.id === selectedButtonId);
-        if (idx !== -1) {
-          foundBtn = p.buttons.splice(idx, 1)[0];
-        }
-      });
-
-      if (foundBtn) {
-        const targetPanel = layout.panels.find(p => p.id === targetPanelId);
-        if (targetPanel) {
-          targetPanel.buttons.push(foundBtn);
-        }
-      }
-      renderRibbon();
-    }
-
-    function moveButton(fromPanelId, btnId, toPanelId) {
-      const fromPanel = layout.panels.find(p => p.id === fromPanelId);
-      const toPanel = layout.panels.find(p => p.id === toPanelId);
-      if (!fromPanel || !toPanel) return;
-
-      const idx = fromPanel.buttons.findIndex(b => b.id === btnId);
-      if (idx !== -1) {
-        const btn = fromPanel.buttons.splice(idx, 1)[0];
-        toPanel.buttons.push(btn);
-        renderRibbon();
-        selectButton(btnId);
-      }
-    }
-
-    function setButtonSize(size) {
-      const btn = findButton(selectedButtonId);
-      if (btn) {
-        btn.type = size;
-        selectButton(selectedButtonId);
-      }
-    }
-
-    function addNewButton() {
-      const p = layout.panels[1]; // default vào MEP
-      const newId = "cmdHDTool_New_" + Date.now();
-      const newBtn = {
-        id: newId,
-        name: "Lệnh Mới\nRevit",
-        type: "large",
-        commandClass: "HDTool.NewCommand",
-        icon: "HDToolMenu",
-        tooltip: "[HDTOOL] Công cụ mới bổ sung theo yêu cầu Sếp Hồ."
-      };
-      p.buttons.push(newBtn);
-      renderRibbon();
-      selectButton(newId);
-    }
-
-    function deleteCurrentButton() {
-      layout.panels.forEach(p => {
-        const idx = p.buttons.findIndex(b => b.id === selectedButtonId);
-        if (idx !== -1) p.buttons.splice(idx, 1);
-      });
-      selectedButtonId = "cmdHDToolCropAlignSplit";
-      renderRibbon();
-      selectButton(selectedButtonId);
-    }
-
-    function resetDefaultLayout() {
-      layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
-      selectedButtonId = "cmdHDToolMepQuantity";
-      renderRibbon();
-      selectButton(selectedButtonId);
-    }
-
-    function toggleTheme() {
-      document.body.classList.toggle("light-theme");
-    }
-
-    function escapeHtml(str) {
-      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-
-    // ================= RENDER DIALOG PREVIEW (MÔ PHỎNG 100% FORM WINDOWS 11) =================
-    function renderDialogPreview(btn) {
-      const viewport = document.getElementById("dialogPreviewViewport");
-      const id = btn.id || '';
-
-      // 1. FORM BÓC KHỐI LƯỢNG ỐNG NƯỚC (CHUYÊN SÂU) - KHỚP 100% ẢNH THẬT
-      if (id === 'cmdHDToolMepQuantity') {
-        viewport.innerHTML = `
-          <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 overflow-hidden text-xs select-none">
-            <!-- Win11 Titlebar -->
-            <div class="bg-[#181d26] px-3 py-2 flex items-center justify-between border-b border-slate-700">
-              <div class="flex items-center gap-2">
-                <span class="text-sky-400 font-bold">HD</span>
-                <span class="font-semibold text-slate-200">HDTOOL - BÓC KHỐI LƯỢNG PHỤ KIỆN ỐNG NƯỚC (CHUYÊN SÂU)</span>
-              </div>
-              <div class="flex items-center gap-3 text-slate-400">
-                <span class="hover:text-white cursor-pointer">─</span>
-                <span class="hover:text-white cursor-pointer">□</span>
-                <span class="hover:text-red-400 cursor-pointer">✕</span>
-              </div>
-            </div>
-
-            <!-- Banner Header -->
-            <div class="bg-gradient-to-r from-[#172554] to-[#1e3a8a] px-4 py-3 border-b border-blue-900/50">
-              <h2 class="text-sm font-bold text-white tracking-wide">BÓC KHỐI LƯỢNG PHỤ KIỆN ỐNG NƯỚC (FITTINGS)</h2>
-              <p class="text-[11px] text-blue-200 mt-0.5">Chuyên bóc co, cút, tê, côn, van, phụ kiện: đếm số lượng chiếc, quy cách và xuất bảng</p>
-            </div>
-
-            <!-- Khối Bộ Lọc Phạm Vi & Chế Độ Bóc -->
-            <div class="p-3 bg-[#1e2430] border-b border-slate-700 grid grid-cols-12 gap-3">
-              <div class="col-span-4 bg-[#181d26] p-2.5 rounded-lg border border-slate-700">
-                <span class="font-bold text-[11px] text-slate-300 block mb-1.5">Bộ Lọc Phạm Vi Bóc Khối Lượng</span>
-                <div class="space-y-1 text-[11px]">
-                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-300"><input type="radio" name="scope"> Khung Nhìn Hiện Hành (SĐKG THOÁT NƯỚC...)</label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-sky-400 font-bold"><input type="radio" name="scope" checked> Vùng Quét Cục Bộ (43 đối tượng)</label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-300"><input type="radio" name="scope"> Toàn Bộ Dự Án (All Documents)</label>
-                </div>
-              </div>
-
-              <div class="col-span-4 flex flex-col justify-center gap-2">
-                <button class="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-2 rounded-lg shadow-md text-xs">
-                  Quét / Chọn View (Kéo quét hoặc Click View)
-                </button>
-                <button class="w-full bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-600 hover:to-emerald-600 text-white font-bold py-1.5 rounded-lg shadow-md text-xs">
-                  Bóc Thêm (Cộng Dồn) (Thêm View / Vùng khác)
-                </button>
-              </div>
-
-              <div class="col-span-4 bg-[#181d26] p-2.5 rounded-lg border border-slate-700">
-                <span class="font-bold text-[11px] text-slate-300 block mb-1.5">Chế Độ Bóc Khối Lượng:</span>
-                <div class="space-y-1 text-[11px]">
-                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-300"><input type="radio" name="mode"> Ống Nước (Pipes - Mét Dài)</label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-sky-400 font-bold"><input type="radio" name="mode" checked> Phụ Kiện (Fittings - Số Lượng)</label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-300"><input type="radio" name="mode"> Tất Cả (Ống Phụ Kiện)</label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Dải Thanh Công Cụ Thao Tác -->
-            <div class="bg-[#141923] px-3 py-2 border-b border-slate-700 flex flex-wrap items-center justify-between gap-2">
-              <span class="text-[11px] text-amber-400 font-bold">ĐÃ TỰ ĐỘNG HIGHLIGHT TOÀN BỘ 43 ĐỐI TƯỢNG ĐÃ BÓC TRÊN MÀN HÌNH REVIT!</span>
-              <div class="flex items-center gap-1.5">
-                <button class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-2.5 py-1 rounded">Sáng Đã Bóc</button>
-                <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded">Tắt Sáng</button>
-                <button class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-2.5 py-1 rounded">Zoom Gần</button>
-                <button class="bg-purple-600 hover:bg-purple-500 text-white px-2.5 py-1 rounded">Cách Ly View</button>
-                <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded">Bỏ Cách Ly</button>
-                <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded">Ẩn / Hiện Cột</button>
-                <button class="bg-teal-600 hover:bg-teal-500 text-white px-2.5 py-1 rounded">Thêm Cột Parameter</button>
-              </div>
-            </div>
-
-            <!-- Bảng Dữ Liệu & TreeView -->
-            <div class="grid grid-cols-12 min-h-[220px] bg-[#1a202c]">
-              <div class="col-span-3 border-r border-slate-700 p-2.5 bg-[#141923] text-[11px] space-y-1 font-mono">
-                <div class="font-bold text-sky-400">📁 TẤT CẢ KHỐI LƯỢNG (43 đối tượng)</div>
-                <div class="pl-3 text-slate-300">└ 📁 Tầng: TN3 (43 cái)</div>
-                <div class="pl-6 text-slate-300">└ 📁 Khu vực: T4 (43 cái)</div>
-                <div class="pl-9 text-slate-300">└ 📁 Hệ thống: P_RAIN WATER (TM) (43 cái)</div>
-                <div class="pl-12 text-amber-400 font-bold">└ 📋 &lt;KLPK P_RAIN WATER (TM) T4 TN3&gt;</div>
-              </div>
-
-              <div class="col-span-9 p-2 overflow-x-auto">
-                <table class="w-full text-left border-collapse text-[11px]">
-                  <thead>
-                    <tr class="bg-[#0f172a] text-slate-200 border-b border-slate-600">
-                      <th class="p-1.5 border-r border-slate-700 w-10 text-center">STT</th>
-                      <th class="p-1.5 border-r border-slate-700">Tên Phụ Kiện / Đường Ống (Đã Gộp)</th>
-                      <th class="p-1.5 border-r border-slate-700">Phân Loại</th>
-                      <th class="p-1.5 border-r border-slate-700">Size</th>
-                      <th class="p-1.5 text-center font-bold text-amber-400">Số Lượng</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-700/60 font-sans">
-                    <tr class="hover:bg-slate-800/60"><td class="p-1.5 text-center">1</td><td class="p-1.5 font-semibold text-sky-300">Ba chạc uPVC 45 độ</td><td class="p-1.5 text-slate-400">Phụ Kiện Ống</td><td class="p-1.5 font-mono">110ø-110ø-110ø</td><td class="p-1.5 text-center font-bold text-amber-400">4</td></tr>
-                    <tr class="hover:bg-slate-800/60"><td class="p-1.5 text-center">2</td><td class="p-1.5 font-semibold text-sky-300">Ba chạc uPVC 45 độ thu</td><td class="p-1.5 text-slate-400">Phụ Kiện Ống</td><td class="p-1.5 font-mono">110ø-110ø-60ø</td><td class="p-1.5 text-center font-bold text-amber-400">5</td></tr>
-                    <tr class="hover:bg-slate-800/60"><td class="p-1.5 text-center">3</td><td class="p-1.5 font-semibold text-sky-300">Ba chạc uPVC 45 độ thu</td><td class="p-1.5 text-slate-400">Phụ Kiện Ống</td><td class="p-1.5 font-mono">110ø-110ø-90ø</td><td class="p-1.5 text-center font-bold text-amber-400">1</td></tr>
-                    <tr class="hover:bg-slate-800/60"><td class="p-1.5 text-center">4</td><td class="p-1.5 font-semibold text-sky-300">CÔN THU</td><td class="p-1.5 text-slate-400">Phụ Kiện Ống</td><td class="p-1.5 font-mono">90ø-60ø</td><td class="p-1.5 text-center font-bold text-amber-400">1</td></tr>
-                    <tr class="hover:bg-slate-800/60"><td class="p-1.5 text-center">5</td><td class="p-1.5 font-semibold text-sky-300">Côn uPVC thu</td><td class="p-1.5 text-slate-400">Phụ Kiện Ống</td><td class="p-1.5 font-mono">90ø-60ø</td><td class="p-1.5 text-center font-bold text-amber-400">4</td></tr>
-                    <tr class="hover:bg-slate-800/60"><td class="p-1.5 text-center">6</td><td class="p-1.5 font-semibold text-sky-300">Cút uPVC 45</td><td class="p-1.5 text-slate-400">Phụ Kiện Ống</td><td class="p-1.5 font-mono">110ø-110ø</td><td class="p-1.5 text-center font-bold text-amber-400">14</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Footer Buttons -->
-            <div class="bg-[#141923] p-3 border-t border-slate-700 flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <button class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs shadow">
-                  Đặt / Cập Nhật Vào Sheet Mong Muốn...
-                </button>
-                <button class="bg-teal-700 hover:bg-teal-600 text-white font-bold px-3 py-1.5 rounded text-xs">
-                  Tạo Vào Project Browser (Kéo Thả)
-                </button>
-                <button class="bg-sky-700 hover:bg-sky-600 text-white px-3 py-1.5 rounded text-xs">
-                  Đồng Bộ Parameter
-                </button>
-              </div>
-              <div class="flex items-center gap-2">
-                <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded text-xs">Xuất Excel</button>
-                <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded text-xs">Sao Chép</button>
-                <button class="bg-slate-800 hover:bg-slate-700 text-slate-400 px-3 py-1.5 rounded text-xs">Đóng (ESC)</button>
-              </div>
-            </div>
+    <!-- VIEW 3: QUẢN LÝ BẢN VẼ & SỬA THAY THẾ SỐ HIỆU HÀNG LOẠT (EXCEL AUTOFILL DRAG) -->
+    <section id="view-sheet" class="w-full max-w-5xl hidden transition-all duration-300">
+      <div class="bg-[#1E293B] rounded-xl border border-slate-700 shadow-2xl overflow-hidden fluent-shadow">
+        
+        <!-- Header Dialog -->
+        <div class="bg-[#182B49] px-4 py-3 flex items-center justify-between border-b border-slate-700">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="font-bold text-xs text-white uppercase tracking-wider">HDTOOL — SỬA & THAY THẾ SỐ HIỆU BẢN VẼ HÀNG LOẠT (EXCEL AUTOFILL)</span>
+            <span class="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 font-semibold">★ MỚI THEO LỆNH SẾP HỒ ★</span>
           </div>
-        `;
-      }
-      // 2. FORM CĂN CHỈNH GRIDS & LEVEL (CROP ALIGN)
-      else if (id === 'cmdHDToolCropAlignSplit') {
-        viewport.innerHTML = `
-          <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 overflow-hidden text-xs select-none">
-            <div class="bg-[#181d26] px-3 py-2 flex items-center justify-between border-b border-slate-700">
-              <div class="flex items-center gap-2">
-                <span class="text-sky-400 font-bold">HD</span>
-                <span class="font-semibold text-slate-200">HDTOOL - CĂN CHỈNH BẢN VẼ REVIT (GRIDS & LEVEL)</span>
-              </div>
-              <div class="flex items-center gap-3 text-slate-400">
-                <span class="hover:text-white cursor-pointer">─</span><span class="hover:text-white cursor-pointer">□</span><span class="hover:text-red-400 cursor-pointer">✕</span>
-              </div>
-            </div>
-            <div class="bg-gradient-to-r from-[#1e3a8a] to-[#0369a1] px-4 py-3 border-b border-blue-900/50">
-              <h2 class="text-sm font-bold text-white tracking-wide">CĂN CHỈNH KHOẢNG CÁCH GRIDS / LEVEL SO VỚI CROP VIEW</h2>
-              <p class="text-[11px] text-blue-200 mt-0.5">Hỗ trợ Mặt bằng (Plan), Mặt cắt (Section), Mặt đứng (Elevation) và Trang in (Sheet) theo mm</p>
-            </div>
-            <div class="p-4 space-y-4">
-              <div class="bg-[#181d26] p-3 rounded-lg border border-slate-700 grid grid-cols-4 gap-3 text-center">
-                <div><span class="text-slate-400 block mb-1">Mép Trái (Left)</span><input type="number" value="15" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-center font-bold text-sky-400"> mm</div>
-                <div><span class="text-slate-400 block mb-1">Mép Phải (Right)</span><input type="number" value="15" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-center font-bold text-sky-400"> mm</div>
-                <div><span class="text-slate-400 block mb-1">Mép Trên (Top)</span><input type="number" value="20" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-center font-bold text-sky-400"> mm</div>
-                <div><span class="text-slate-400 block mb-1">Mép Dưới (Bottom)</span><input type="number" value="20" class="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-center font-bold text-sky-400"> mm</div>
-              </div>
-              <div class="flex justify-end gap-2">
-                <button class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-2 rounded">Thực Hiện Căn Chỉnh Ngay</button>
-              </div>
-            </div>
+          <div class="text-slate-400 text-xs font-mono">
+            <span>Live Preview Active</span>
           </div>
-        `;
-      }
-      // 3. FORM CHECK VAR PLUMBING
-      else if (id === 'cmdHDToolPickTableHighlight') {
-        viewport.innerHTML = `
-          <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 overflow-hidden text-xs select-none">
-            <div class="bg-[#181d26] px-3 py-2 flex items-center justify-between border-b border-slate-700">
-              <span class="font-semibold text-slate-200">HDTOOL - CHECK VAR PLUMBING (ĐỐI SOÁT TRỰC TIẾP TRÊN SHEET)</span>
-              <span class="text-slate-400">✕</span>
-            </div>
-            <div class="p-4 space-y-3">
-              <div class="bg-amber-950/40 border border-amber-800/60 p-3 rounded-lg text-amber-200">
-                🔍 <strong>HƯỚNG DẪN:</strong> Click chuột vào bất kỳ ô nào trên Bảng Khối Lượng đang đặt trên Sheet, HDTOOL sẽ tự động làm sáng rực rỡ và phóng to đúng các đối tượng ống nước / phụ kiện tương ứng trên mô hình 3D!
-              </div>
-              <div class="flex justify-center py-6">
-                <button class="bg-gradient-to-r from-amber-600 to-yellow-600 text-white font-bold px-6 py-2.5 rounded-lg shadow-lg">
-                  Kích Hoạt Chế Độ Soi Sáng Bảng Sheet (Click to Highlight)
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-      // 2. FORM BÃ“C KHá»I LÆ¯á»¢NG á»NG GIÃ“ & PHá»¤ KIá»†N HVAC (TCVN 5687:2010 / SMACNA) THEO Lá»†NH Sáº¾P Há»’
-      else if (id === 'cmdHDToolDuctQuantity') {
-        viewport.innerHTML = `
-          <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 overflow-hidden text-xs select-none">
-            <!-- Win11 Titlebar -->
-            <div class="bg-[#181d26] px-3 py-2 flex items-center justify-between border-b border-slate-700">
-              <div class="flex items-center gap-2">
-                <span class="text-amber-400 font-black tracking-wider text-sm">HadoMEE</span>
-                <span class="text-slate-500">|</span>
-                <span class="font-semibold text-slate-200">HDTOOL â€” THá»NG KÃŠ KHá»I LÆ¯á»¢NG á»NG GIÃ“ & PHá»¤ KIá»†N HVAC (TCVN 5687:2010 / SMACNA)</span>
-              </div>
-              <div class="flex items-center gap-3 text-slate-400">
-                <span class="hover:text-white cursor-pointer">â”€</span>
-                <span class="hover:text-white cursor-pointer">â–¡</span>
-                <span class="hover:text-red-400 cursor-pointer">âœ•</span>
-              </div>
-            </div>
-
-            <!-- Banner Header HadoMEE -->
-            <div class="bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#0f172a] px-4 py-3 border-b border-blue-900/50 flex items-center justify-between">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="bg-red-700 text-white font-extrabold px-2 py-0.5 rounded text-[10px] tracking-wider uppercase">â˜… Táº¤T Cáº¢ VÃŒ HÃ€ ÄÃ” THÃ‚N YÃŠU â˜…</span>
-                  <h2 class="text-sm font-bold text-white tracking-wide">THá»NG KÃŠ KHá»I LÆ¯á»¢NG á»NG GIÃ“ & PHá»¤ KIá»†N HVAC (MÂ² TÃ”N & PHá»¤ KIá»†N)</h2>
-                </div>
-                <p class="text-[11px] text-blue-200 mt-1">
-                  Tá»± Ä‘á»™ng tÃ­nh diá»‡n tÃ­ch tÃ´n mÂ² theo TCVN 5687:2010 / SMACNA  |  PhÃ¢n loáº¡i cÃºt, cÃ´n, lÆ°á»£n, van VCD/FD, miá»‡ng giÃ³  |  ThÃªm cá»™t Parameter dá»± Ã¡n & Há»‡ á»‘ng giÃ³  |  Xuáº¥t Sheet chuáº©n chá»‰
-                </p>
-              </div>
-              <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 text-right">
-                <span class="text-[10px] text-slate-300 block">TiÃªu Chuáº©n Ãp Dá»¥ng:</span>
-                <span class="text-xs font-bold text-amber-300 font-mono">TCVN 5687:2010 / SMACNA</span>
-              </div>
-            </div>
-
-            <!-- Khá»‘i Bá»™ Lá»c Pháº¡m Vi & Háº¡ng Má»¥c HVAC -->
-            <div class="p-3 bg-[#1e2430] border-b border-slate-700 grid grid-cols-12 gap-3">
-              <!-- Cá»¥m 1: Pháº¡m vi -->
-              <div class="col-span-4 bg-[#181d26] p-2.5 rounded-lg border border-slate-700 flex flex-col justify-between">
-                <span class="font-bold text-[11px] text-slate-300 block mb-1">Pháº¡m Vi BÃ³c TÃ¡ch:</span>
-                <div class="space-y-1 text-[11px]">
-                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
-                    <input type="radio" name="ductScope"> Khung NhÃ¬n Hiá»‡n HÃ nh (Máº·t Báº±ng T4 - HVAC)
-                  </label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-amber-400 font-bold">
-                    <input type="radio" name="ductScope" checked> VÃ¹ng QuÃ©t Chuá»™t Cá»¥c Bá»™ (78 Ä‘á»‘i tÆ°á»£ng)
-                  </label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
-                    <input type="radio" name="ductScope"> ToÃ n Bá»™ Dá»± Ãn (All Document)
-                  </label>
-                </div>
-              </div>
-
-              <!-- Cá»¥m 2: Thao tÃ¡c quÃ©t -->
-              <div class="col-span-3 flex flex-col justify-center gap-2">
-                <button class="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-2 rounded-lg shadow-md text-xs flex items-center justify-center gap-1.5">
-                  <span>â¬›</span> QUÃ‰T VÃ™NG Má»šI (KÃ©o chuá»™t)
-                </button>
-                <button class="w-full bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-600 hover:to-emerald-600 text-white font-bold py-1.5 rounded-lg shadow-md text-xs flex items-center justify-center gap-1.5">
-                  <span>âž•</span> BÃ³c ThÃªm (Cá»™ng Dá»“n View)
-                </button>
-              </div>
-
-              <!-- Cá»¥m 3: Háº¡ng má»¥c HVAC -->
-              <div class="col-span-5 bg-[#181d26] p-2.5 rounded-lg border border-slate-700">
-                <span class="font-bold text-[11px] text-slate-300 block mb-1">Háº¡ng Má»¥c BÃ³c Khá»‘i LÆ°á»£ng:</span>
-                <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-                  <label class="flex items-center gap-1.5 cursor-pointer text-sky-400 font-semibold">
-                    <input type="checkbox" checked> á»ng GiÃ³ Tháº³ng (mÂ² TÃ´n)
-                  </label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-emerald-400 font-semibold">
-                    <input type="checkbox" checked> Phá»¥ Kiá»‡n CÃºt/CÃ´n/LÆ°á»£n
-                  </label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-amber-400 font-semibold">
-                    <input type="checkbox" checked> Van GiÃ³ VCD / FD / NRD
-                  </label>
-                  <label class="flex items-center gap-1.5 cursor-pointer text-purple-400 font-semibold">
-                    <input type="checkbox" checked> Miá»‡ng GiÃ³ (Diffuser, Slot)
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Dáº£i Thanh CÃ´ng Cá»¥ Thao TÃ¡c & Quáº£n LÃ½ Cá»™t Parameter Dá»± Ãn -->
-            <div class="bg-[#141923] px-3 py-2 border-b border-slate-700 flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
-                  <span>ðŸŽ¯</span> ÄÃƒ SOI SÃNG MÃ” HÃŒNH 2 CHIá»€U:
-                </span>
-                <span class="text-[11px] text-slate-400">Click dÃ²ng báº£ng Ä‘á»ƒ lÃ m sÃ¡ng rá»±c rá»¡ á»‘ng giÃ³ tÆ°Æ¡ng á»©ng trÃªn Revit!</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <button class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-2.5 py-1 rounded text-xs flex items-center gap-1">
-                  <span>ðŸ’¡</span> SÃ¡ng ÄÃ£ BÃ³c
-                </button>
-                <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded text-xs">Táº¯t SÃ¡ng</button>
-                <button class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-2.5 py-1 rounded text-xs">Zoom Gáº§n</button>
-                <button class="bg-purple-600 hover:bg-purple-500 text-white px-2.5 py-1 rounded text-xs">CÃ¡ch Ly View</button>
-                <button class="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold px-3 py-1 rounded text-xs shadow flex items-center gap-1" onclick="openParamModalDemo()">
-                  <span>âž•</span> ThÃªm Cá»™t Parameter
-                </button>
-                <button class="bg-red-900/60 hover:bg-red-800 text-red-300 px-2.5 py-1 rounded text-xs" onclick="alert('ÄÃ£ xÃ³a cá»™t parameter tÃ¹y chá»n cuá»‘i cÃ¹ng khá»i báº£ng!')">
-                  <span>ðŸ—‘ï¸</span> XÃ³a Cá»™t
-                </button>
-              </div>
-            </div>
-
-            <!-- Báº£ng Dá»¯ Liá»‡u DataGridView Khá»‘i LÆ°á»£ng á»ng GiÃ³ HVAC Äáº§y Äá»§ Cá»™t -->
-            <div class="overflow-x-auto max-h-72">
-              <table class="w-full text-left border-collapse font-sans text-[11px]" id="ductQuantityTable">
-                <thead class="bg-[#18212f] text-slate-300 sticky top-0 border-b border-slate-700">
-                  <tr>
-                    <th class="p-2 border-r border-slate-700 w-10 text-center">STT</th>
-                    <th class="p-2 border-r border-slate-700 min-w-[200px]">TÃªn Cáº¥u Kiá»‡n / Phá»¥ Kiá»‡n</th>
-                    <th class="p-2 border-r border-slate-700 w-28">Quy CÃ¡ch (WxH / Ã˜)</th>
-                    <th class="p-2 border-r border-slate-700 w-24 text-right">Chiá»u DÃ i (m)</th>
-                    <th class="p-2 border-r border-slate-700 w-20 text-center font-bold text-amber-400">Sá»‘ LÆ°á»£ng</th>
-                    <th class="p-2 border-r border-slate-700 w-24 text-right font-bold text-emerald-400">Diá»‡n TÃ­ch (mÂ²)</th>
-                    <th class="p-2 border-r border-slate-700 w-28">Há»‡ Thá»‘ng</th>
-                    <th class="p-2 border-r border-slate-700 w-20 text-center">Äá»™ DÃ y (mm)</th>
-                    <th class="p-2 border-r border-slate-700 w-16">Táº§ng</th>
-                    <!-- CÃC Cá»˜T PARAMETER Dá»° ÃN & Há»† á»NG GIÃ“ DO NGÆ¯á»œI DÃ™NG THÃŠM -->
-                    <th class="p-2 border-r border-slate-700 bg-teal-950/40 text-teal-300 font-bold min-w-[120px]">
-                      Loáº¡i Báº£o Ã”n (Custom)
-                    </th>
-                    <th class="p-2 bg-teal-950/40 text-teal-300 font-bold min-w-[110px]">
-                      Comments (Dá»± Ãn)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-800 text-slate-300">
-                  <tr class="hover:bg-sky-950/40 cursor-pointer">
-                    <td class="p-2 text-center text-slate-500">1</td>
-                    <td class="p-2 font-medium text-slate-100 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-sky-400"></span> á»ng GiÃ³ Tháº³ng TÃ´n Máº¡ Káº½m
-                    </td>
-                    <td class="p-2 font-mono text-sky-300">800 x 400</td>
-                    <td class="p-2 text-right font-mono">48.00</td>
-                    <td class="p-2 text-center font-bold text-amber-400">40 Ä‘oáº¡n</td>
-                    <td class="p-2 text-right font-bold text-emerald-400 font-mono">115.20</td>
-                    <td class="p-2 text-sky-400 font-semibold">Cáº¥p GiÃ³ (SA)</td>
-                    <td class="p-2 text-center text-slate-400">0.80</td>
-                    <td class="p-2 text-slate-400">Táº§ng 4</td>
-                    <td class="p-2 bg-teal-950/20 text-teal-200">BÃ´ng Thá»§y Tinh 25mm</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-300">Tuyáº¿n Trá»¥c ChÃ­nh AHU-01</td>
-                  </tr>
-                  <tr class="hover:bg-sky-950/40 cursor-pointer bg-slate-900/40">
-                    <td class="p-2 text-center text-slate-500">2</td>
-                    <td class="p-2 font-medium text-slate-100 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-sky-400"></span> á»ng GiÃ³ Tháº³ng TÃ´n Máº¡ Káº½m
-                    </td>
-                    <td class="p-2 font-mono text-sky-300">600 x 350</td>
-                    <td class="p-2 text-right font-mono">36.00</td>
-                    <td class="p-2 text-center font-bold text-amber-400">30 Ä‘oáº¡n</td>
-                    <td class="p-2 text-right font-bold text-emerald-400 font-mono">68.40</td>
-                    <td class="p-2 text-sky-400 font-semibold">Cáº¥p GiÃ³ (SA)</td>
-                    <td class="p-2 text-center text-slate-400">0.80</td>
-                    <td class="p-2 text-slate-400">Táº§ng 4</td>
-                    <td class="p-2 bg-teal-950/20 text-teal-200">BÃ´ng Thá»§y Tinh 25mm</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-300">NhÃ¡nh Khu VÄƒn PhÃ²ng</td>
-                  </tr>
-                  <tr class="hover:bg-sky-950/40 cursor-pointer">
-                    <td class="p-2 text-center text-slate-500">3</td>
-                    <td class="p-2 font-medium text-slate-100 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400"></span> CÃºt 90 Äá»™ CÃ³ CÃ¡nh HÆ°á»›ng DÃ²ng
-                    </td>
-                    <td class="p-2 font-mono text-emerald-300">800x400 R150</td>
-                    <td class="p-2 text-right text-slate-600">-</td>
-                    <td class="p-2 text-center font-bold text-amber-400">8 cÃ¡i</td>
-                    <td class="p-2 text-right font-bold text-emerald-400 font-mono">12.80</td>
-                    <td class="p-2 text-sky-400 font-semibold">Cáº¥p GiÃ³ (SA)</td>
-                    <td class="p-2 text-center text-slate-400">0.80</td>
-                    <td class="p-2 text-slate-400">Táº§ng 4</td>
-                    <td class="p-2 bg-teal-950/20 text-teal-200">BÃ´ng Thá»§y Tinh 25mm</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-300">Gia cÃ´ng CNC chuáº©n TCVN</td>
-                  </tr>
-                  <tr class="hover:bg-sky-950/40 cursor-pointer bg-slate-900/40">
-                    <td class="p-2 text-center text-slate-500">4</td>
-                    <td class="p-2 font-medium text-slate-100 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400"></span> CÃ´n Thu Chuyá»ƒn Tiáº¿t Diá»‡n
-                    </td>
-                    <td class="p-2 font-mono text-emerald-300">800x400 - 600x350</td>
-                    <td class="p-2 text-right font-mono">0.50</td>
-                    <td class="p-2 text-center font-bold text-amber-400">4 cÃ¡i</td>
-                    <td class="p-2 text-right font-bold text-emerald-400 font-mono">4.20</td>
-                    <td class="p-2 text-sky-400 font-semibold">Cáº¥p GiÃ³ (SA)</td>
-                    <td class="p-2 text-center text-slate-400">0.80</td>
-                    <td class="p-2 text-slate-400">Táº§ng 4</td>
-                    <td class="p-2 bg-teal-950/20 text-teal-200">BÃ´ng Thá»§y Tinh 25mm</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-300">CÃ´n thu cÃ¢n tÃ¢m</td>
-                  </tr>
-                  <tr class="hover:bg-sky-950/40 cursor-pointer">
-                    <td class="p-2 text-center text-slate-500">5</td>
-                    <td class="p-2 font-medium text-slate-100 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-amber-400"></span> Van GiÃ³ Äiá»u Chá»‰nh VCD Tay Gáº¡t
-                    </td>
-                    <td class="p-2 font-mono text-amber-300">600 x 350</td>
-                    <td class="p-2 text-right text-slate-600">-</td>
-                    <td class="p-2 text-center font-bold text-amber-400">6 cÃ¡i</td>
-                    <td class="p-2 text-right text-slate-600">-</td>
-                    <td class="p-2 text-sky-400 font-semibold">Cáº¥p GiÃ³ (SA)</td>
-                    <td class="p-2 text-center text-slate-400">-</td>
-                    <td class="p-2 text-slate-400">Táº§ng 4</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-400">KhÃ´ng Bá»c</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-300">Van cÃ¡nh Ä‘Ã´i VCD-T4</td>
-                  </tr>
-                  <tr class="hover:bg-sky-950/40 cursor-pointer bg-slate-900/40">
-                    <td class="p-2 text-center text-slate-500">6</td>
-                    <td class="p-2 font-medium text-slate-100 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-purple-400"></span> Miá»‡ng GiÃ³ Khuáº¿ch TÃ¡n 4 HÆ°á»›ng
-                    </td>
-                    <td class="p-2 font-mono text-purple-300">600 x 600 (Há»™p 250)</td>
-                    <td class="p-2 text-right text-slate-600">-</td>
-                    <td class="p-2 text-center font-bold text-amber-400">14 bá»™</td>
-                    <td class="p-2 text-right text-slate-600">-</td>
-                    <td class="p-2 text-sky-400 font-semibold">Cáº¥p GiÃ³ Láº¡nh</td>
-                    <td class="p-2 text-center text-slate-400">-</td>
-                    <td class="p-2 text-slate-400">Táº§ng 4</td>
-                    <td class="p-2 bg-teal-950/20 text-teal-200">Há»™p GiÃ³ Bá»c 15mm</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-300">Máº·t tráº§n tháº¡ch cao</td>
-                  </tr>
-                  <tr class="hover:bg-sky-950/40 cursor-pointer">
-                    <td class="p-2 text-center text-slate-500">7</td>
-                    <td class="p-2 font-medium text-slate-100 flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-sky-400"></span> á»ng GiÃ³ TrÃ²n Xoáº¯n HÃºt KhÃ­ Tháº£i
-                    </td>
-                    <td class="p-2 font-mono text-sky-300">Ã˜300</td>
-                    <td class="p-2 text-right font-mono">25.00</td>
-                    <td class="p-2 text-center font-bold text-amber-400">20 Ä‘oáº¡n</td>
-                    <td class="p-2 text-right font-bold text-emerald-400 font-mono">23.56</td>
-                    <td class="p-2 text-rose-400 font-semibold">HÃºt KhÃ­ Tháº£i (EA)</td>
-                    <td class="p-2 text-center text-slate-400">0.75</td>
-                    <td class="p-2 text-slate-400">Táº§ng 4</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-400">KhÃ´ng Bá»c</td>
-                    <td class="p-2 bg-teal-950/20 text-slate-300">Trá»¥c hÃºt tháº£i khu phá»¥</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Footer TÃ¡c Vá»¥ & Tá»•ng Há»£p Khá»‘i LÆ°á»£ng TÃ´n -->
-            <div class="bg-[#181d26] p-3 border-t border-slate-700 flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-3">
-                <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                  <span>ðŸ“Š</span> Tá»”NG Cá»˜NG MÂ² TÃ”N: <span class="text-white text-sm font-black underline ml-1">224.16 mÂ²</span>
-                </span>
-                <span class="text-slate-500">|</span>
-                <span class="text-xs text-amber-300 font-semibold">
-                  90 Ä‘oáº¡n á»‘ng tháº³ng  â€¢  12 phá»¥ kiá»‡n cÃºt/cÃ´n  â€¢  6 van giÃ³  â€¢  14 miá»‡ng giÃ³
-                </span>
-              </div>
-              <div class="flex items-center gap-2">
-                <button class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-4 py-1.5 rounded-lg shadow-md flex items-center gap-1.5" onclick="alert('ÄÃ£ sáºµn sÃ ng lá»‡nh Ä‘áº·t Báº£ng Thá»‘ng KÃª Khá»‘i LÆ°á»£ng á»ng GiÃ³ vÃ o Sheet Revit!')">
-                  <span>ðŸš€</span> Äáº·t / Cáº­p Nháº­t VÃ o Sheet...
-                </button>
-                <button class="bg-gradient-to-r from-teal-700 to-cyan-700 hover:from-teal-600 hover:to-cyan-600 text-white font-bold px-3 py-1.5 rounded-lg shadow flex items-center gap-1" onclick="alert('ÄÃ£ xuáº¥t toÃ n bá»™ dá»¯ liá»‡u á»‘ng giÃ³ vÃ  phá»¥ kiá»‡n ra file Excel (.xlsx) chuáº©n ISO!')">
-                  <span>ðŸ“Š</span> Xuáº¥t Excel
-                </button>
-                <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg" onclick="alert('ÄÃ£ sao chÃ©p toÃ n bá»™ báº£ng vÃ o Clipboard!')">
-                  ðŸ“‹ Copy
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-      // 4. FORM KHỚP TỶ LỆ BẢNG KHỐI LƯỢNG
-      else if (id === 'cmdHDToolFitTableScale') {
-        viewport.innerHTML = `
-          <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 overflow-hidden text-xs select-none">
-            <div class="bg-[#181d26] px-3 py-2 flex items-center justify-between border-b border-slate-700">
-              <span class="font-semibold text-slate-200">HDTOOL - KHỚP TỶ LỆ BẢNG KHỐI LƯỢNG</span>
-              <span class="text-slate-400">✕</span>
-            </div>
-            <div class="p-4 space-y-3">
-              <div class="bg-sky-950/40 border border-sky-800/60 p-3 rounded-lg text-sky-200">
-                📐 Tự động điều chỉnh kích thước ô bảng, cỡ chữ và tỷ lệ bảng khối lượng vừa vặn 100% với khung view trên Sheet, không bao giờ bị tràn khung hay lệch dòng!
-              </div>
-              <div class="flex justify-center py-4">
-                <button class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-6 py-2 rounded-lg">
-                  Khớp Ngay Vừa Vặn Khung View Hiện Tại
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-      // 5. CÁC FORM KHÁC
-      else {
-        viewport.innerHTML = `
-          <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 p-6 text-center text-xs select-none">
-            <h3 class="text-base font-bold text-sky-400 mb-2">${escapeHtml(btn.name).replace(/\n/g, ' ')}</h3>
-            <p class="text-slate-300 mb-4">${escapeHtml(btn.tooltip || 'Công cụ thuộc bộ HDTOOL')}</p>
-            <div class="inline-block bg-slate-800 px-4 py-2 rounded border border-slate-700 text-slate-400 font-mono text-[11px]">
-              Command: ${escapeHtml(btn.commandClass || 'HDTool.ExternalCommand')}
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    // Xuất mã C# chuẩn cho App.cs
-    function exportCSharpCode() {
-      let code = `// ==================================================================\n`;
-      code += `// HDTOOL AUTODESK REVIT RIBBON - CODE TỰ ĐỘNG SINH TỪ PREVIEW STUDIO\n`;
-      code += `// Hệ điều hành: Windows 11 | Autodesk Revit 2024 / 2025\n`;
-      code += `// ==================================================================\n\n`;
-
-      layout.panels.forEach((p, pIdx) => {
-        const pVar = `panel_${pIdx + 1}`;
-        code += `// PANEL ${pIdx + 1}: ${p.name.toUpperCase()}\n`;
-        code += `RibbonPanel ${pVar} = GetOrCreateRibbonPanel(application, tabName, "${p.name}");\n\n`;
-
-        p.buttons.forEach(b => {
-          if (b.type === 'split') {
-            code += `// SplitButton: ${b.name.replace(/\n/g, ' ')}\n`;
-            code += `SplitButtonData ${b.id}_Data = new SplitButtonData("${b.id}", "${b.name.replace(/\n/g, '\\n')}");\n`;
-            code += `SplitButton ${b.id}_Btn = ${pVar}.AddItem(${b.id}_Data) as SplitButton;\n`;
-            code += `if (${b.id}_Btn != null) {\n`;
-            code += `    ${b.id}_Btn.IsSynchronizedWithCurrentItem = true;\n`;
-            if (b.subButtons) {
-              b.subButtons.forEach(sub => {
-                code += `    PushButtonData ${sub.id}_Data = new PushButtonData("${sub.id}", "${sub.name}", assemblyPath, "${sub.commandClass}");\n`;
-                code += `    ${sub.id}_Data.LargeImage = ResourceHelper.CreateCropAlignCombinedIcon(32);\n`;
-                code += `    ${sub.id}_Data.Image = ResourceHelper.CreateCropAlignCombinedIcon(16);\n`;
-                code += `    ${b.id}_Btn.AddPushButton(${sub.id}_Data);\n`;
-              });
-            }
-            code += `}\n\n`;
-          } else {
-            code += `// PushButton: ${b.name.replace(/\n/g, ' ')}\n`;
-            code += `PushButtonData ${b.id}_Data = new PushButtonData("${b.id}", "${b.name.replace(/\n/g, '\\n')}", assemblyPath, "${b.commandClass}");\n`;
-            code += `${b.id}_Data.ToolTip = "${b.tooltip || b.name}";\n`;
-            code += `${b.id}_Data.LargeImage = ResourceHelper.Create${b.icon}Icon(32);\n`;
-            code += `${b.id}_Data.Image = ResourceHelper.Create${b.icon}Icon(16);\n`;
-            code += `${pVar}.AddItem(${b.id}_Data);\n\n`;
-          }
-        });
-      });
-
-      navigator.clipboard.writeText(code).then(() => {
-        alert("🎉 ĐÃ XUẤT VÀ SAO CHÉP MÃ NGUỒN C# CHO SOURCE/APP.CS THÀNH CÔNG VÀO BỘ NHỚ TẠM (CLIPBOARD)!");
-      });
-    }
-
-    window.onload = initStudio;
-  </script>
-  <!-- Modal ThÃªm Cá»™t Parameter Dá»± Ãn HVAC (Popup Demo Trá»±c Quan Cho Sáº¿p Há»“) -->
-  <div id="paramModalDemo" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#1e2430] border border-slate-600 rounded-xl shadow-2xl w-full max-w-lg text-slate-200 text-xs overflow-hidden">
-      <div class="bg-[#181d26] px-4 py-3 flex items-center justify-between border-b border-slate-700">
-        <div class="flex items-center gap-2">
-          <span class="text-teal-400 font-bold text-sm">âž•</span>
-          <span class="font-bold text-slate-100 text-sm">CHá»ŒN THAM Sá» Dá»° ÃN Äá»‚ THÃŠM VÃ€O Báº¢NG (PROJECT PARAMETERS)</span>
         </div>
-        <button class="text-slate-400 hover:text-white text-base" onclick="closeParamModalDemo()">âœ•</button>
+
+        <div class="p-4 bg-[#0F172A] text-xs space-y-3">
+          <!-- Hàng Mode & Phạm Vi -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="bg-[#1E293B] p-2.5 rounded-lg border border-slate-700">
+              <span class="text-slate-400 font-bold block mb-1.5 text-[11px]">CHỌN CHẾ ĐỘ THAY ĐỔI:</span>
+              <div class="flex items-center gap-3 text-slate-200">
+                <label class="flex items-center gap-1.5 cursor-pointer font-bold text-sky-400">
+                  <input type="radio" name="preview_mode" checked class="accent-sky-500"> 1. Thay Thế Tiền Tố
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                  <input type="radio" name="preview_mode" class="accent-sky-500"> 2. Thêm Tiền Tố
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                  <input type="radio" name="preview_mode" class="accent-sky-500"> 3. Đánh Số TĐ
+                </label>
+              </div>
+            </div>
+
+            <div class="bg-[#1E293B] p-2.5 rounded-lg border border-slate-700">
+              <span class="text-slate-400 font-bold block mb-1.5 text-[11px]">PHẠM VI ÁP DỤNG:</span>
+              <div class="flex items-center gap-3 text-slate-200">
+                <label class="flex items-center gap-1.5 cursor-pointer font-bold text-emerald-400">
+                  <input type="radio" name="preview_scope" checked class="accent-emerald-500"> ⭐ Cùng tiền tố (52 bản vẽ)
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                  <input type="radio" name="preview_scope" class="accent-emerald-500"> Đang chọn (1)
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input Tiền tố -->
+          <div class="bg-[#1E293B] p-3 rounded-lg border border-slate-700 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Tiền tố cũ / Chuỗi tìm kiếm:</label>
+              <input type="text" value="HDM/TN/PH" class="w-full bg-[#0F172A] border border-slate-600 rounded px-2.5 py-1 text-white font-mono font-bold focus:border-sky-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-emerald-400 font-semibold mb-1 text-[11px]">Thay thế bằng (Tiền tố mới):</label>
+              <input type="text" value="" placeholder="Nhập tiền tố mới hoặc kéo chuột cột bên dưới..." class="w-full bg-[#0F172A] border border-slate-600 rounded px-2.5 py-1 text-emerald-400 font-mono font-bold focus:border-emerald-500 focus:outline-none">
+            </div>
+          </div>
+
+          <!-- Hướng dẫn tính năng Excel AutoFill Drag Handle mới -->
+          <div class="bg-gradient-to-r from-emerald-950/60 to-slate-900 p-2.5 rounded-lg border border-emerald-500/40 flex items-center justify-between text-[11px]">
+            <div class="flex items-center gap-2 text-emerald-300 font-medium">
+              <span class="text-base">✨</span>
+              <span><strong>TÍNH NĂNG MỚI:</strong> Nhấp vào ô Số Hiệu Mới, rê chuột vào góc vuông <span class="inline-block w-2.5 h-2.5 bg-emerald-500 border border-white align-middle"></span> và <strong>KÉO CHUỘT XUỐNG</strong> để số thứ tự đuôi tự động tăng dần giống hệt Excel!</span>
+            </div>
+            <button onclick="demoAutoFillDrag()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded shadow transition text-[10px] whitespace-nowrap">
+              ⚡ Thử Kéo Tự Động Tăng Đuôi
+            </button>
+          </div>
+
+          <!-- Bảng DataGridView Live Preview -->
+          <div class="bg-[#1E293B] rounded-lg border border-slate-700 overflow-hidden shadow-inner">
+            <table class="w-full text-left border-collapse text-[11px] font-mono select-none">
+              <thead class="bg-[#182234] text-slate-300 font-bold border-b border-slate-700">
+                <tr>
+                  <th class="p-2 w-12 text-center">STT</th>
+                  <th class="p-2 w-64">Tên Bản Vẽ (Sheet Name)</th>
+                  <th class="p-2 w-48">Số Hiệu Hiện Tại (Cũ)</th>
+                  <th class="p-2 text-sky-300">Số Hiệu Mới (Xem Trước) ➔ [KÉO TĂNG ĐUÔI]</th>
+                  <th class="p-2 w-28 text-center">Trạng Thái</th>
+                </tr>
+              </thead>
+              <tbody id="previewSheetTable" class="divide-y divide-slate-800">
+                <tr class="hover:bg-slate-800/60 bg-[#16202E]">
+                  <td class="p-1.5 text-center text-slate-400">1</td>
+                  <td class="p-1.5 text-slate-300 font-sans font-medium">DANH MỤC BẢN VẼ</td>
+                  <td class="p-1.5 text-slate-400">HDM/TN/PH/C2/00</td>
+                  <td class="p-1.5 relative group cursor-cell font-bold text-emerald-400 bg-emerald-950/20 border-2 border-emerald-500">
+                    <span id="sheet_num_1">/C2/00</span>
+                    <!-- Excel Fill Handle square -->
+                    <span class="absolute bottom-[-3px] right-[-3px] w-2 h-2 bg-emerald-400 border border-slate-900 cursor-crosshair shadow"></span>
+                  </td>
+                  <td class="p-1.5 text-center text-emerald-400 font-bold">Đổi số hiệu</td>
+                </tr>
+                <tr class="hover:bg-slate-800/60 bg-[#1E293B]">
+                  <td class="p-1.5 text-center text-slate-400">2</td>
+                  <td class="p-1.5 text-slate-300 font-sans font-medium">MẶT BẰNG TỔNG THỂ CH-PH TẦNG 14+15</td>
+                  <td class="p-1.5 text-slate-400">HDM/TN/PH/C2/01</td>
+                  <td class="p-1.5 font-bold text-emerald-400"><span id="sheet_num_2">/C2/01</span></td>
+                  <td class="p-1.5 text-center text-emerald-400 font-bold">Đổi số hiệu</td>
+                </tr>
+                <tr class="hover:bg-slate-800/60 bg-[#16202E]">
+                  <td class="p-1.5 text-center text-slate-400">3</td>
+                  <td class="p-1.5 text-slate-300 font-sans font-medium">MẶT BẰNG THOÁT NƯỚC CĂN HỘ PH5 TẦNG 14</td>
+                  <td class="p-1.5 text-slate-400">HDM/TN/PH/C2/02</td>
+                  <td class="p-1.5 font-bold text-emerald-400"><span id="sheet_num_3">/C2/02</span></td>
+                  <td class="p-1.5 text-center text-emerald-400 font-bold">Đổi số hiệu</td>
+                </tr>
+                <tr class="hover:bg-slate-800/60 bg-[#1E293B]">
+                  <td class="p-1.5 text-center text-slate-400">4</td>
+                  <td class="p-1.5 text-slate-300 font-sans font-medium">MẶT BẰNG THOÁT NƯỚC CĂN HỘ PH5 TẦNG 15</td>
+                  <td class="p-1.5 text-slate-400">HDM/TN/PH/C2/03</td>
+                  <td class="p-1.5 font-bold text-emerald-400"><span id="sheet_num_4">/C2/03</span></td>
+                  <td class="p-1.5 text-center text-emerald-400 font-bold">Đổi số hiệu</td>
+                </tr>
+                <tr class="hover:bg-slate-800/60 bg-[#16202E]">
+                  <td class="p-1.5 text-center text-slate-400">5</td>
+                  <td class="p-1.5 text-slate-300 font-sans font-medium">SƠ ĐỒ KHÔNG GIAN THOÁT NƯỚC CĂN HỘ PH5</td>
+                  <td class="p-1.5 text-slate-400">HDM/TN/PH/C2/04</td>
+                  <td class="p-1.5 font-bold text-emerald-400"><span id="sheet_num_5">/C2/04</span></td>
+                  <td class="p-1.5 text-center text-emerald-400 font-bold">Đổi số hiệu</td>
+                </tr>
+                <tr class="hover:bg-slate-800/60 bg-[#1E293B]">
+                  <td class="p-1.5 text-center text-slate-400">6</td>
+                  <td class="p-1.5 text-slate-300 font-sans font-medium">SĐKG ỐNG THÔNG HƠI CĂN HỘ PH-5</td>
+                  <td class="p-1.5 text-slate-400">HDM/TN/PH/C2/05</td>
+                  <td class="p-1.5 font-bold text-emerald-400"><span id="sheet_num_6">/C2/05</span></td>
+                  <td class="p-1.5 text-center text-emerald-400 font-bold">Đổi số hiệu</td>
+                </tr>
+                <tr class="hover:bg-slate-800/60 bg-[#16202E]">
+                  <td class="p-1.5 text-center text-slate-400">7</td>
+                  <td class="p-1.5 text-slate-300 font-sans font-medium">SĐKG ỐNG THOÁT RỬA CĂN HỘ PH-5</td>
+                  <td class="p-1.5 text-slate-400">HDM/TN/PH/C2/05.1</td>
+                  <td class="p-1.5 font-bold text-emerald-400"><span id="sheet_num_7">/C2/05.1</span></td>
+                  <td class="p-1.5 text-center text-emerald-400 font-bold">Đổi số hiệu</td>
+                </tr>
+                <tr class="hover:bg-slate-800/60 bg-[#1E293B]">
+                  <td class="p-1.5 text-center text-slate-400">8</td>
+                  <td class="p-1.5 text-slate-300 font-sans font-medium">SĐKG ỐNG THOÁT XÍ CĂN HỘ PH-5</td>
+                  <td class="p-1.5 text-slate-400">HDM/TN/PH/C2/05.2</td>
+                  <td class="p-1.5 font-bold text-emerald-400"><span id="sheet_num_8">/C2/05.2</span></td>
+                  <td class="p-1.5 text-center text-emerald-400 font-bold">Đổi số hiệu</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Thống kê & Nút hành động đáy Form (HIỂN THỊ ĐẦY ĐỦ 100%, KHÔNG CHE KHUẤT) -->
+          <div class="pt-2 flex items-center justify-between border-t border-slate-700">
+            <span class="text-sky-400 font-bold text-[11px]">Thống kê: Sẽ thay đổi 52 / 52 bản vẽ. Không có trùng lặp, an toàn 100%.</span>
+            
+            <div class="flex items-center gap-2.5">
+              <button class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 font-bold text-white rounded-lg shadow-lg shadow-emerald-900/40 flex items-center gap-1.5 transition">
+                <span>✔</span> ÁP DỤNG THAY ĐỔI (52 BẢN VẼ)
+              </button>
+              <button class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition font-medium">
+                ✖ HỦY BỎ
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <div class="p-4 space-y-3">
-        <p class="text-[11px] text-slate-300">
-          Chá»n tham sá»‘ tá»« Dá»± Ãn, Shared Parameters hoáº·c Family Parameters cá»§a Há»‡ Thá»‘ng á»ng GiÃ³ Ä‘á»ƒ bá»• sung cá»™t thá»‘ng kÃª vÃ o DataGridView:
-        </p>
-        <div class="space-y-1">
-          <label class="block text-[11px] font-semibold text-teal-300">TÃ¬m kiáº¿m nhanh parameter:</label>
-          <input type="text" id="txtSearchParam" placeholder="GÃµ tÃªn tham sá»‘ (vÃ­ dá»¥: Báº£o Ã´n, Mark, Comments...)" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 outline-none focus:border-teal-400">
-        </div>
-        <div class="space-y-1">
-          <label class="block text-[11px] font-semibold text-slate-300">Danh sÃ¡ch Parameter kháº£ dá»¥ng trong Dá»± Ãn:</label>
-          <select id="selAvailableParams" size="7" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-slate-200 outline-none font-mono text-[11px]">
-            <option value="Loáº¡i Báº£o Ã”n" selected>Loáº¡i Báº£o Ã”n (Insulation Type)</option>
-            <option value="Äá»™ DÃ y Báº£o Ã”n">Äá»™ DÃ y Báº£o Ã”n (Insulation Thickness)</option>
-            <option value="Äá»™ DÃ y TÃ´n">Äá»™ DÃ y TÃ´n Máº¡ Káº½m (Sheet Thickness)</option>
-            <option value="Comments">Comments (Ghi ChÃº Thi CÃ´ng)</option>
-            <option value="Mark">Mark (MÃ£ Hiá»‡u Äá»‘i TÆ°á»£ng)</option>
-            <option value="Váº­t Liá»‡u TÃ´n">Váº­t Liá»‡u TÃ´n (Sheet Material)</option>
-            <option value="MÃ£ Hiá»‡u Phá»¥ Kiá»‡n">MÃ£ Hiá»‡u Phá»¥ Kiá»‡n (Fitting Code)</option>
-            <option value="System Classification">System Classification (PhÃ¢n Loáº¡i Tuyáº¿n GiÃ³)</option>
-            <option value="Phase Created">Phase Created (Giai Äoáº¡n Dá»± Ãn)</option>
-            <option value="Manufacturer">Manufacturer (HÃ£ng / NhÃ  Cung Cáº¥p)</option>
-            <option value="Cost">Cost (ÄÆ¡n GiÃ¡ Dá»± ToÃ¡n)</option>
-          </select>
-        </div>
-        <div class="bg-teal-950/40 border border-teal-800/60 p-2.5 rounded text-[11px] text-teal-200 flex items-center gap-2">
-          <span>ðŸ’¡</span> Cá»™t má»›i thÃªm cÃ³ thá»ƒ chá»‰nh sá»­a trá»±c tiáº¿p giÃ¡ trá»‹ trÃªn báº£ng vÃ  tá»± Ä‘á»™ng lÆ°u vÃ o bá»™ nhá»› dá»± Ã¡n cho cÃ¡c láº§n má»Ÿ sau!
+    </section>
+
+    <!-- VIEW 4: KHỐI LƯỢNG ỐNG NƯỚC MEP -->
+    <section id="view-mep" class="w-full max-w-5xl hidden transition-all duration-300">
+      <div class="bg-[#1E293B] rounded-xl border border-slate-700 shadow-2xl overflow-hidden p-4 text-xs">
+        <h3 class="font-bold text-white text-sm mb-2">Thống Kê Khối Lượng Ống Nước & Phụ Kiện MEP</h3>
+        <p class="text-slate-400 mb-4">Gộp 3 parameters phân mảnh thành 1 cột duy nhất, bóc cục bộ, soi sáng 2 chiều, kéo thả Schedule vào Sheet.</p>
+        <div class="bg-[#0F172A] p-3 rounded-lg border border-slate-700 text-slate-300">
+          Chế độ bóc cục bộ: <strong class="text-amber-400">Tách rời rạc theo chiều dài (Không SUM)</strong>
         </div>
       </div>
-      <div class="bg-[#181d26] px-4 py-2.5 border-t border-slate-700 flex items-center justify-end gap-2">
-        <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded" onclick="closeParamModalDemo()">Há»§y Bá»</button>
-        <button class="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold px-4 py-1.5 rounded shadow" onclick="confirmAddParamColumn()">
-          âž• ThÃªm Cá»™t VÃ o Báº£ng Ngay
+    </section>
+
+    <!-- VIEW 5: THANH RIBBON REVIT -->
+    <section id="view-ribbon" class="w-full max-w-5xl hidden transition-all duration-300">
+      <div class="revit-ribbon rounded-xl border border-slate-700 shadow-2xl overflow-hidden">
+        <div class="flex items-center border-b border-slate-700 px-3 py-1.5 text-xs text-slate-400 gap-4">
+          <span>Architecture</span>
+          <span>Structure</span>
+          <span>Systems</span>
+          <span class="ribbon-tab-active font-bold px-3 py-1 rounded-t">HDTOOL</span>
+          <span>Collaborate</span>
+          <span>View</span>
+        </div>
+        <div class="p-3 flex items-stretch gap-3 overflow-x-auto text-xs bg-[#262A34]">
+          <!-- Panel 1: Căn Chỉnh Đối Tượng -->
+          <div class="bg-[#1E293B] p-2 rounded-lg border border-slate-700 flex flex-col justify-between">
+            <div class="flex items-center gap-2">
+              <div onclick="switchView('grid')" class="flex flex-col items-center p-1.5 rounded hover:bg-slate-700/60 cursor-pointer transition min-w-[85px]">
+                <span class="text-2xl mb-1">📐</span>
+                <span class="font-bold text-slate-200 text-center leading-tight">Căn Chỉnh<br>Grids / Level</span>
+              </div>
+              <div onclick="switchView('autocrop')" class="flex flex-col items-center p-1.5 rounded border border-red-500/80 bg-red-950/30 hover:bg-red-900/40 cursor-pointer transition min-w-[85px] shadow-[0_0_12px_rgba(239,68,68,0.2)]">
+                <span class="text-2xl mb-1">🔲</span>
+                <span class="font-bold text-red-300 text-center leading-tight">Tự Động<br>Crop View</span>
+              </div>
+            </div>
+            <span class="text-[10px] text-slate-400 mt-2 border-t border-slate-700 w-full text-center pt-1 font-semibold">Căn Chỉnh Đối Tượng</span>
+          </div>
+
+          <!-- Panel 2: Khối Lượng MEP -->
+          <div class="bg-[#1E293B] p-2 rounded-lg border border-slate-700 flex flex-col justify-between">
+            <div class="flex items-center gap-2">
+              <div onclick="switchView('mep')" class="flex flex-col items-center p-1.5 rounded hover:bg-slate-700/60 cursor-pointer transition min-w-[75px]">
+                <span class="text-2xl mb-1">💧</span>
+                <span class="font-bold text-slate-200 text-center leading-tight">Thống Kê<br>Ống Nước</span>
+              </div>
+              <div onclick="switchView('duct')" class="flex flex-col items-center p-1.5 rounded bg-blue-900/40 border border-blue-500/60 hover:bg-blue-800/50 cursor-pointer transition min-w-[75px]">
+                <span class="text-2xl mb-1">💨</span>
+                <span class="font-bold text-amber-300 text-center leading-tight">Khối Lượng<br>Ống Gió</span>
+              </div>
+            </div>
+            <span class="text-[10px] text-slate-400 mt-2 border-t border-slate-700 w-full text-center pt-1 font-semibold">Khối Lượng MEP</span>
+          </div>
+
+          <!-- Panel 3: Quản Lý Bản Vẽ & Sheet -->
+          <div class="bg-[#1E293B] p-2 rounded-lg border border-slate-700 flex flex-col justify-between">
+            <div class="flex items-center gap-2">
+              <div onclick="switchView('sheet')" class="flex flex-col items-center p-1.5 rounded hover:bg-slate-700/60 cursor-pointer transition min-w-[85px]">
+                <span class="text-2xl mb-1">📋</span>
+                <span class="font-bold text-slate-200 text-center leading-tight">Xuất Danh Mục<br>Bản Vẽ</span>
+              </div>
+            </div>
+            <span class="text-[10px] text-slate-400 mt-2 border-t border-slate-700 w-full text-center pt-1 font-semibold">Quản Lý Bản Vẽ & Sheet</span>
+          </div>
+
+          <!-- Panel 4: Hệ Thống & Menu -->
+          <div class="bg-[#1E293B] p-2 rounded-lg border border-slate-700 flex flex-col justify-between">
+            <div class="flex items-center gap-2">
+              <div class="flex flex-col items-center p-1.5 rounded hover:bg-slate-700/60 cursor-pointer transition min-w-[75px]">
+                <span class="text-2xl mb-1">🚀</span>
+                <span class="font-bold text-emerald-300 text-center leading-tight">Cập Nhật<br>Tool</span>
+              </div>
+              <div class="flex flex-col items-center p-1.5 rounded hover:bg-slate-700/60 cursor-pointer transition min-w-[75px]">
+                <span class="text-2xl mb-1">⚙️</span>
+                <span class="font-bold text-sky-300 text-center leading-tight">Menu<br>HDTOOL</span>
+              </div>
+            </div>
+            <span class="text-[10px] text-slate-400 mt-2 border-t border-slate-700 w-full text-center pt-1 font-semibold">Hệ Thống & Menu</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= NOTIFICATION MODAL XÁC NHẬN ================= -->
+  <div id="confirmModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#1E293B] border border-slate-600 rounded-xl shadow-2xl w-full max-w-md p-5 text-slate-200 text-xs">
+      <div class="flex items-center gap-2 mb-3 text-emerald-400 font-bold text-sm">
+        <span>✔</span> XÁC NHẬN CHỐT GIAO DIỆN UX/UI HDTOOL
+      </div>
+      <p class="text-slate-300 mb-4 leading-relaxed">
+        Giao diện UX/UI chuẩn mực (Bảng bóc ống gió HVAC, sắp xếp từ to đến nhỏ, cút góc/R, côn thu L, lượn Z H=, Modeless 60 FPS) đã sẵn sàng để nạp code vào dự án.
+      </p>
+      <div class="flex items-center justify-end gap-2">
+        <button onclick="closeModal()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-300">Đóng</button>
+        <button onclick="applyCodeToProject()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 font-bold text-white rounded shadow">
+          🚀 Tiến Hành Áp Dụng Ngay
         </button>
       </div>
     </div>
   </div>
 
   <script>
-    function openParamModalDemo() {
-      const modal = document.getElementById('paramModalDemo');
-      if (modal) modal.classList.remove('hidden');
+        function updateCropPadding(val) {
+      document.getElementById('cropPaddingInput').value = val;
+      document.getElementById('cropPaddingRange').value = val;
+      const baseW = 240;
+      const baseH = 260;
+      const extra = parseInt(val) * 0.45;
+      const borderEl = document.getElementById('cropBoxBorder');
+      const whiteEl = document.getElementById('cropBoxWhite');
+      const newW = Math.round(baseW + extra);
+      const newH = Math.round(baseH + extra);
+      borderEl.style.width = newW + 'px';
+      borderEl.style.height = newH + 'px';
+      borderEl.querySelector('span').innerText = 'Crop Box: ' + newW + 'x' + newH;
+      whiteEl.style.width = (newW - 10) + 'px';
+      whiteEl.style.height = (newH - 10) + 'px';
+      document.getElementById('cropStatusText').innerText = 'Trạng thái: Đang Tự Động Fit (Padding ' + val + 'mm)';
     }
 
-    function closeParamModalDemo() {
-      const modal = document.getElementById('paramModalDemo');
-      if (modal) modal.classList.add('hidden');
+    function triggerAutoCropEffect() {
+      const borderEl = document.getElementById('cropBoxBorder');
+      borderEl.classList.add('scale-105', 'border-emerald-400', 'bg-emerald-500/10');
+      borderEl.classList.remove('border-red-500');
+      setTimeout(() => {
+        borderEl.classList.remove('scale-105', 'border-emerald-400', 'bg-emerald-500/10');
+        borderEl.classList.add('border-red-500');
+      }, 400);
+      document.getElementById('cropStatusText').innerText = '✅ Đã Fit Thành Công Crop View Ôm Khít Đối Tượng!';
     }
 
-    function confirmAddParamColumn() {
-      const sel = document.getElementById('selAvailableParams');
-      const val = sel ? sel.value : 'Custom Param';
-      alert('ÄÃ£ bá»• sung thÃ nh cÃ´ng cá»™t Parameter [' + val + '] vÃ o Báº£ng Thá»‘ng KÃª Khá»‘i LÆ°á»£ng á»ng GiÃ³!');
-      closeParamModalDemo();
+    function resetCropDemo() {
+      const borderEl = document.getElementById('cropBoxBorder');
+      const whiteEl = document.getElementById('cropBoxWhite');
+      borderEl.style.width = '370px';
+      borderEl.style.height = '360px';
+      whiteEl.style.width = '360px';
+      whiteEl.style.height = '350px';
+      borderEl.querySelector('span').innerText = 'Crop Box Chưa Fit (Thừa thãi): 370x360';
+      document.getElementById('cropStatusText').innerText = '⚠️ Khung Crop Ban Đầu Rất Rộng Thừa Thãi';
+    }
+
+        function demoAutoFillDrag() {
+      // Giả lập kéo chuột tăng đuôi số hiệu từ ô 1 xuống
+      const basePrefix = "HDM/TN/PH/C2/";
+      const startNum = 1;
+      for (let i = 1; i <= 8; i++) {
+        const numStr = (startNum + i - 1).toString().padStart(2, '0');
+        const el = document.getElementById('sheet_num_' + i);
+        if (el) {
+          el.innerText = basePrefix + numStr;
+          el.classList.add('bg-emerald-900/40', 'transition');
+          setTimeout(() => el.classList.remove('bg-emerald-900/40'), 800);
+        }
+      }
+    }
+
+    function switchView(viewName) {
+      const views = ['autocrop', 'duct', 'grid', 'sheet', 'mep', 'ribbon'];
+      const views = ['duct', 'grid', 'sheet', 'mep', 'ribbon'];
+      views.forEach(v => {
+        const el = document.getElementById('view-' + v);
+        const tab = document.getElementById('tab-' + v);
+        if (v === viewName) {
+          el.classList.remove('hidden');
+          tab.classList.add('bg-blue-600', 'text-white', 'font-bold', 'shadow');
+          tab.classList.remove('text-slate-300');
+        } else {
+          el.classList.add('hidden');
+          tab.classList.remove('bg-blue-600', 'text-white', 'font-bold', 'shadow');
+          tab.classList.add('text-slate-300');
+        }
+      });
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      const label = document.getElementById('themeLabel');
+      if (body.classList.contains('light-mode')) {
+        body.classList.remove('light-mode');
+        body.classList.add('dark-mode');
+        label.innerText = 'Dark Mode';
+      } else {
+        body.classList.remove('dark-mode');
+        body.classList.add('light-mode');
+        label.innerText = 'Light Mode';
+      }
+    }
+
+    function confirmLayoutCommit() {
+      document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('confirmModal').classList.add('hidden');
+    }
+
+    function applyCodeToProject() {
+      closeModal();
+      alert('Sếp Hồ đã CHỐT giao diện UX/UI! Toàn bộ kiến trúc và code C# đã sẵn sàng nạp chuẩn 100%!');
     }
   </script>
 </body>

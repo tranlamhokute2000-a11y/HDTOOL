@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <RevitAddIns>
   <!-- 1. Ứng dụng chính HDTOOL (Ribbon Tab HDTOOL & các công cụ) -->
   <AddIn Type="Application">
@@ -75,6 +75,15 @@
     <Assembly>HDTOOL\HDTOOL.dll</Assembly>
     <FullClassName>HDTool.MepQuantityCommand</FullClassName>
     <ClientId>C4D5E6F7-1A2B-3C4D-5E6F-7A8B9C0D1E2F</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+  <!-- 9. Lệnh Tự Động Tạo & Căn Chỉnh Crop View (Auto Crop Box) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Tự Động Crop View</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.AutoCropCommand</FullClassName>
+    <ClientId>F8B2A1C3-5D4E-4A7B-9C0D-1E2F3A4B5C6D</ClientId>
     <VendorId>HDTOOL</VendorId>
     <VendorDescription>HDTOOL BIM Development</VendorDescription>
   </AddIn>

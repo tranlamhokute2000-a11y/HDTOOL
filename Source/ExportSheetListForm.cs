@@ -1385,21 +1385,19 @@ namespace HDTool
                 .ToList();
 
             string cur = selectedItems.Count > 0 ? selectedItems[0].GroupTitle : string.Empty;
-            using (SetGroupTitleForm form = new SetGroupTitleForm(selectedItems.Count, existing, cur))
+            SetGroupTitleForm form = new SetGroupTitleForm(selectedItems.Count, existing, cur);
+            form.GroupTitleConfirmed += delegate(string newGroup)
             {
-                if (form.ShowDialog(this) == DialogResult.OK)
+                foreach (SheetItem item in selectedItems)
                 {
-                    string newGroup = form.SelectedGroupTitle;
-                    foreach (SheetItem item in selectedItems)
-                    {
-                        item.GroupTitle = newGroup;
-                    }
-                    _selectedTreeGroup = string.IsNullOrEmpty(newGroup) ? null : newGroup;
-                    RebuildTreeNodes();
-                    RefreshGridData();
-                    SelectGroupNodeInTree(newGroup);
+                    item.GroupTitle = newGroup;
                 }
-            }
+                _selectedTreeGroup = string.IsNullOrEmpty(newGroup) ? null : newGroup;
+                RebuildTreeNodes();
+                RefreshGridData();
+                SelectGroupNodeInTree(newGroup);
+            };
+            form.Show(this);
         }
 
         private void OpenBatchEditSheetNumberDialog()
@@ -1436,69 +1434,68 @@ namespace HDTool
                 return;
             }
 
-            using (BatchEditSheetNumberForm form = new BatchEditSheetNumberForm(_allSheets, targetSheets))
+            BatchEditSheetNumberForm form = new BatchEditSheetNumberForm(_allSheets, targetSheets);
+            form.ChangesApplied += delegate(Dictionary<SheetItem, string> modifiedDict)
             {
-                if (form.ShowDialog(this) == DialogResult.OK)
+                int modifiedCount = 0;
+                foreach (KeyValuePair<SheetItem, string> kvp in modifiedDict)
                 {
-                    int modifiedCount = 0;
-                    foreach (KeyValuePair<SheetItem, string> kvp in form.ModifiedNumbers)
+                    SheetItem item = kvp.Key;
+                    string newNum = kvp.Value;
+                    if (!string.Equals(item.SheetNumber, newNum, StringComparison.Ordinal))
                     {
-                        SheetItem item = kvp.Key;
-                        string newNum = kvp.Value;
-                        if (!string.Equals(item.SheetNumber, newNum, StringComparison.Ordinal))
-                        {
-                            item.SheetNumber = newNum;
-                            item.IsSelected = true;
-                            modifiedCount++;
-                        }
-                    }
-
-                    if (modifiedCount > 0)
-                    {
-                        bool anyOutsideFiltered = false;
-                        foreach (KeyValuePair<SheetItem, string> kvp in form.ModifiedNumbers)
-                        {
-                            if (!_filteredSheets.Contains(kvp.Key))
-                            {
-                                anyOutsideFiltered = true;
-                                break;
-                            }
-                        }
-
-                        if (anyOutsideFiltered)
-                        {
-                            _selectedTreeGroup = null;
-                            if (txtSearch != null) txtSearch.Text = string.Empty;
-                            ApplyFilter();
-                        }
-
-                        RefreshGridData();
-                        UpdateSaveButtonState();
-                        UpdateStatusCount();
-                        this.BeginInvoke((MethodInvoker)delegate
-                        {
-                            try
-                            {
-                                RebuildTreeNodes();
-                            }
-                            catch { }
-                        });
-
-                        lblStatus.Text = string.Format("✔ Đã sửa số hiệu cho {0} bản vẽ. Vui lòng bấm [LƯU VÀO REVIT] để hoàn tất!", modifiedCount);
-                        MessageBox.Show(
-                            string.Format(
-                                "Đã thay đổi số hiệu thành công cho {0} bản vẽ!\n\n" +
-                                "Các ô số hiệu vừa sửa đã được tô màu xanh lá nổi bật trên bảng.\n" +
-                                "Vui lòng bấm nút màu đỏ [✔ LƯU {0} BẢN VẼ VÀO REVIT] ở góc dưới để cập nhật chính thức vào Revit.",
-                                modifiedCount
-                            ),
-                            "HDTOOL - Sửa Số Hiệu Hàng Loạt",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information
-                        );
+                        item.SheetNumber = newNum;
+                        item.IsSelected = true;
+                        modifiedCount++;
                     }
                 }
-            }
+
+                if (modifiedCount > 0)
+                {
+                    bool anyOutsideFiltered = false;
+                    foreach (KeyValuePair<SheetItem, string> kvp in modifiedDict)
+                    {
+                        if (!_filteredSheets.Contains(kvp.Key))
+                        {
+                            anyOutsideFiltered = true;
+                            break;
+                        }
+                    }
+
+                    if (anyOutsideFiltered)
+                    {
+                        _selectedTreeGroup = null;
+                        if (txtSearch != null) txtSearch.Text = string.Empty;
+                        ApplyFilter();
+                    }
+
+                    RefreshGridData();
+                    UpdateSaveButtonState();
+                    UpdateStatusCount();
+                    try
+                    {
+                        this.BeginInvoke((MethodInvoker)delegate
+                        {
+                            try { RebuildTreeNodes(); } catch { }
+                        });
+                    }
+                    catch { }
+
+                    lblStatus.Text = string.Format("✔ Đã sửa số hiệu cho {0} bản vẽ. Vui lòng bấm [LƯU VÀO REVIT] để hoàn tất!", modifiedCount);
+                    MessageBox.Show(
+                        string.Format(
+                            "Đã thay đổi số hiệu thành công cho {0} bản vẽ!\n\n" +
+                            "Các ô số hiệu vừa sửa đã được tô màu xanh lá nổi bật trên bảng.\n" +
+                            "Vui lòng bấm nút màu đỏ [✔ LƯU {0} BẢN VẼ VÀO REVIT] ở góc dưới để cập nhật chính thức vào Revit.",
+                            modifiedCount
+                        ),
+                        "HDTOOL - Sửa Số Hiệu Hàng Loạt",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+                }
+            };
+            form.Show(this);
         }
 
         private void DgvSheets_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -2680,23 +2677,21 @@ namespace HDTool
             List<SheetItem> inGroup = _allSheets.Where(delegate(SheetItem x) { return string.Equals(x.GroupTitle, oldName, StringComparison.OrdinalIgnoreCase); }).ToList();
             List<string> existing = _allSheets.Select(delegate(SheetItem x) { return x.GroupTitle; }).Where(delegate(string x) { return !string.IsNullOrEmpty(x); }).Distinct().ToList();
 
-            using (SetGroupTitleForm form = new SetGroupTitleForm(inGroup.Count, existing, oldName))
+            SetGroupTitleForm form = new SetGroupTitleForm(inGroup.Count, existing, oldName);
+            form.GroupTitleConfirmed += delegate(string newName)
             {
-                if (form.ShowDialog(this) == DialogResult.OK)
+                if (!string.IsNullOrEmpty(newName) && !string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase))
                 {
-                    string newName = form.SelectedGroupTitle;
-                    if (!string.IsNullOrEmpty(newName) && !string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase))
+                    foreach (SheetItem s in inGroup)
                     {
-                        foreach (SheetItem s in inGroup)
-                        {
-                            s.GroupTitle = newName;
-                        }
-                        _selectedTreeGroup = newName;
-                        RebuildTreeNodes();
-                        RefreshGridData();
+                        s.GroupTitle = newName;
                     }
+                    _selectedTreeGroup = newName;
+                    RebuildTreeNodes();
+                    RefreshGridData();
                 }
-            }
+            };
+            form.Show(this);
         }
 
         private void DeleteSelectedGroup()
@@ -2981,7 +2976,10 @@ namespace HDTool
 
         private int SaveModifiedSheetsToRevit()
         {
-            dgvSheets.EndEdit();
+            if (!this.IsDisposed && dgvSheets != null)
+            {
+                try { dgvSheets.EndEdit(); } catch { }
+            }
 
             List<SheetItem> modifiedItems = _allSheets.Where(delegate(SheetItem s) {
                 return s.IsModified;
@@ -2989,109 +2987,126 @@ namespace HDTool
 
             if (modifiedItems.Count == 0) return 0;
 
-            int successCount = 0;
-            List<string> details = new List<string>();
-            List<string> errors = new List<string>();
-
-            using (Transaction trans = new Transaction(_doc, "HDTOOL - Đổi Tên & Số Hiệu Bản Vẽ Trực Tiếp"))
+            HDToolModelessHost.Run(uiapp =>
             {
-                trans.Start();
+                Document docToUse = (uiapp != null && uiapp.ActiveUIDocument != null) ? uiapp.ActiveUIDocument.Document : _doc;
+                int successCount = 0;
+                List<string> details = new List<string>();
+                List<string> errors = new List<string>();
 
-                // GIAI ĐOẠN 1: Đổi các SheetNumber bị sửa sang mã tạm ngẫu nhiên để tránh lỗi xung đột "Sheet number already in use" của Revit
-                foreach (SheetItem item in modifiedItems)
+                using (Transaction trans = new Transaction(docToUse, "HDTOOL - Đổi Tên & Số Hiệu Bản Vẽ Trực Tiếp"))
                 {
-                    if (item.IsNumberModified)
+                    trans.Start();
+
+                    // GIAI ĐOẠN 1: Đổi các SheetNumber bị sửa sang mã tạm ngẫu nhiên để tránh lỗi xung đột "Sheet number already in use" của Revit
+                    foreach (SheetItem item in modifiedItems)
+                    {
+                        if (item.IsNumberModified)
+                        {
+                            try
+                            {
+                                ViewSheet vs = docToUse.GetElement(item.SheetId) as ViewSheet;
+                                if (vs != null)
+                                {
+                                    vs.SheetNumber = "HD_TMP_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+
+                    // GIAI ĐOẠN 2: Cập nhật Số hiệu và Tên chính thức
+                    foreach (SheetItem item in modifiedItems)
                     {
                         try
                         {
-                            ViewSheet vs = _doc.GetElement(item.SheetId) as ViewSheet;
+                            Element elem = docToUse.GetElement(item.SheetId);
+                            ViewSheet vs = elem as ViewSheet;
                             if (vs != null)
                             {
-                                vs.SheetNumber = "HD_TMP_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                                string oldNum = item.OriginalSheetNumber;
+                                string oldName = item.OriginalSheetName;
+
+                                if (item.IsNumberModified)
+                                {
+                                    vs.SheetNumber = item.SheetNumber;
+                                    item.OriginalSheetNumber = item.SheetNumber;
+                                }
+
+                                if (item.IsNameModified)
+                                {
+                                    string sanitizedName = UpdateSheetListService.SanitizeSheetName(item.SheetName);
+                                    vs.Name = sanitizedName;
+                                    item.SheetName = sanitizedName;
+                                    item.OriginalSheetName = sanitizedName;
+                                }
+
+                                if (!string.IsNullOrEmpty(item.Revision))
+                                {
+                                    Parameter pRev = vs.get_Parameter(BuiltInParameter.SHEET_CURRENT_REVISION);
+                                    if (pRev != null && !pRev.IsReadOnly) pRev.Set(item.Revision);
+                                }
+                                if (!string.IsNullOrEmpty(item.IssueDate))
+                                {
+                                    Parameter pDate = vs.get_Parameter(BuiltInParameter.SHEET_ISSUE_DATE);
+                                    if (pDate != null && !pDate.IsReadOnly) pDate.Set(item.IssueDate);
+                                }
+                                if (!string.IsNullOrEmpty(item.DrawnBy))
+                                {
+                                    Parameter pDrawn = vs.get_Parameter(BuiltInParameter.SHEET_DRAWN_BY);
+                                    if (pDrawn != null && !pDrawn.IsReadOnly) pDrawn.Set(item.DrawnBy);
+                                }
+
+                                details.Add(string.Format("• [{0}]: Số hiệu \"{1}\"➔\"{2}\" | Tên \"{3}\"➔\"{4}\"",
+                                    vs.SheetNumber, oldNum, item.SheetNumber, oldName, item.SheetName));
+                                successCount++;
                             }
                         }
-                        catch { }
-                    }
-                }
-
-                // GIAI ĐOẠN 2: Cập nhật Số hiệu và Tên chính thức
-                foreach (SheetItem item in modifiedItems)
-                {
-                    try
-                    {
-                        Element elem = _doc.GetElement(item.SheetId);
-                        ViewSheet vs = elem as ViewSheet;
-                        if (vs != null)
+                        catch (Exception ex)
                         {
-                            string oldNum = item.OriginalSheetNumber;
-                            string oldName = item.OriginalSheetName;
-
-                            if (item.IsNumberModified)
-                            {
-                                vs.SheetNumber = item.SheetNumber;
-                                item.OriginalSheetNumber = item.SheetNumber;
-                            }
-
-                            if (item.IsNameModified)
-                            {
-                                string sanitizedName = UpdateSheetListService.SanitizeSheetName(item.SheetName);
-                                vs.Name = sanitizedName;
-                                item.SheetName = sanitizedName;
-                                item.OriginalSheetName = sanitizedName;
-                            }
-
-                            if (!string.IsNullOrEmpty(item.Revision))
-                            {
-                                Parameter pRev = vs.get_Parameter(BuiltInParameter.SHEET_CURRENT_REVISION);
-                                if (pRev != null && !pRev.IsReadOnly) pRev.Set(item.Revision);
-                            }
-                            if (!string.IsNullOrEmpty(item.IssueDate))
-                            {
-                                Parameter pDate = vs.get_Parameter(BuiltInParameter.SHEET_ISSUE_DATE);
-                                if (pDate != null && !pDate.IsReadOnly) pDate.Set(item.IssueDate);
-                            }
-                            if (!string.IsNullOrEmpty(item.DrawnBy))
-                            {
-                                Parameter pDrawn = vs.get_Parameter(BuiltInParameter.SHEET_DRAWN_BY);
-                                if (pDrawn != null && !pDrawn.IsReadOnly) pDrawn.Set(item.DrawnBy);
-                            }
-
-                            details.Add(string.Format("• [{0}]: Số hiệu \"{1}\"➔\"{2}\" | Tên \"{3}\"➔\"{4}\"",
-                                vs.SheetNumber, oldNum, item.SheetNumber, oldName, item.SheetName));
-                            successCount++;
+                            errors.Add(string.Format("• [{0}]: Lỗi ({1})", item.SheetNumber, ex.Message));
                         }
                     }
-                    catch (Exception ex)
+
+                    trans.Commit();
+                }
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(string.Format("Đã cập nhật thành công {0} bản vẽ trong Revit!", successCount));
+                if (details.Count > 0)
+                {
+                    sb.AppendLine("\nChi tiết thay đổi:");
+                    foreach (string d in details.Take(25)) sb.AppendLine(d);
+                    if (details.Count > 25)
                     {
-                        errors.Add(string.Format("• [{0}]: Lỗi ({1})", item.SheetNumber, ex.Message));
+                        sb.AppendLine(string.Format("... và {0} bản vẽ khác.", details.Count - 25));
                     }
                 }
-
-                trans.Commit();
-            }
-
-            RefreshGridData();
-            UpdateSaveButtonState();
-
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine(string.Format("Đã cập nhật thành công {0} bản vẽ trong Revit!", successCount));
-            if (details.Count > 0)
-            {
-                sb.AppendLine("\nChi tiết thay đổi:");
-                foreach (string d in details.Take(25)) sb.AppendLine(d);
-                if (details.Count > 25)
+                if (errors.Count > 0)
                 {
-                    sb.AppendLine(string.Format("... và {0} bản vẽ khác.", details.Count - 25));
+                    sb.AppendLine("\nBản vẽ gặp lỗi:");
+                    foreach (string err in errors) sb.AppendLine(err);
                 }
-            }
-            if (errors.Count > 0)
-            {
-                sb.AppendLine("\nBản vẽ gặp lỗi:");
-                foreach (string err in errors) sb.AppendLine(err);
-            }
 
-            MessageBox.Show(sb.ToString(), "HDTOOL - Đã Lưu Vào Revit", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            return successCount;
+                if (!this.IsDisposed && this.IsHandleCreated)
+                {
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        if (!this.IsDisposed)
+                        {
+                            RefreshGridData();
+                            UpdateSaveButtonState();
+                            MessageBox.Show(sb.ToString(), "HDTOOL - Đã Lưu Vào Revit", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    });
+                }
+                else
+                {
+                    TaskDialog.Show("HDTOOL - Đã Lưu Vào Revit", sb.ToString());
+                }
+            });
+
+            return modifiedItems.Count;
         }
 
         private void BtnSaveToRevit_Click(object sender, EventArgs e)
@@ -3222,10 +3237,8 @@ namespace HDTool
 
             string activeGroup = selected.Count > 0 ? selected[0].GroupTitle : string.Empty;
 
-            using (ExportCadPdfOptionsForm form = new ExportCadPdfOptionsForm(_doc, selected, ExportTargetFormat.Pdf, activeGroup))
-            {
-                form.ShowDialog(this);
-            }
+            ExportCadPdfOptionsForm form = new ExportCadPdfOptionsForm(_doc, selected, ExportTargetFormat.Pdf, activeGroup);
+            form.Show(this);
         }
 
         private void BtnExportCad_Click(object sender, EventArgs e)
@@ -3239,10 +3252,8 @@ namespace HDTool
 
             string activeGroup = selected.Count > 0 ? selected[0].GroupTitle : string.Empty;
 
-            using (ExportCadPdfOptionsForm form = new ExportCadPdfOptionsForm(_doc, selected, ExportTargetFormat.Cad, activeGroup))
-            {
-                form.ShowDialog(this);
-            }
+            ExportCadPdfOptionsForm form = new ExportCadPdfOptionsForm(_doc, selected, ExportTargetFormat.Cad, activeGroup);
+            form.Show(this);
         }
 
         private void BtnExportCombinedCad_Click(object sender, EventArgs e)
@@ -3299,30 +3310,45 @@ namespace HDTool
                     lblStatus.ForeColor = Color.FromArgb(192, 57, 43);
                     this.Update();
 
-                    try
-                    {
-                        string resultMsg;
-                        bool success = SheetExportCadPdfService.ExportToSingleCombinedCad(
-                            _doc,
-                            selected,
-                            sfd.FileName,
-                            chkOpenAfter.Checked,
-                            out resultMsg);
+                    string targetFileName = sfd.FileName;
+                    bool openAfter = chkOpenAfter.Checked;
 
-                        if (success)
-                        {
-                            MessageBox.Show(resultMsg, "HDTOOL - Xuất Gộp 1 File CAD Thành Công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                        else
-                        {
-                            MessageBox.Show(resultMsg, "HDTOOL - Thông Báo Xuất CAD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
-                    }
-                    finally
+                    HDToolModelessHost.Run(uiapp =>
                     {
-                        this.Cursor = Cursors.Default;
-                        UpdateStatusCount();
-                    }
+                        try
+                        {
+                            string resultMsg;
+                            bool success = SheetExportCadPdfService.ExportToSingleCombinedCad(
+                                _doc,
+                                selected,
+                                targetFileName,
+                                openAfter,
+                                out resultMsg);
+
+                            this.BeginInvoke((MethodInvoker)delegate
+                            {
+                                this.Cursor = Cursors.Default;
+                                UpdateStatusCount();
+                                if (success)
+                                {
+                                    MessageBox.Show(resultMsg, "HDTOOL - Xuất Gộp 1 File CAD Thành Công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                }
+                                else
+                                {
+                                    MessageBox.Show(resultMsg, "HDTOOL - Thông Báo Xuất CAD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                }
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            this.BeginInvoke((MethodInvoker)delegate
+                            {
+                                this.Cursor = Cursors.Default;
+                                UpdateStatusCount();
+                                MessageBox.Show("Lỗi xuất CAD: " + ex.Message, "HDTOOL Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            });
+                        }
+                    });
                 }
             }
         }
@@ -3379,15 +3405,16 @@ namespace HDTool
                     return;
                 }
 
-                using (UpdateSheetListPreviewForm preview = new UpdateSheetListPreviewForm(_doc, items))
+                UpdateSheetListPreviewForm preview = new UpdateSheetListPreviewForm(_doc, items);
+                preview.UpdatesApplied += delegate(int updatedCount)
                 {
-                    if (preview.ShowDialog() == DialogResult.OK && preview.UpdatedCount > 0)
+                    if (updatedCount > 0 && !this.IsDisposed)
                     {
-                        // Tải lại danh sách bản vẽ mới nhất từ Revit
                         _allSheets = ExportSheetListService.GetSheetsFromDocument(_doc);
                         ApplyFilter();
                     }
-                }
+                };
+                preview.Show(this);
             }
             catch (Exception ex)
             {
@@ -3420,14 +3447,16 @@ namespace HDTool
                     return;
                 }
 
-                using (UpdateSheetListPreviewForm preview = new UpdateSheetListPreviewForm(_doc, items))
+                UpdateSheetListPreviewForm preview = new UpdateSheetListPreviewForm(_doc, items);
+                preview.UpdatesApplied += delegate(int updatedCount)
                 {
-                    if (preview.ShowDialog() == DialogResult.OK && preview.UpdatedCount > 0)
+                    if (updatedCount > 0 && !this.IsDisposed)
                     {
                         _allSheets = ExportSheetListService.GetSheetsFromDocument(_doc);
                         ApplyFilter();
                     }
-                }
+                };
+                preview.Show(this);
             }
             catch (Exception ex)
             {

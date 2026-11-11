@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 using Color = System.Drawing.Color;
 using Font = System.Drawing.Font;
 using Point = System.Drawing.Point;
@@ -21,6 +22,7 @@ namespace HDTool
         private bool _lastTargetCheckState = true;
 
         public int UpdatedCount { get; private set; }
+        public event Action<int> UpdatesApplied;
 
         // UI Controls
         private System.Windows.Forms.Panel pnlHeader;
@@ -692,29 +694,47 @@ namespace HDTool
 
             if (confirm != DialogResult.Yes) return;
 
-            string report;
-            int count = UpdateSheetListService.ApplyUpdatesToDocument(_doc, _allItems, out report);
-            this.UpdatedCount = count;
-
-            if (count > 0)
+            HDToolModelessHost.Run(uiapp =>
             {
-                MessageBox.Show(
-                    "CẬP NHẬT THÀNH CÔNG!\n\n" + report,
-                    "HDTOOL - Cập Nhật Bản Vẽ Thành Công",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                try
+                {
+                    Document targetDoc = (uiapp != null && uiapp.ActiveUIDocument != null) ? uiapp.ActiveUIDocument.Document : _doc;
+                    string report;
+                    int count = UpdateSheetListService.ApplyUpdatesToDocument(targetDoc, _allItems, out report);
+                    this.UpdatedCount = count;
 
-                this.DialogResult = DialogResult.OK;
-                this.Close();
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Không có bản vẽ nào được cập nhật.\n" + report,
-                    "Thông Báo",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        if (count > 0)
+                        {
+                            MessageBox.Show(
+                                "CẬP NHẬT THÀNH CÔNG!\n\n" + report,
+                                "HDTOOL - Cập Nhật Bản Vẽ Thành Công",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+
+                            if (UpdatesApplied != null) UpdatesApplied(count);
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                                "Không có bản vẽ nào được cập nhật.\n" + report,
+                                "Thông Báo",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        MessageBox.Show("Lỗi cập nhật: " + ex.Message, "HDTOOL Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    });
+                }
+            });
         }
     }
 }

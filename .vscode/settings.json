@@ -1,7 +1,10 @@
 {
+  "dotnet.defaultSolution": "HDTOOL.csproj",
   "dotnet.showProjectInitializationNotification": false,
   "csharp.showOmnisharpLogOnError": false,
   "csharp.suppressDotnetInstallWarning": true,
-  "csharp.suppressHiddenDiagnostics": true
+  "csharp.suppressHiddenDiagnostics": true,
+  "csharp.suppressDotnetRestoreNotification": true,
+  "omnisharp.autoStart": false,
+  "omnisharp.useModernNet": false
 }
-

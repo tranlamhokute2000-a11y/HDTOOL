@@ -10,6 +10,8 @@ namespace HDTool
     [Regeneration(RegenerationOption.Manual)]
     public class LevelCropCommand : IExternalCommand
     {
+        private static LevelCropForm _instance = null;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             if (ToolHotReloadManager.HasActiveHotReloadAssembly())
@@ -47,6 +49,8 @@ namespace HDTool
                     return Result.Cancelled;
                 }
 
+                HDToolModelessHost.EnsureInitialized();
+
                 // Kiểm tra các Level đã được người dùng chọn từ trước (nếu có)
                 List<Level> preselectedLevels = new List<Level>();
                 ICollection<ElementId> selIds = uidoc.Selection.GetElementIds();
@@ -63,11 +67,18 @@ namespace HDTool
                     }
                 }
 
-                // Mở cửa sổ điều khiển chính
-                using (LevelCropForm form = new LevelCropForm(uidoc, preselectedLevels))
+                // Nếu Form đã mở -> Cập nhật context và kích hoạt
+                if (_instance != null && !_instance.IsDisposed)
                 {
-                    form.ShowDialog();
+                    _instance.UpdateContext(uidoc, preselectedLevels);
+                    HDToolModelessHost.ShowModeless(_instance, uiapp.MainWindowHandle);
+                    return Result.Succeeded;
                 }
+
+                // Mở cửa sổ điều khiển chính dạng Modeless Dialog
+                _instance = new LevelCropForm(uidoc, preselectedLevels);
+                _instance.FormClosed += (s, e) => { _instance = null; };
+                HDToolModelessHost.ShowModeless(_instance, uiapp.MainWindowHandle);
 
                 return Result.Succeeded;
             }

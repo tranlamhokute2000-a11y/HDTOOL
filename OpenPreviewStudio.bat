@@ -1,3 +1,4 @@
+
 @echo off
 chcp 65001 >nul
 title HDTOOL PREVIEW STUDIO - Trình Thiết Kế & Sắp Xếp Giao Diện Revit (Windows 11)

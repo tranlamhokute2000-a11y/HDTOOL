@@ -69,6 +69,29 @@ namespace HDTool
             PopulateViewsList();
         }
 
+        public void UpdateContext(UIDocument uidoc, List<Level> preselectedLevels = null)
+        {
+            if (uidoc == null) return;
+            _uidoc = uidoc;
+            _doc = uidoc.Document;
+            _activeView = uidoc.ActiveView;
+            _isSheet = (_activeView is ViewSheet);
+            if (preselectedLevels != null) _preselectedLevels = preselectedLevels;
+            _detectedViews = LevelCropService.GetApplicableViewsInContext(uidoc);
+            PopulateViewsList();
+        }
+
+        private void SyncContextFromApp(UIApplication uiapp)
+        {
+            if (uiapp != null && uiapp.ActiveUIDocument != null)
+            {
+                _uidoc = uiapp.ActiveUIDocument;
+                _doc = _uidoc.Document;
+                _activeView = _uidoc.ActiveView;
+                _isSheet = (_activeView is ViewSheet);
+            }
+        }
+
         private void InitializeComponent()
         {
             this.SuspendLayout();
@@ -469,20 +492,38 @@ namespace HDTool
                 return;
             }
 
+            List<ElementId> targetViewIds = new List<ElementId>();
+            foreach (Autodesk.Revit.DB.View tv in targetViews) targetViewIds.Add(tv.Id);
+
             double offsetLeft = (double)numLeft.Value;
             double offsetRight = (double)numRight.Value;
             bool make2D = chk2D.Checked;
             bool symLeft = chkSymbolLeft.Checked;
             bool symRight = chkSymbolRight.Checked;
 
-            string summaryMsg;
-            int totalLevels = LevelCropService.AdjustMultipleViews(_doc, targetViews, offsetLeft, offsetRight, make2D, symLeft, symRight, out summaryMsg);
-
-            try
+            HDToolModelessHost.Run(uiapp =>
             {
-                _uidoc.RefreshActiveView();
-            }
-            catch { }
+                try
+                {
+                    SyncContextFromApp(uiapp);
+                    List<Autodesk.Revit.DB.View> viewsInDoc = new List<Autodesk.Revit.DB.View>();
+                    foreach (ElementId vid in targetViewIds)
+                    {
+                        Autodesk.Revit.DB.View v = _doc.GetElement(vid) as Autodesk.Revit.DB.View;
+                        if (v != null) viewsInDoc.Add(v);
+                    }
+                    if (viewsInDoc.Count == 0) return;
+
+                    string summaryMsg;
+                    LevelCropService.AdjustMultipleViews(_doc, viewsInDoc, offsetLeft, offsetRight, make2D, symLeft, symRight, out summaryMsg);
+
+                    try { _uidoc.RefreshActiveView(); } catch { }
+                }
+                catch (Exception ex)
+                {
+                    this.BeginInvoke((MethodInvoker)(() => TaskDialog.Show("Lỗi", "Đã xảy ra lỗi: " + ex.Message)));
+                }
+            });
         }
 
         private void BtnPick_Click(object sender, EventArgs e)
@@ -495,112 +536,131 @@ namespace HDTool
 
             if (_preselectedLevels.Count > 0 && !_isSheet)
             {
-                string msg;
-                LevelCropService.AdjustLevels(_doc, _activeView, _preselectedLevels, offsetLeft, offsetRight, make2D, symLeft, symRight, out msg);
-                try
+                List<ElementId> preIds = new List<ElementId>();
+                foreach (Level lv in _preselectedLevels) preIds.Add(lv.Id);
+
+                HDToolModelessHost.Run(uiapp =>
                 {
-                    _uidoc.RefreshActiveView();
-                }
-                catch { }
+                    SyncContextFromApp(uiapp);
+                    List<Level> levelsInDoc = new List<Level>();
+                    foreach (ElementId lid in preIds)
+                    {
+                        Level l = _doc.GetElement(lid) as Level;
+                        if (l != null) levelsInDoc.Add(l);
+                    }
+                    if (levelsInDoc.Count > 0)
+                    {
+                        string msg;
+                        LevelCropService.AdjustLevels(_doc, _activeView, levelsInDoc, offsetLeft, offsetRight, make2D, symLeft, symRight, out msg);
+                        try { _uidoc.RefreshActiveView(); } catch { }
+                    }
+                });
                 return;
             }
 
-            this.Hide();
-
-            try
+            HDToolModelessHost.Run(uiapp =>
             {
-                if (_isSheet)
-                {
-                    // Trên Sheet: Người dùng chọn các Viewport (H12, H14...)
-                    IList<Reference> references = _uidoc.Selection.PickObjects(
-                        ObjectType.Element,
-                        new LevelSelectionFilter(true),
-                        "Click chọn các Viewport (H12, H14...) trên Sheet (nhấn Finish khi chọn xong)");
-
-                    if (references != null && references.Count > 0)
-                    {
-                        List<Autodesk.Revit.DB.View> pickedViews = new List<Autodesk.Revit.DB.View>();
-                        foreach (Reference r in references)
-                        {
-                            Element elem = _doc.GetElement(r);
-                            Viewport vp = elem as Viewport;
-                            if (vp != null)
-                            {
-                                Autodesk.Revit.DB.View v = _doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
-                                if (v != null && LevelCropService.IsViewApplicable(v))
-                                {
-                                    pickedViews.Add(v);
-                                }
-                            }
-                        }
-
-                        if (pickedViews.Count > 0)
-                        {
-                            string summary;
-                            LevelCropService.AdjustMultipleViews(_doc, pickedViews, offsetLeft, offsetRight, make2D, symLeft, symRight, out summary);
-                        }
-                    }
-                }
-                else
-                {
-                    // Trong View thường: Người dùng chọn các Level
-                    IList<Reference> references = _uidoc.Selection.PickObjects(
-                        ObjectType.Element,
-                        new LevelSelectionFilter(false),
-                        "Click chọn các Level cần căn chỉnh (nhấn Finish trên thanh Options Bar khi chọn xong)");
-
-                    if (references != null && references.Count > 0)
-                    {
-                        List<Level> pickedLevels = new List<Level>();
-                        foreach (Reference r in references)
-                        {
-                            Element elem = _doc.GetElement(r);
-                            Level lvl = elem as Level;
-                            if (lvl != null)
-                            {
-                                pickedLevels.Add(lvl);
-                            }
-                        }
-
-                        string msg;
-                        LevelCropService.AdjustLevels(_doc, _activeView, pickedLevels, offsetLeft, offsetRight, make2D, symLeft, symRight, out msg);
-                    }
-                }
+                SyncContextFromApp(uiapp);
+                try { if (!this.IsDisposed) this.BeginInvoke((MethodInvoker)(() => this.Hide())); } catch { }
 
                 try
                 {
-                    _uidoc.RefreshActiveView();
+                    if (_isSheet)
+                    {
+                        // Trên Sheet: Người dùng chọn các Viewport (H12, H14...)
+                        IList<Reference> references = _uidoc.Selection.PickObjects(
+                            ObjectType.Element,
+                            new LevelSelectionFilter(true),
+                            "Click chọn các Viewport (H12, H14...) trên Sheet (nhấn Finish khi chọn xong)");
+
+                        if (references != null && references.Count > 0)
+                        {
+                            List<Autodesk.Revit.DB.View> pickedViews = new List<Autodesk.Revit.DB.View>();
+                            foreach (Reference r in references)
+                            {
+                                Element elem = _doc.GetElement(r);
+                                Viewport vp = elem as Viewport;
+                                if (vp != null)
+                                {
+                                    Autodesk.Revit.DB.View v = _doc.GetElement(vp.ViewId) as Autodesk.Revit.DB.View;
+                                    if (v != null && LevelCropService.IsViewApplicable(v))
+                                    {
+                                        pickedViews.Add(v);
+                                    }
+                                }
+                            }
+
+                            if (pickedViews.Count > 0)
+                            {
+                                string summary;
+                                LevelCropService.AdjustMultipleViews(_doc, pickedViews, offsetLeft, offsetRight, make2D, symLeft, symRight, out summary);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Trong View thường: Người dùng chọn các Level
+                        IList<Reference> references = _uidoc.Selection.PickObjects(
+                            ObjectType.Element,
+                            new LevelSelectionFilter(false),
+                            "Click chọn các Level cần căn chỉnh (nhấn Finish trên thanh Options Bar khi chọn xong)");
+
+                        if (references != null && references.Count > 0)
+                        {
+                            List<Level> pickedLevels = new List<Level>();
+                            foreach (Reference r in references)
+                            {
+                                Element elem = _doc.GetElement(r);
+                                Level lvl = elem as Level;
+                                if (lvl != null)
+                                {
+                                    pickedLevels.Add(lvl);
+                                }
+                            }
+
+                            string msg;
+                            LevelCropService.AdjustLevels(_doc, _activeView, pickedLevels, offsetLeft, offsetRight, make2D, symLeft, symRight, out msg);
+                        }
+                    }
+
+                    try { _uidoc.RefreshActiveView(); } catch { }
                 }
-                catch { }
-            }
-            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-            {
-                // Người dùng nhấn Esc hủy chọn
-            }
-            catch (Exception ex)
-            {
-                TaskDialog.Show("Lỗi", "Đã xảy ra lỗi: " + ex.Message);
-            }
-            finally
-            {
-                this.Show();
-            }
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                {
+                    // Người dùng nhấn Esc hủy chọn
+                }
+                catch (Exception ex)
+                {
+                    try { this.BeginInvoke((MethodInvoker)(() => TaskDialog.Show("Lỗi", "Đã xảy ra lỗi: " + ex.Message))); } catch { }
+                }
+                finally
+                {
+                    try
+                    {
+                        if (!this.IsDisposed)
+                        {
+                            this.BeginInvoke((MethodInvoker)(() =>
+                            {
+                                this.Show();
+                                this.BringToFront();
+                                this.Activate();
+                            }));
+                        }
+                    }
+                    catch { }
+                }
+            });
         }
 
         private void BtnSwitchGrid_Click(object sender, EventArgs e)
         {
-            this.Hide();
-            try
-            {
-                using (GridCropForm form = new GridCropForm(_uidoc))
-                {
-                    form.ShowDialog();
-                }
-            }
-            finally
-            {
-                this.Close();
-            }
+            HDToolModelessHost.EnsureInitialized();
+            IntPtr hMain = IntPtr.Zero;
+            try { hMain = _uidoc.Application.MainWindowHandle; } catch { }
+
+            GridCropForm form = new GridCropForm(_uidoc, HDToolModelessHost.ExEvent, HDToolModelessHost.Handler);
+            HDToolModelessHost.ShowModeless(form, hMain);
+            this.Close();
         }
     }
 }

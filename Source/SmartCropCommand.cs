@@ -10,6 +10,9 @@ namespace HDTool
     [Regeneration(RegenerationOption.Manual)]
     public class SmartCropCommand : IExternalCommand
     {
+        private static GridCropForm _gridInstance = null;
+        private static LevelCropForm _levelInstance = null;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             if (ToolHotReloadManager.HasActiveHotReloadAssembly())
@@ -39,23 +42,39 @@ namespace HDTool
                 Autodesk.Revit.DB.View view = uidoc.ActiveView;
                 if (view == null) return Result.Cancelled;
 
-                // 1. Đang ở Mặt bằng HOẶC Trang in (Sheet) -> Tự động mở công cụ Căn Grids
+                HDToolModelessHost.EnsureInitialized();
+
+                // 1. Đang ở Mặt bằng HOẶC Trang in (Sheet) -> Tự động mở công cụ Căn Grids Modeless
                 if (GridCropService.IsPlanView(view) || view is ViewSheet)
                 {
-                    using (GridCropForm form = new GridCropForm(uidoc))
+                    if (_gridInstance != null && !_gridInstance.IsDisposed)
                     {
-                        form.ShowDialog();
+                        _gridInstance.UpdateContext(uidoc);
+                        HDToolModelessHost.ShowModeless(_gridInstance, uiapp.MainWindowHandle);
+                    }
+                    else
+                    {
+                        _gridInstance = new GridCropForm(uidoc, HDToolModelessHost.ExEvent, HDToolModelessHost.Handler);
+                        _gridInstance.FormClosed += (s, e) => { _gridInstance = null; };
+                        HDToolModelessHost.ShowModeless(_gridInstance, uiapp.MainWindowHandle);
                     }
                     return Result.Succeeded;
                 }
 
-                // 2. Đang ở Mặt cắt / Mặt đứng -> Tự động mở công cụ Căn Level
+                // 2. Đang ở Mặt cắt / Mặt đứng -> Tự động mở công cụ Căn Level Modeless
                 string errorMsg;
                 if (LevelCropService.IsValidContext(view, out errorMsg))
                 {
-                    using (LevelCropForm form = new LevelCropForm(uidoc, new List<Level>()))
+                    if (_levelInstance != null && !_levelInstance.IsDisposed)
                     {
-                        form.ShowDialog();
+                        _levelInstance.UpdateContext(uidoc, new List<Level>());
+                        HDToolModelessHost.ShowModeless(_levelInstance, uiapp.MainWindowHandle);
+                    }
+                    else
+                    {
+                        _levelInstance = new LevelCropForm(uidoc, new List<Level>());
+                        _levelInstance.FormClosed += (s, e) => { _levelInstance = null; };
+                        HDToolModelessHost.ShowModeless(_levelInstance, uiapp.MainWindowHandle);
                     }
                     return Result.Succeeded;
                 }

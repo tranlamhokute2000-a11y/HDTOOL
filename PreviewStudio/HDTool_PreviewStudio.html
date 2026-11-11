@@ -438,6 +438,15 @@
         <text x="19" y="20" font-size="6" font-weight="bold" fill="#ffffff" text-anchor="middle">m²</text>
       </svg>`,
 
+      CadToDuct: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="10" width="16" height="12" rx="1.5" fill="#38bdf8" stroke="#0284c7" stroke-width="1.5"/>
+        <line x1="3" y1="16" x2="19" y2="16" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 2"/>
+        <path d="M 19 13 L 25 7 L 29 7 L 29 11 L 23 17" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
+        <path d="M 11 22 L 11 29 L 17 29 L 17 22" fill="#10b981" stroke="#059669" stroke-width="1"/>
+        <text x="11" y="18" font-size="5" font-weight="900" fill="#0f172a" text-anchor="middle">CAD</text>
+        <path d="M 23 23 L 29 27 M 29 23 L 23 27" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>`,
+
       SheetList: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M 6 4 C 6 2.8 6.8 2 8 2 L 20 2 L 26 8 L 26 28 C 26 29.2 25.2 30 24 30 L 8 30 C 6.8 30 6 29.2 6 28 Z" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
         <polygon points="20,2 26,8 20,8" fill="#cbd5e1"/>
@@ -530,6 +539,14 @@
               commandClass: "HDTool.DuctQuantityCommand",
               icon: "DuctQuantity",
               tooltip: "[HDTOOL] Thống kê khối lượng ống gió HVAC: Tính diện tích tôn m2, phân loại cút, côn, lượn, van gió VCD và miệng gió."
+            },
+            {
+              id: "cmdHDToolCadToDuct",
+              name: "Dựng Ống Gió\nTừ CAD Link",
+              type: "large",
+              commandClass: "HDTool.CadToDuctCommand",
+              icon: "CadToDuct",
+              tooltip: "[HDTOOL] Tự động nhận diện tuyến ống, size WxH, cút, côn đồng tâm, chân rẽ Tap và dựng lại mô hình 3D ống gió hoàn chỉnh từ bản vẽ CAD Link."
             }
           ]
         },
@@ -985,7 +1002,106 @@
           </div>
         `;
       }
-      // 5. CÁC FORM KHÁC
+      // 5. FORM DỰNG ỐNG GIÓ TỪ CAD LINK (MỚI VERSION 70 - THEO LỆNH SẾP HỒ)
+      else if (id === 'cmdHDToolCadToDuct') {
+        viewport.innerHTML = `
+          <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 overflow-hidden text-xs select-none">
+            <div class="bg-[#181d26] px-3 py-2 flex items-center justify-between border-b border-slate-700">
+              <div class="flex items-center gap-2">
+                <span class="text-sky-400 font-bold">HD</span>
+                <span class="font-semibold text-slate-200">HDTOOL - DỰNG MÔ HÌNH HỆ THỐNG ỐNG GIÓ 3D TỪ CAD LINK</span>
+              </div>
+              <span class="text-slate-400 hover:text-white cursor-pointer">✕</span>
+            </div>
+            <div class="bg-gradient-to-r from-[#0c4a6e] to-[#075985] px-4 py-2.5 border-b border-sky-900/50">
+              <h2 class="text-sm font-bold text-white tracking-wide">DỰNG HỆ THỐNG ỐNG GIÓ 3D TỰ ĐỘNG TỪ HÌNH VẼ CAD LINK</h2>
+              <p class="text-[11px] text-sky-200 mt-0.5">Nhận diện bằng HÌNH HỌC (Hình chữ nhật ống, Hình thang Côn thu, Chân rẽ Tap, Cút) - Không phụ thuộc Layer - Modeless 100%</p>
+            </div>
+            <div class="p-4 space-y-3 bg-[#1e2430]">
+              <div class="grid grid-cols-12 gap-3 bg-[#181d26] p-3 rounded-lg border border-slate-700">
+                <div class="col-span-5">
+                  <label class="block text-slate-300 font-bold mb-1">1. File CAD Link:</label>
+                  <select class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-sky-300 font-mono text-[11px] outline-none">
+                    <option>THÔNG GIÓ 1.dwg</option>
+                  </select>
+                </div>
+                <div class="col-span-2 flex items-end">
+                  <button class="w-full bg-sky-700 hover:bg-sky-600 text-white font-bold py-1.5 rounded text-[11px] shadow">🎯 Pick CAD</button>
+                </div>
+                <div class="col-span-5">
+                  <label class="block text-slate-300 font-bold mb-1">Chế Độ Lọc Layer:</label>
+                  <select class="w-full bg-slate-900 border border-emerald-600 rounded px-2 py-1.5 text-emerald-300 font-bold text-[11px]">
+                    <option>(Tất cả Layer - Nhận diện theo hình vẽ)</option>
+                    <option>MEP-M-O-DUCT-50</option>
+                    <option>M-O-DUCT-50</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 gap-2.5">
+                <button class="col-span-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2.5 rounded-lg shadow-lg text-xs">
+                  🎯 PICK CHỌN HÌNH VẼ TUYẾN ỐNG
+                </button>
+                <button class="col-span-3 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-lg text-[11px]">
+                  ⬚ Quét Vùng
+                </button>
+                <button class="col-span-3 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-lg text-[11px]">
+                  🌐 Quét Toàn Bộ
+                </button>
+              </div>
+
+              <div class="bg-[#141923] rounded-lg border border-slate-700 overflow-hidden">
+                <div class="px-3 py-1.5 bg-slate-800/80 text-[11px] font-bold text-slate-300 border-b border-slate-700">
+                  Danh Sách Hình Vẽ Đã Nhận Diện (Live Preview):
+                </div>
+                <table class="w-full text-[11px] text-left border-collapse">
+                  <thead class="bg-slate-900 text-slate-400">
+                    <tr>
+                      <th class="p-1.5">STT</th>
+                      <th class="p-1.5">Phân Loại</th>
+                      <th class="p-1.5">WxH (mm)</th>
+                      <th class="p-1.5">Dài</th>
+                      <th class="p-1.5">Kết Nối Nối Tiếp</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800 text-slate-300">
+                    <tr><td class="p-1.5">1</td><td class="p-1.5">Ống gió thẳng</td><td class="p-1.5 text-emerald-400 font-bold">800 x 350</td><td class="p-1.5">10,388 mm</td><td class="p-1.5 text-amber-300">Côn thu -> #2 (500x300)</td></tr>
+                    <tr><td class="p-1.5">2</td><td class="p-1.5">Ống gió thẳng</td><td class="p-1.5 text-emerald-400 font-bold">500 x 300</td><td class="p-1.5">4,734 mm</td><td class="p-1.5 text-sky-300">Chạc chia Tee -> #3, #4</td></tr>
+                    <tr><td class="p-1.5">3</td><td class="p-1.5">Ống gió thẳng</td><td class="p-1.5 text-emerald-400 font-bold">350 x 300</td><td class="p-1.5">2,822 mm</td><td class="p-1.5 text-slate-400">Chân rẽ Tap vào #1 | Cút -> #5</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="grid grid-cols-12 gap-3 bg-[#181d26] p-3 rounded-lg border border-slate-700">
+                <div class="col-span-6">
+                  <label class="block text-slate-300 font-bold mb-1">Hệ Thống Ống Gió (System Type):</label>
+                  <select class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-amber-300 font-bold text-[11px]">
+                    <option>Hút Khói Tầng Hầm / Gió Tươi</option>
+                  </select>
+                </div>
+                <div class="col-span-6">
+                  <label class="block text-slate-300 font-bold mb-1">Cao Độ Tim (mm) / Mặc Định H:</label>
+                  <div class="flex gap-2">
+                    <input type="number" value="3200" class="w-1/2 bg-slate-900 border border-emerald-600 rounded px-2 py-1 text-emerald-400 font-bold font-mono text-xs">
+                    <input type="number" value="300" class="w-1/2 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-slate-300 font-mono text-xs">
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-1">
+                <button class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-2.5 rounded-lg shadow-lg text-xs">
+                  🚀 DỰNG MÔ HÌNH REVIT 3D (CÔN ĐỒNG TÂM + TAP + CÚT)
+                </button>
+              </div>
+            </div>
+            <div class="bg-[#141923] px-3 py-2 border-t border-slate-700 flex justify-between items-center text-[11px]">
+              <span class="text-emerald-400 font-bold">✔ Chế độ Modeless Dialog 60 FPS: Người dùng thoải mái Pan, Zoom, chọn đối tượng trên bản vẽ Revit!</span>
+              <button class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1 rounded">Đóng (ESC)</button>
+            </div>
+          </div>
+        `;
+      }
+      // 6. CÁC FORM KHÁC
       else {
         viewport.innerHTML = `
           <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 p-6 text-center text-xs select-none">

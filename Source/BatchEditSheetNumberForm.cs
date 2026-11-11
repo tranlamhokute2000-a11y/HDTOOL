@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Color = System.Drawing.Color;
 using Font = System.Drawing.Font;
@@ -11,9 +12,8 @@ namespace HDTool
 {
     /// <summary>
     /// Hộp thoại Sửa & Thay Thế Số Hiệu Hàng Loạt Với Các Tiền Tố Giống Nhau
-    /// Hỗ trợ: Tìm & Thay thế Tiền tố, Thêm Tiền tố/Hậu tố, hoặc Đánh số thứ tự tự động theo Tiền tố
-    /// với bảng Live Preview thời gian thực, tự động quét TẤT CẢ bản vẽ có cùng tiền tố trong toàn bộ dự án
-    /// và kiểm tra trùng lặp an toàn 100%.
+    /// Hỗ trợ tính năng Excel AutoFill Drag Handle: Quét chọn rồi kéo chuột tự động tăng dần số đuôi
+    /// giống hệt tính năng trong bảng Microsoft Excel theo lệnh của Sếp Hồ (HadoMEE).
     /// </summary>
     public class BatchEditSheetNumberForm : Form
     {
@@ -22,11 +22,27 @@ namespace HDTool
         private List<SheetItem> _activeTargetSheets;
         private string _detectedCommonPrefix = string.Empty;
 
+        /// <summary>
+        /// Sự kiện kích hoạt khi người dùng bấm Áp dụng thay đổi số hiệu ở chế độ Modeless
+        /// </summary>
+        public event Action<Dictionary<SheetItem, string>> ChangesApplied;
+
+        // Bộ nhớ lưu các số hiệu đã sửa thủ công hoặc do kéo chuột Excel AutoFill
+        private Dictionary<SheetItem, string> _manualOverrides = new Dictionary<SheetItem, string>();
+
+        // Biến trạng thái kéo chuột Excel AutoFill Drag Handle
+        private bool _isDraggingFillHandle = false;
+        private int _dragStartRow = -1;
+        private int _dragCurrentRow = -1;
+        private Rectangle _currentFillHandleRect = Rectangle.Empty;
+        private System.Windows.Forms.ToolTip _dragToolTip = new System.Windows.Forms.ToolTip();
+
         // UI Controls
         private System.Windows.Forms.Panel pnlHeader;
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Label lblSubtitle;
 
+        private System.Windows.Forms.Panel pnlTopContainer;
         private System.Windows.Forms.GroupBox grpMode;
         private System.Windows.Forms.RadioButton rdoModeReplace;
         private System.Windows.Forms.RadioButton rdoModeAdd;
@@ -69,6 +85,11 @@ namespace HDTool
 
         // Live Preview Grid
         private System.Windows.Forms.GroupBox grpPreview;
+        private System.Windows.Forms.Panel pnlPreviewToolbar;
+        private System.Windows.Forms.Button btnQuickAutoFill;
+        private System.Windows.Forms.Button btnResetPrefix;
+        private System.Windows.Forms.Label lblExcelHint;
+
         private DataGridView dgvPreview;
         private DataGridViewTextBoxColumn colPvStt;
         private DataGridViewTextBoxColumn colPvName;
@@ -76,6 +97,8 @@ namespace HDTool
         private DataGridViewTextBoxColumn colPvNew;
         private DataGridViewTextBoxColumn colPvStatus;
         private System.Windows.Forms.Label lblPreviewStats;
+
+        private ContextMenuStrip ctxGridMenu;
 
         // Bottom Actions
         private System.Windows.Forms.Panel pnlBottom;
@@ -106,8 +129,9 @@ namespace HDTool
             this.SuspendLayout();
 
             this.Text = "HDTOOL - Sửa & Thay Thế Số Hiệu Bản Vẽ Hàng Loạt";
-            this.Size = new Size(960, 700);
-            this.MinimumSize = new Size(900, 620);
+            // Sử dụng ClientSize cố định vùng nội dung để các nút dưới đáy KHÔNG BAO GIỜ bị che khuất
+            this.ClientSize = new Size(980, 720);
+            this.MinimumSize = new Size(920, 640);
             this.StartPosition = FormStartPosition.CenterParent;
             this.BackColor = Color.FromArgb(245, 247, 250);
             this.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
@@ -121,12 +145,12 @@ namespace HDTool
             lblTitle = new System.Windows.Forms.Label();
             lblTitle.Text = "✏  SỬA & THAY THẾ SỐ HIỆU BẢN VẼ HÀNG LOẠT (BATCH EDIT PREFIX)";
             lblTitle.ForeColor = Color.White;
-            lblTitle.Font = new Font("Segoe UI", 11.0f, FontStyle.Bold);
+            lblTitle.Font = new Font("Segoe UI", 11.5f, FontStyle.Bold);
             lblTitle.Location = new Point(16, 12);
             lblTitle.AutoSize = true;
 
             lblSubtitle = new System.Windows.Forms.Label();
-            lblSubtitle.Text = "Tự động nhận diện tiền tố chung, tìm & thay thế trên TẤT CẢ bản vẽ cùng tiền tố trong toàn bộ dự án";
+            lblSubtitle.Text = "Tự động nhận diện tiền tố chung, tìm & thay thế và hỗ trợ KÉO CHUỘT TĂNG SỐ ĐUÔI GIỐNG EXCEL";
             lblSubtitle.ForeColor = Color.FromArgb(189, 195, 199);
             lblSubtitle.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
             lblSubtitle.Location = new Point(16, 38);
@@ -135,17 +159,23 @@ namespace HDTool
             pnlHeader.Controls.Add(lblTitle);
             pnlHeader.Controls.Add(lblSubtitle);
 
+            // Container phía trên
+            pnlTopContainer = new System.Windows.Forms.Panel();
+            pnlTopContainer.Dock = DockStyle.Top;
+            pnlTopContainer.Height = 145;
+            pnlTopContainer.BackColor = Color.FromArgb(245, 247, 250);
+
             // 2. Mode Selector Group
             grpMode = new System.Windows.Forms.GroupBox();
             grpMode.Text = "Chọn Chế Độ Thay Đổi";
-            grpMode.Location = new Point(14, 75);
-            grpMode.Size = new Size(430, 54);
+            grpMode.Location = new Point(14, 6);
+            grpMode.Size = new Size(430, 52);
             grpMode.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             grpMode.ForeColor = Color.FromArgb(24, 43, 73);
 
             rdoModeReplace = new System.Windows.Forms.RadioButton();
             rdoModeReplace.Text = "1. Thay Thế Tiền Tố";
-            rdoModeReplace.Location = new Point(10, 20);
+            rdoModeReplace.Location = new Point(10, 19);
             rdoModeReplace.Size = new Size(145, 22);
             rdoModeReplace.Checked = true;
             rdoModeReplace.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
@@ -153,14 +183,14 @@ namespace HDTool
 
             rdoModeAdd = new System.Windows.Forms.RadioButton();
             rdoModeAdd.Text = "2. Thêm Tiền Tố/Hậu Tố";
-            rdoModeAdd.Location = new Point(160, 20);
+            rdoModeAdd.Location = new Point(160, 19);
             rdoModeAdd.Size = new Size(150, 22);
             rdoModeAdd.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
             rdoModeAdd.CheckedChanged += Mode_CheckedChanged;
 
             rdoModeNumber = new System.Windows.Forms.RadioButton();
             rdoModeNumber.Text = "3. Đánh Số TĐ";
-            rdoModeNumber.Location = new Point(315, 20);
+            rdoModeNumber.Location = new Point(315, 19);
             rdoModeNumber.Size = new Size(110, 22);
             rdoModeNumber.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
             rdoModeNumber.CheckedChanged += Mode_CheckedChanged;
@@ -169,19 +199,19 @@ namespace HDTool
             grpMode.Controls.Add(rdoModeAdd);
             grpMode.Controls.Add(rdoModeNumber);
 
-            // Scope Selector Group: 3 options, rdoScopeMatched is DEFAULT
+            // Scope Selector Group
             grpScope = new System.Windows.Forms.GroupBox();
             grpScope.Text = "Phạm Vi Áp Dụng";
-            grpScope.Location = new Point(452, 75);
-            grpScope.Size = new Size(490, 54);
+            grpScope.Location = new Point(452, 6);
+            grpScope.Size = new Size(514, 52);
             grpScope.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             grpScope.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             grpScope.ForeColor = Color.FromArgb(24, 43, 73);
 
             rdoScopeMatched = new System.Windows.Forms.RadioButton();
             rdoScopeMatched.Text = "⭐ Cùng tiền tố (0 bản vẽ)";
-            rdoScopeMatched.Location = new Point(10, 20);
-            rdoScopeMatched.Size = new Size(225, 22);
+            rdoScopeMatched.Location = new Point(10, 19);
+            rdoScopeMatched.Size = new Size(230, 22);
             rdoScopeMatched.Checked = true;
             rdoScopeMatched.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
             rdoScopeMatched.ForeColor = Color.FromArgb(24, 106, 59); // Green
@@ -189,15 +219,15 @@ namespace HDTool
 
             rdoScopeSelected = new System.Windows.Forms.RadioButton();
             rdoScopeSelected.Text = string.Format("Đang chọn ({0})", _selectedSheets.Count);
-            rdoScopeSelected.Location = new Point(240, 20);
-            rdoScopeSelected.Size = new Size(135, 22);
+            rdoScopeSelected.Location = new Point(245, 19);
+            rdoScopeSelected.Size = new Size(140, 22);
             rdoScopeSelected.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
             rdoScopeSelected.CheckedChanged += Scope_CheckedChanged;
 
             rdoScopeAll = new System.Windows.Forms.RadioButton();
             rdoScopeAll.Text = string.Format("Tất cả ({0})", _allSheets.Count);
-            rdoScopeAll.Location = new Point(380, 20);
-            rdoScopeAll.Size = new Size(100, 22);
+            rdoScopeAll.Location = new Point(390, 19);
+            rdoScopeAll.Size = new Size(110, 22);
             rdoScopeAll.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
             rdoScopeAll.CheckedChanged += Scope_CheckedChanged;
 
@@ -205,11 +235,10 @@ namespace HDTool
             grpScope.Controls.Add(rdoScopeSelected);
             grpScope.Controls.Add(rdoScopeAll);
 
-            // Container for Mode Inputs (Height: 76)
             // Mode 1: Replace inputs
             pnlModeReplace = new System.Windows.Forms.Panel();
-            pnlModeReplace.Location = new Point(14, 134);
-            pnlModeReplace.Size = new Size(928, 76);
+            pnlModeReplace.Location = new Point(14, 64);
+            pnlModeReplace.Size = new Size(952, 74);
             pnlModeReplace.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             pnlModeReplace.BackColor = Color.FromArgb(238, 242, 246);
             pnlModeReplace.BorderStyle = BorderStyle.FixedSingle;
@@ -225,7 +254,7 @@ namespace HDTool
             txtFind.Location = new Point(180, 9);
             txtFind.Size = new Size(240, 23);
             txtFind.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            txtFind.TextChanged += (s, e) => UpdateLivePreview();
+            txtFind.TextChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
             txtFind.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == Keys.Enter)
@@ -246,11 +275,11 @@ namespace HDTool
 
             txtReplace = new System.Windows.Forms.TextBox();
             txtReplace.Location = new Point(605, 9);
-            txtReplace.Size = new Size(310, 23);
+            txtReplace.Size = new Size(330, 23);
             txtReplace.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtReplace.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             txtReplace.ForeColor = Color.FromArgb(24, 106, 59);
-            txtReplace.TextChanged += (s, e) => UpdateLivePreview();
+            txtReplace.TextChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
             txtReplace.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == Keys.Enter)
@@ -270,7 +299,7 @@ namespace HDTool
             chkOnlyPrefix.Size = new Size(390, 22);
             chkOnlyPrefix.Checked = true;
             chkOnlyPrefix.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
-            chkOnlyPrefix.CheckedChanged += (s, e) => UpdateLivePreview();
+            chkOnlyPrefix.CheckedChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             chkMatchCase = new System.Windows.Forms.CheckBox();
             chkMatchCase.Text = "Phân biệt chữ hoa / thường";
@@ -278,7 +307,7 @@ namespace HDTool
             chkMatchCase.Size = new Size(220, 22);
             chkMatchCase.Checked = false;
             chkMatchCase.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
-            chkMatchCase.CheckedChanged += (s, e) => UpdateLivePreview();
+            chkMatchCase.CheckedChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             pnlModeReplace.Controls.Add(lblFind);
             pnlModeReplace.Controls.Add(txtFind);
@@ -289,8 +318,8 @@ namespace HDTool
 
             // Mode 2: Add inputs
             pnlModeAdd = new System.Windows.Forms.Panel();
-            pnlModeAdd.Location = new Point(14, 134);
-            pnlModeAdd.Size = new Size(928, 76);
+            pnlModeAdd.Location = new Point(14, 64);
+            pnlModeAdd.Size = new Size(952, 74);
             pnlModeAdd.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             pnlModeAdd.BackColor = Color.FromArgb(238, 242, 246);
             pnlModeAdd.BorderStyle = BorderStyle.FixedSingle;
@@ -300,31 +329,31 @@ namespace HDTool
             lblAddPrefix.Text = "Thêm Tiền tố vào trước (Prefix):";
             lblAddPrefix.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
             lblAddPrefix.ForeColor = Color.FromArgb(41, 128, 185);
-            lblAddPrefix.Location = new Point(12, 18);
+            lblAddPrefix.Location = new Point(12, 16);
             lblAddPrefix.AutoSize = true;
 
             txtAddPrefix = new System.Windows.Forms.TextBox();
-            txtAddPrefix.Location = new Point(205, 15);
+            txtAddPrefix.Location = new Point(205, 13);
             txtAddPrefix.Size = new Size(210, 23);
             txtAddPrefix.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            txtAddPrefix.TextChanged += (s, e) => UpdateLivePreview();
+            txtAddPrefix.TextChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             lblAddSuffix = new System.Windows.Forms.Label();
             lblAddSuffix.Text = "Thêm Hậu tố vào sau (Suffix):";
             lblAddSuffix.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
             lblAddSuffix.ForeColor = Color.FromArgb(142, 68, 173);
-            lblAddSuffix.Location = new Point(430, 18);
+            lblAddSuffix.Location = new Point(430, 16);
             lblAddSuffix.AutoSize = true;
 
             txtAddSuffix = new System.Windows.Forms.TextBox();
-            txtAddSuffix.Location = new Point(600, 15);
+            txtAddSuffix.Location = new Point(600, 13);
             txtAddSuffix.Size = new Size(210, 23);
             txtAddSuffix.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            txtAddSuffix.TextChanged += (s, e) => UpdateLivePreview();
+            txtAddSuffix.TextChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             System.Windows.Forms.Label lblAddHint = new System.Windows.Forms.Label();
             lblAddHint.Text = "💡 Ví dụ: Thêm tiền tố \"PCCC-\" hoặc thêm hậu tố \"-REV1\" vào tất cả các số hiệu đang chọn.";
-            lblAddHint.Location = new Point(12, 48);
+            lblAddHint.Location = new Point(12, 46);
             lblAddHint.AutoSize = true;
             lblAddHint.ForeColor = Color.FromArgb(100, 110, 120);
             lblAddHint.Font = new Font("Segoe UI", 8.25f, FontStyle.Italic);
@@ -337,8 +366,8 @@ namespace HDTool
 
             // Mode 3: Numbering inputs
             pnlModeNumber = new System.Windows.Forms.Panel();
-            pnlModeNumber.Location = new Point(14, 134);
-            pnlModeNumber.Size = new Size(928, 76);
+            pnlModeNumber.Location = new Point(14, 64);
+            pnlModeNumber.Size = new Size(952, 74);
             pnlModeNumber.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             pnlModeNumber.BackColor = Color.FromArgb(238, 242, 246);
             pnlModeNumber.BorderStyle = BorderStyle.FixedSingle;
@@ -354,7 +383,7 @@ namespace HDTool
             txtNumPrefix.Location = new Point(65, 12);
             txtNumPrefix.Size = new Size(190, 23);
             txtNumPrefix.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            txtNumPrefix.TextChanged += (s, e) => UpdateLivePreview();
+            txtNumPrefix.TextChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             lblNumStart = new System.Windows.Forms.Label();
             lblNumStart.Text = "Bắt đầu:";
@@ -368,7 +397,7 @@ namespace HDTool
             numStart.Minimum = 0;
             numStart.Maximum = 99999;
             numStart.Value = 1;
-            numStart.ValueChanged += (s, e) => UpdateLivePreview();
+            numStart.ValueChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             lblNumFormat = new System.Windows.Forms.Label();
             lblNumFormat.Text = "Định dạng:";
@@ -382,7 +411,7 @@ namespace HDTool
             cmbNumFormat.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbNumFormat.Items.AddRange(new object[] { "01, 02...", "001, 002...", "1, 2, 3...", "0001, 0002..." });
             cmbNumFormat.SelectedIndex = 0;
-            cmbNumFormat.SelectedIndexChanged += (s, e) => UpdateLivePreview();
+            cmbNumFormat.SelectedIndexChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             lblNumStep = new System.Windows.Forms.Label();
             lblNumStep.Text = "Bước nhảy:";
@@ -396,7 +425,7 @@ namespace HDTool
             numStep.Minimum = 1;
             numStep.Maximum = 100;
             numStep.Value = 1;
-            numStep.ValueChanged += (s, e) => UpdateLivePreview();
+            numStep.ValueChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             lblNumSuffix = new System.Windows.Forms.Label();
             lblNumSuffix.Text = "Hậu tố:";
@@ -406,12 +435,12 @@ namespace HDTool
 
             txtNumSuffix = new System.Windows.Forms.TextBox();
             txtNumSuffix.Location = new Point(755, 12);
-            txtNumSuffix.Size = new Size(120, 23);
-            txtNumSuffix.TextChanged += (s, e) => UpdateLivePreview();
+            txtNumSuffix.Size = new Size(140, 23);
+            txtNumSuffix.TextChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             System.Windows.Forms.Label lblNumHint = new System.Windows.Forms.Label();
             lblNumHint.Text = "💡 Ví dụ: Tiền tố \"HDM/CB/B1/T1.\" ➔ Đánh số tự động: HDM/CB/B1/T1.01, HDM/CB/B1/T1.02...";
-            lblNumHint.Location = new Point(10, 48);
+            lblNumHint.Location = new Point(10, 46);
             lblNumHint.AutoSize = true;
             lblNumHint.ForeColor = Color.FromArgb(100, 110, 120);
             lblNumHint.Font = new Font("Segoe UI", 8.25f, FontStyle.Italic);
@@ -428,25 +457,73 @@ namespace HDTool
             pnlModeNumber.Controls.Add(txtNumSuffix);
             pnlModeNumber.Controls.Add(lblNumHint);
 
-            // 3. Live Preview GroupBox & DataGridView
+            pnlTopContainer.Controls.Add(pnlModeReplace);
+            pnlTopContainer.Controls.Add(pnlModeAdd);
+            pnlTopContainer.Controls.Add(pnlModeNumber);
+            pnlTopContainer.Controls.Add(grpScope);
+            pnlTopContainer.Controls.Add(grpMode);
+
+            // 3. Live Preview GroupBox & DataGridView (Dock = Fill để co dãn chuẩn mực 100%)
             grpPreview = new System.Windows.Forms.GroupBox();
             grpPreview.Text = "Xem Trước Thay Đổi Thời Gian Thực (Live Preview)";
-            grpPreview.Location = new Point(14, 218);
-            grpPreview.Size = new Size(928, 415);
-            grpPreview.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            grpPreview.Dock = DockStyle.Fill;
+            grpPreview.Padding = new Padding(12, 8, 12, 8);
             grpPreview.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             grpPreview.ForeColor = Color.FromArgb(24, 43, 73);
+
+            // Thanh Toolbar thao tác Excel AutoFill
+            pnlPreviewToolbar = new System.Windows.Forms.Panel();
+            pnlPreviewToolbar.Dock = DockStyle.Top;
+            pnlPreviewToolbar.Height = 32;
+            pnlPreviewToolbar.BackColor = Color.FromArgb(240, 244, 248);
+            pnlPreviewToolbar.Padding = new Padding(6, 3, 6, 3);
+
+            lblExcelHint = new System.Windows.Forms.Label();
+            lblExcelHint.Text = "✨ Kéo ô vuông góc dưới-phải (Fill Handle) hoặc bấm nút để số đuôi tự động tăng dần:";
+            lblExcelHint.Font = new Font("Segoe UI", 8.5f, FontStyle.Italic);
+            lblExcelHint.ForeColor = Color.FromArgb(16, 124, 65); // Excel Green
+            lblExcelHint.Location = new Point(6, 7);
+            lblExcelHint.AutoSize = true;
+
+            btnQuickAutoFill = new System.Windows.Forms.Button();
+            btnQuickAutoFill.Text = "⚡ Kéo Tăng Đuôi Theo Ô Đang Chọn";
+            btnQuickAutoFill.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+            btnQuickAutoFill.Size = new Size(220, 26);
+            btnQuickAutoFill.Location = new Point(510, 3);
+            btnQuickAutoFill.BackColor = Color.FromArgb(16, 124, 65);
+            btnQuickAutoFill.ForeColor = Color.White;
+            btnQuickAutoFill.FlatStyle = FlatStyle.Flat;
+            btnQuickAutoFill.FlatAppearance.BorderSize = 0;
+            btnQuickAutoFill.Cursor = Cursors.Hand;
+            btnQuickAutoFill.Click += (s, e) => { AutoFillFromCurrentSelection(); };
+
+            btnResetPrefix = new System.Windows.Forms.Button();
+            btnResetPrefix.Text = "↺ Đặt Lại Theo Tiền Tố";
+            btnResetPrefix.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
+            btnResetPrefix.Size = new Size(150, 26);
+            btnResetPrefix.Location = new Point(738, 3);
+            btnResetPrefix.BackColor = Color.FromArgb(220, 226, 235);
+            btnResetPrefix.ForeColor = Color.FromArgb(44, 62, 80);
+            btnResetPrefix.FlatStyle = FlatStyle.Flat;
+            btnResetPrefix.FlatAppearance.BorderSize = 0;
+            btnResetPrefix.Cursor = Cursors.Hand;
+            btnResetPrefix.Click += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
+
+            pnlPreviewToolbar.Controls.Add(lblExcelHint);
+            pnlPreviewToolbar.Controls.Add(btnQuickAutoFill);
+            pnlPreviewToolbar.Controls.Add(btnResetPrefix);
 
             dgvPreview = new DataGridView();
             dgvPreview.Dock = DockStyle.Fill;
             dgvPreview.BackgroundColor = Color.White;
-            dgvPreview.BorderStyle = BorderStyle.None;
+            dgvPreview.BorderStyle = BorderStyle.FixedSingle;
             dgvPreview.RowHeadersVisible = false;
             dgvPreview.AllowUserToAddRows = false;
             dgvPreview.AllowUserToDeleteRows = false;
             dgvPreview.AllowUserToResizeRows = false;
-            dgvPreview.ReadOnly = true;
-            dgvPreview.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvPreview.ReadOnly = false; // Bật cho phép sửa cột New
+            dgvPreview.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            dgvPreview.MultiSelect = true;
             dgvPreview.RowTemplate.Height = 26;
             dgvPreview.ColumnHeadersHeight = 28;
             dgvPreview.EnableHeadersVisualStyles = false;
@@ -454,34 +531,50 @@ namespace HDTool
             dgvPreview.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(44, 62, 80);
             dgvPreview.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
 
+            // Bật DoubleBuffered chống giật lag khi kéo chuột
+            try
+            {
+                typeof(DataGridView).InvokeMember("DoubleBuffered",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.SetProperty,
+                    null, dgvPreview, new object[] { true });
+            }
+            catch { }
+
             colPvStt = new DataGridViewTextBoxColumn();
             colPvStt.HeaderText = "STT";
             colPvStt.Width = 45;
+            colPvStt.ReadOnly = true;
             colPvStt.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgvPreview.Columns.Add(colPvStt);
 
             colPvName = new DataGridViewTextBoxColumn();
             colPvName.HeaderText = "Tên Bản Vẽ (Sheet Name)";
-            colPvName.Width = 280;
+            colPvName.Width = 270;
+            colPvName.ReadOnly = true;
             colPvName.DefaultCellStyle.ForeColor = Color.FromArgb(80, 80, 80);
             dgvPreview.Columns.Add(colPvName);
 
             colPvOld = new DataGridViewTextBoxColumn();
             colPvOld.HeaderText = "Số Hiệu Hiện Tại (Cũ)";
-            colPvOld.Width = 230;
+            colPvOld.Width = 210;
+            colPvOld.ReadOnly = true;
             colPvOld.DefaultCellStyle.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
             colPvOld.DefaultCellStyle.ForeColor = Color.FromArgb(100, 100, 100);
             dgvPreview.Columns.Add(colPvOld);
 
+            // CỘT SỐ HIỆU MỚI: Cho phép sửa trực tiếp & Kéo chuột tăng đuôi kiểu Excel
             colPvNew = new DataGridViewTextBoxColumn();
-            colPvNew.HeaderText = "Số Hiệu Mới (Xem Trước) ➔";
+            colPvNew.HeaderText = "Số Hiệu Mới (Xem Trước / Sửa Trực Tiếp / Kéo Chuột Excel ➔)";
             colPvNew.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            colPvNew.ReadOnly = false;
             colPvNew.DefaultCellStyle.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+            colPvNew.DefaultCellStyle.ForeColor = Color.FromArgb(16, 124, 65);
             dgvPreview.Columns.Add(colPvNew);
 
             colPvStatus = new DataGridViewTextBoxColumn();
             colPvStatus.HeaderText = "Trạng Thái";
-            colPvStatus.Width = 130;
+            colPvStatus.Width = 125;
+            colPvStatus.ReadOnly = true;
             colPvStatus.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgvPreview.Columns.Add(colPvStatus);
 
@@ -494,61 +587,416 @@ namespace HDTool
             lblPreviewStats.TextAlign = ContentAlignment.MiddleLeft;
             lblPreviewStats.Padding = new Padding(8, 0, 0, 0);
 
+            // Gắn các sự kiện Excel Drag Handle & Inline Edit
+            dgvPreview.CellPainting += DgvPreview_CellPainting;
+            dgvPreview.Paint += DgvPreview_Paint;
+            dgvPreview.MouseDown += DgvPreview_MouseDown;
+            dgvPreview.MouseMove += DgvPreview_MouseMove;
+            dgvPreview.MouseUp += DgvPreview_MouseUp;
+            dgvPreview.CellDoubleClick += DgvPreview_CellDoubleClick;
+            dgvPreview.CellEndEdit += DgvPreview_CellEndEdit;
+            dgvPreview.KeyDown += DgvPreview_KeyDown;
+
+            // Context Menu
+            ctxGridMenu = new ContextMenuStrip();
+            ToolStripMenuItem mnuAutoFill = new ToolStripMenuItem("⚡ Tự Động Kéo Tăng Dần Số Đuôi (AutoFill)", null, (s, e) => { AutoFillFromCurrentSelection(); });
+            ToolStripMenuItem mnuFillDown = new ToolStripMenuItem("📋 Sao Chép Ô Đầu Xuống Dưới (Fill Down)", null, (s, e) => { FillDownFromCurrentSelection(); });
+            ToolStripMenuItem mnuReset = new ToolStripMenuItem("↺ Đặt Lại Theo Tiền Tố Ban Đầu", null, (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); });
+            ctxGridMenu.Items.Add(mnuAutoFill);
+            ctxGridMenu.Items.Add(mnuFillDown);
+            ctxGridMenu.Items.Add(new ToolStripSeparator());
+            ctxGridMenu.Items.Add(mnuReset);
+            dgvPreview.ContextMenuStrip = ctxGridMenu;
+
             grpPreview.Controls.Add(dgvPreview);
+            grpPreview.Controls.Add(pnlPreviewToolbar);
             grpPreview.Controls.Add(lblPreviewStats);
 
-            // 4. Bottom Action Panel
+            // 4. Bottom Action Panel (Dock = Bottom, hiển thị đầy đủ 100% không che khuất)
             pnlBottom = new System.Windows.Forms.Panel();
             pnlBottom.Dock = DockStyle.Bottom;
-            pnlBottom.Height = 58;
+            pnlBottom.Height = 56;
             pnlBottom.BackColor = Color.FromArgb(240, 243, 246);
 
             btnApply = new System.Windows.Forms.Button();
             btnApply.Text = "✔  ÁP DỤNG THAY ĐỔI";
-            btnApply.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+            btnApply.Font = new Font("Segoe UI", 10.0f, FontStyle.Bold);
             btnApply.BackColor = Color.FromArgb(39, 174, 96); // Green
             btnApply.ForeColor = Color.White;
             btnApply.FlatStyle = FlatStyle.Flat;
             btnApply.FlatAppearance.BorderSize = 0;
             btnApply.Cursor = Cursors.Hand;
-            btnApply.Size = new Size(320, 40);
+            btnApply.Size = new Size(320, 42);
             btnApply.Click += BtnApply_Click;
 
             btnCancel = new System.Windows.Forms.Button();
             btnCancel.Text = "❌  HỦY BỎ";
-            btnCancel.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
+            btnCancel.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             btnCancel.BackColor = Color.FromArgb(149, 165, 166);
             btnCancel.ForeColor = Color.White;
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.FlatAppearance.BorderSize = 0;
             btnCancel.Cursor = Cursors.Hand;
-            btnCancel.Size = new Size(110, 40);
+            btnCancel.Size = new Size(115, 42);
             btnCancel.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
             this.CancelButton = btnCancel;
 
             pnlBottom.Resize += (s, e) =>
             {
                 btnApply.Left = Math.Max(10, (pnlBottom.Width - btnApply.Width - btnCancel.Width - 15) / 2);
-                btnApply.Top = 9;
+                btnApply.Top = 7;
                 btnCancel.Left = btnApply.Right + 15;
-                btnCancel.Top = 9;
+                btnCancel.Top = 7;
             };
 
             pnlBottom.Controls.Add(btnApply);
             pnlBottom.Controls.Add(btnCancel);
 
-            // Attach Controls to Form
+            // Gắn Controls vào Form theo thứ tự Dock chuẩn
             this.Controls.Add(grpPreview);
-            this.Controls.Add(pnlModeReplace);
-            this.Controls.Add(pnlModeAdd);
-            this.Controls.Add(pnlModeNumber);
-            this.Controls.Add(grpScope);
-            this.Controls.Add(grpMode);
+            this.Controls.Add(pnlTopContainer);
             this.Controls.Add(pnlHeader);
             this.Controls.Add(pnlBottom);
 
             this.ResumeLayout(false);
         }
+
+        #region ====== EXCEL AUTOFILL DRAG HANDLE ENGINE ======
+
+        private void DgvPreview_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            // Vẽ viền highlight ô đang chọn trong cột New
+            if (e.RowIndex >= 0 && e.ColumnIndex == colPvNew.Index)
+            {
+                if (dgvPreview.Rows[e.RowIndex].Cells[e.ColumnIndex].Selected)
+                {
+                    e.Paint(e.ClipBounds, DataGridViewPaintParts.All);
+                    using (Pen p = new Pen(Color.FromArgb(16, 124, 65), 2.0f))
+                    {
+                        Rectangle r = e.CellBounds;
+                        e.Graphics.DrawRectangle(p, r.Left + 1, r.Top + 1, r.Width - 2, r.Height - 2);
+                    }
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private void DgvPreview_Paint(object sender, PaintEventArgs e)
+        {
+            // Vẽ nút vuông Fill Handle nhỏ tại góc dưới phải của ô/vùng chọn cột colPvNew
+            _currentFillHandleRect = Rectangle.Empty;
+
+            if (dgvPreview.SelectedCells.Count == 0) return;
+
+            int maxRow = -1;
+            foreach (DataGridViewCell cell in dgvPreview.SelectedCells)
+            {
+                if (cell.ColumnIndex == colPvNew.Index && cell.RowIndex > maxRow)
+                {
+                    maxRow = cell.RowIndex;
+                }
+            }
+
+            if (maxRow >= 0 && maxRow < dgvPreview.Rows.Count)
+            {
+                Rectangle cellRect = dgvPreview.GetCellDisplayRectangle(colPvNew.Index, maxRow, true);
+                if (cellRect.Width > 0 && cellRect.Height > 0)
+                {
+                    int hSize = 6;
+                    Rectangle handleRect = new Rectangle(cellRect.Right - hSize - 1, cellRect.Bottom - hSize - 1, hSize, hSize);
+                    _currentFillHandleRect = handleRect;
+
+                    using (SolidBrush b = new SolidBrush(Color.FromArgb(16, 124, 65)))
+                    {
+                        e.Graphics.FillRectangle(b, handleRect);
+                    }
+                    using (Pen p = new Pen(Color.White, 1.0f))
+                    {
+                        e.Graphics.DrawRectangle(p, handleRect);
+                    }
+                }
+            }
+
+            // Vẽ khung nét đứt khi đang kéo chuột AutoFill
+            if (_isDraggingFillHandle && _dragStartRow >= 0 && _dragCurrentRow >= 0)
+            {
+                int rMin = Math.Min(_dragStartRow, _dragCurrentRow);
+                int rMax = Math.Max(_dragStartRow, _dragCurrentRow);
+
+                Rectangle topRect = dgvPreview.GetCellDisplayRectangle(colPvNew.Index, rMin, true);
+                Rectangle btmRect = dgvPreview.GetCellDisplayRectangle(colPvNew.Index, rMax, true);
+
+                if (topRect.Width > 0 && btmRect.Width > 0)
+                {
+                    int topY = topRect.Top;
+                    int btmY = btmRect.Bottom;
+                    Rectangle dragBox = new Rectangle(topRect.Left, topY, topRect.Width, btmY - topY);
+
+                    using (SolidBrush shade = new SolidBrush(Color.FromArgb(35, 16, 124, 65)))
+                    {
+                        e.Graphics.FillRectangle(shade, dragBox);
+                    }
+                    using (Pen dashPen = new Pen(Color.FromArgb(16, 124, 65), 1.8f))
+                    {
+                        dashPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+                        e.Graphics.DrawRectangle(dashPen, dragBox.Left + 1, dragBox.Top + 1, dragBox.Width - 3, dragBox.Height - 3);
+                    }
+                }
+            }
+        }
+
+        private void DgvPreview_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && !_currentFillHandleRect.IsEmpty)
+            {
+                Rectangle hitArea = new Rectangle(_currentFillHandleRect.X - 3, _currentFillHandleRect.Y - 3, _currentFillHandleRect.Width + 6, _currentFillHandleRect.Height + 6);
+                if (hitArea.Contains(e.Location))
+                {
+                    _isDraggingFillHandle = true;
+                    dgvPreview.Capture = true;
+
+                    // Xác định hàng xuất phát
+                    _dragStartRow = -1;
+                    foreach (DataGridViewCell cell in dgvPreview.SelectedCells)
+                    {
+                        if (cell.ColumnIndex == colPvNew.Index)
+                        {
+                            if (_dragStartRow == -1 || cell.RowIndex > _dragStartRow)
+                            {
+                                _dragStartRow = cell.RowIndex;
+                            }
+                        }
+                    }
+                    if (_dragStartRow == -1 && dgvPreview.CurrentCell != null)
+                    {
+                        _dragStartRow = dgvPreview.CurrentCell.RowIndex;
+                    }
+                    _dragCurrentRow = _dragStartRow;
+                }
+            }
+        }
+
+        private void DgvPreview_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isDraggingFillHandle)
+            {
+                if (!_currentFillHandleRect.IsEmpty)
+                {
+                    Rectangle hitArea = new Rectangle(_currentFillHandleRect.X - 3, _currentFillHandleRect.Y - 3, _currentFillHandleRect.Width + 6, _currentFillHandleRect.Height + 6);
+                    if (hitArea.Contains(e.Location))
+                    {
+                        dgvPreview.Cursor = Cursors.Cross;
+                        return;
+                    }
+                }
+                dgvPreview.Cursor = Cursors.Default;
+            }
+            else
+            {
+                dgvPreview.Cursor = Cursors.Cross;
+                DataGridView.HitTestInfo hit = dgvPreview.HitTest(e.X, e.Y);
+                if (hit.RowIndex >= 0 && hit.RowIndex != _dragCurrentRow && hit.RowIndex < dgvPreview.Rows.Count)
+                {
+                    _dragCurrentRow = hit.RowIndex;
+                    string previewVal = CalculateAutoFillValue(_dragStartRow, _dragCurrentRow);
+                    _dragToolTip.Show(string.Format("→ {0}", previewVal), dgvPreview, e.X + 18, e.Y + 12);
+                    dgvPreview.Invalidate();
+                }
+            }
+        }
+
+        private void DgvPreview_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (_isDraggingFillHandle)
+            {
+                _isDraggingFillHandle = false;
+                dgvPreview.Capture = false;
+                _dragToolTip.Hide(dgvPreview);
+                dgvPreview.Cursor = Cursors.Default;
+
+                if (_dragStartRow >= 0 && _dragCurrentRow >= 0 && _dragStartRow != _dragCurrentRow)
+                {
+                    ApplyAutoFillRange(_dragStartRow, _dragCurrentRow);
+                }
+
+                dgvPreview.Invalidate();
+            }
+        }
+
+        private void DgvPreview_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Nhấp đúp vào Fill Handle -> Tự động điền tăng dần xuống hết bảng!
+            if (e.RowIndex >= 0 && e.ColumnIndex == colPvNew.Index)
+            {
+                Point mousePos = dgvPreview.PointToClient(Control.MousePosition);
+                if (!_currentFillHandleRect.IsEmpty)
+                {
+                    Rectangle hitArea = new Rectangle(_currentFillHandleRect.X - 4, _currentFillHandleRect.Y - 4, _currentFillHandleRect.Width + 8, _currentFillHandleRect.Height + 8);
+                    if (hitArea.Contains(mousePos))
+                    {
+                        AutoFillFromRowDown(e.RowIndex);
+                    }
+                }
+            }
+        }
+
+        private void DgvPreview_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex == colPvNew.Index)
+            {
+                DataGridViewRow row = dgvPreview.Rows[e.RowIndex];
+                string enteredVal = row.Cells[colPvNew.Index].Value as string ?? string.Empty;
+
+                if (row.Tag is KeyValuePair<SheetItem, string>)
+                {
+                    SheetItem item = ((KeyValuePair<SheetItem, string>)row.Tag).Key;
+                    _manualOverrides[item] = enteredVal;
+                    row.Tag = new KeyValuePair<SheetItem, string>(item, enteredVal);
+                }
+
+                UpdateDuplicateCheckAndStats();
+            }
+        }
+
+        private void DgvPreview_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Ctrl+D: Fill Down
+            if (e.Control && e.KeyCode == Keys.D)
+            {
+                FillDownFromCurrentSelection();
+                e.Handled = true;
+            }
+        }
+
+        private string CalculateAutoFillValue(int startRow, int targetRow)
+        {
+            if (startRow < 0 || startRow >= dgvPreview.Rows.Count) return string.Empty;
+            string baseVal = dgvPreview.Rows[startRow].Cells[colPvNew.Index].Value as string ?? string.Empty;
+            int offset = targetRow - startRow;
+            return IncrementLastNumber(baseVal, offset);
+        }
+
+        private void ApplyAutoFillRange(int startRow, int targetRow)
+        {
+            if (startRow < 0 || startRow >= dgvPreview.Rows.Count) return;
+            if (targetRow < 0 || targetRow >= dgvPreview.Rows.Count) return;
+
+            string baseVal = dgvPreview.Rows[startRow].Cells[colPvNew.Index].Value as string ?? string.Empty;
+
+            if (targetRow > startRow)
+            {
+                for (int r = startRow + 1; r <= targetRow; r++)
+                {
+                    int offset = r - startRow;
+                    string newVal = IncrementLastNumber(baseVal, offset);
+                    SetRowNewNumber(r, newVal);
+                }
+            }
+            else if (targetRow < startRow)
+            {
+                for (int r = startRow - 1; r >= targetRow; r--)
+                {
+                    int offset = r - startRow;
+                    string newVal = IncrementLastNumber(baseVal, offset);
+                    SetRowNewNumber(r, newVal);
+                }
+            }
+
+            UpdateDuplicateCheckAndStats();
+        }
+
+        private void AutoFillFromRowDown(int startRow)
+        {
+            if (startRow < 0 || startRow >= dgvPreview.Rows.Count) return;
+            string baseVal = dgvPreview.Rows[startRow].Cells[colPvNew.Index].Value as string ?? string.Empty;
+
+            for (int r = startRow + 1; r < dgvPreview.Rows.Count; r++)
+            {
+                int offset = r - startRow;
+                string newVal = IncrementLastNumber(baseVal, offset);
+                SetRowNewNumber(r, newVal);
+            }
+
+            UpdateDuplicateCheckAndStats();
+            dgvPreview.Invalidate();
+        }
+
+        private void AutoFillFromCurrentSelection()
+        {
+            if (dgvPreview.CurrentCell == null) return;
+            int startRow = dgvPreview.CurrentCell.RowIndex;
+            AutoFillFromRowDown(startRow);
+        }
+
+        private void FillDownFromCurrentSelection()
+        {
+            if (dgvPreview.SelectedCells.Count <= 1) return;
+
+            int minRow = int.MaxValue;
+            int maxRow = int.MinValue;
+            foreach (DataGridViewCell cell in dgvPreview.SelectedCells)
+            {
+                if (cell.RowIndex < minRow) minRow = cell.RowIndex;
+                if (cell.RowIndex > maxRow) maxRow = cell.RowIndex;
+            }
+
+            if (minRow >= 0 && maxRow > minRow)
+            {
+                string copyVal = dgvPreview.Rows[minRow].Cells[colPvNew.Index].Value as string ?? string.Empty;
+                for (int r = minRow + 1; r <= maxRow; r++)
+                {
+                    SetRowNewNumber(r, copyVal);
+                }
+                UpdateDuplicateCheckAndStats();
+                dgvPreview.Invalidate();
+            }
+        }
+
+        private void SetRowNewNumber(int rowIdx, string newVal)
+        {
+            if (rowIdx < 0 || rowIdx >= dgvPreview.Rows.Count) return;
+            DataGridViewRow row = dgvPreview.Rows[rowIdx];
+            row.Cells[colPvNew.Index].Value = newVal;
+
+            if (row.Tag is KeyValuePair<SheetItem, string>)
+            {
+                SheetItem item = ((KeyValuePair<SheetItem, string>)row.Tag).Key;
+                _manualOverrides[item] = newVal;
+                row.Tag = new KeyValuePair<SheetItem, string>(item, newVal);
+            }
+        }
+
+        /// <summary>
+        /// Thuật toán tìm cụm số cuối cùng trong chuỗi và tăng/giảm theo offset, bảo toàn tiền tố và độ dài đệm 0
+        /// </summary>
+        public static string IncrementLastNumber(string baseText, int offset)
+        {
+            if (string.IsNullOrEmpty(baseText)) return baseText;
+
+            // Tìm cụm số cuối cùng trong chuỗi: (\d+)(?!.*\d)
+            Match m = Regex.Match(baseText, @"(\d+)(?!.*\d)");
+            if (!m.Success)
+            {
+                return string.Format("{0}{1:D2}", baseText, Math.Max(1, 1 + offset));
+            }
+
+            string numStr = m.Value;
+            int baseNum;
+            if (!int.TryParse(numStr, out baseNum))
+            {
+                return baseText;
+            }
+
+            int targetNum = Math.Max(0, baseNum + offset);
+            int padLength = numStr.Length; // Giữ nguyên số chữ số 0 (ví dụ 01 -> pad 2, 005 -> pad 3)
+
+            string newNumStr = targetNum.ToString("D" + padLength);
+            return baseText.Substring(0, m.Index) + newNumStr + baseText.Substring(m.Index + m.Length);
+        }
+
+        #endregion
+
+        #region ====== LOGIC TÍNH TOÁN & CẬP NHẬT LIVE PREVIEW ======
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -632,7 +1080,6 @@ namespace HDTool
         {
             if (string.IsNullOrEmpty(prefix)) return string.Empty;
 
-            // 1. Nếu có ký tự phân cách chuẩn (/, -, _, .):
             int lastDelim = prefix.LastIndexOfAny(new char[] { '/', '-', '_', '.' });
             if (lastDelim >= 0 && lastDelim < prefix.Length - 1)
             {
@@ -651,7 +1098,6 @@ namespace HDTool
                 }
             }
 
-            // 2. Nếu kết thúc bằng số thì cắt bỏ phần số cuối để lấy phần chữ tiền tố (ví dụ "A0" -> "A")
             string trimmed = prefix.TrimEnd('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
             if (!string.IsNullOrEmpty(trimmed))
             {
@@ -667,11 +1113,13 @@ namespace HDTool
             pnlModeAdd.Visible = rdoModeAdd.Checked;
             pnlModeNumber.Visible = rdoModeNumber.Checked;
 
+            _manualOverrides.Clear();
             UpdateLivePreview();
         }
 
         private void Scope_CheckedChanged(object sender, EventArgs e)
         {
+            _manualOverrides.Clear();
             UpdateLivePreview();
         }
 
@@ -688,14 +1136,13 @@ namespace HDTool
             {
                 pattern = txtNumPrefix != null ? txtNumPrefix.Text : string.Empty;
             }
-            else // rdoModeAdd
+            else
             {
                 pattern = _detectedCommonPrefix ?? string.Empty;
             }
 
             if (string.IsNullOrEmpty(pattern))
             {
-                // Nếu chưa có tiền tố, tạm hiển thị danh sách bản vẽ đang chọn
                 return new List<SheetItem>(_selectedSheets);
             }
 
@@ -769,14 +1216,50 @@ namespace HDTool
                 return;
             }
 
+            int stt = 1;
+            int autoNum = (int)numStart.Value;
+            int step = (int)numStep.Value;
+
+            foreach (SheetItem item in _activeTargetSheets)
+            {
+                string oldNum = item.SheetNumber ?? string.Empty;
+                string newNum = string.Empty;
+
+                // Nếu có sửa đổi thủ công hoặc do kéo chuột Excel AutoFill
+                if (_manualOverrides.ContainsKey(item))
+                {
+                    newNum = _manualOverrides[item];
+                }
+                else
+                {
+                    newNum = ComputeNewNumber(oldNum, autoNum);
+                }
+                autoNum += step;
+
+                int rowIdx = dgvPreview.Rows.Add(
+                    stt++,
+                    item.SheetName,
+                    oldNum,
+                    newNum,
+                    "Tính toán..."
+                );
+                DataGridViewRow row = dgvPreview.Rows[rowIdx];
+                row.Tag = new KeyValuePair<SheetItem, string>(item, newNum);
+            }
+
+            UpdateDuplicateCheckAndStats();
+        }
+
+        private void UpdateDuplicateCheckAndStats()
+        {
+            if (dgvPreview == null) return;
+
             int changedCount = 0;
             int duplicateCount = 0;
 
-            // Bộ nhớ kiểm tra trùng số hiệu
             HashSet<string> generatedNumbers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            // Tập hợp các số hiệu hiện tại của các bản vẽ KHÔNG nằm trong danh sách đang sửa
             HashSet<string> existingExternalNumbers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (SheetItem s in _allSheets)
             {
                 if (!_activeTargetSheets.Contains(s) && !string.IsNullOrEmpty(s.SheetNumber))
@@ -785,15 +1268,10 @@ namespace HDTool
                 }
             }
 
-            int stt = 1;
-            int autoNum = (int)numStart.Value;
-            int step = (int)numStep.Value;
-
-            foreach (SheetItem item in _activeTargetSheets)
+            foreach (DataGridViewRow row in dgvPreview.Rows)
             {
-                string oldNum = item.SheetNumber ?? string.Empty;
-                string newNum = ComputeNewNumber(oldNum, autoNum);
-                autoNum += step;
+                string oldNum = row.Cells[colPvOld.Index].Value as string ?? string.Empty;
+                string newNum = row.Cells[colPvNew.Index].Value as string ?? string.Empty;
 
                 bool isChanged = !string.Equals(oldNum, newNum, StringComparison.Ordinal);
                 if (isChanged) changedCount++;
@@ -823,27 +1301,22 @@ namespace HDTool
                     generatedNumbers.Add(newNum);
                 }
 
-                int rowIdx = dgvPreview.Rows.Add(
-                    stt++,
-                    item.SheetName,
-                    oldNum,
-                    newNum,
-                    statusText
-                );
-                DataGridViewRow row = dgvPreview.Rows[rowIdx];
-                row.Tag = new KeyValuePair<SheetItem, string>(item, newNum);
+                row.Cells[colPvStatus.Index].Value = statusText;
+                row.Cells[colPvStatus.Index].Style.ForeColor = statusColor;
+                row.Cells[colPvStatus.Index].Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
 
                 if (isChanged)
                 {
                     row.Cells[colPvNew.Index].Style.BackColor = Color.FromArgb(234, 250, 234);
                     row.Cells[colPvNew.Index].Style.ForeColor = Color.FromArgb(24, 106, 59);
                 }
-
-                row.Cells[colPvStatus.Index].Style.ForeColor = statusColor;
-                row.Cells[colPvStatus.Index].Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+                else
+                {
+                    row.Cells[colPvNew.Index].Style.BackColor = Color.White;
+                    row.Cells[colPvNew.Index].Style.ForeColor = Color.FromArgb(16, 124, 65);
+                }
             }
 
-            // Cập nhật thống kê và nút bấm
             btnApply.Text = string.Format("✔  ÁP DỤNG THAY ĐỔI ({0} BẢN VẼ)", changedCount);
 
             if (duplicateCount > 0)
@@ -891,7 +1364,6 @@ namespace HDTool
                     }
                     else
                     {
-                        // Case-insensitive replace
                         int pos = oldNumber.IndexOf(find, StringComparison.OrdinalIgnoreCase);
                         if (pos >= 0)
                         {
@@ -949,8 +1421,15 @@ namespace HDTool
                 }
             }
 
+            if (ChangesApplied != null)
+            {
+                ChangesApplied(new Dictionary<SheetItem, string>(ModifiedNumbers));
+            }
+
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
+
+        #endregion
     }
 }

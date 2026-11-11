@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Autodesk.Revit.DB;
@@ -37,19 +37,43 @@ namespace HDTool
                 if (cmdHDToolCropAlignSplit_Btn != null)
                 {
                     cmdHDToolCropAlignSplit_Btn.IsSynchronizedWithCurrentItem = true;
+
+                    // Mục 1: Bảng điều khiển tích hợp Grids & Level
                     PushButtonData cmdCropAlignUnified_Data = new PushButtonData("cmdCropAlignUnified", "Căn Chỉnh Grids / Level", assemblyPath, "HDTool.CropAlignCommand");
                     cmdCropAlignUnified_Data.LargeImage = ResourceHelper.CreateCropAlignCombinedIcon(32);
                     cmdCropAlignUnified_Data.Image = ResourceHelper.CreateCropAlignCombinedIcon(16);
                     cmdHDToolCropAlignSplit_Btn.AddPushButton(cmdCropAlignUnified_Data);
+
+                    // Mục 2: Căn Grids
                     PushButtonData cmdGridCrop_Item_Data = new PushButtonData("cmdGridCrop_Item", "Căn Chỉnh Grids", assemblyPath, "HDTool.GridCropCommand");
                     cmdGridCrop_Item_Data.LargeImage = ResourceHelper.CreateGridCropIcon(32);
                     cmdGridCrop_Item_Data.Image = ResourceHelper.CreateGridCropIcon(16);
                     cmdHDToolCropAlignSplit_Btn.AddPushButton(cmdGridCrop_Item_Data);
+
+                    // Mục 3: Căn Level
                     PushButtonData cmdLevelCrop_Item_Data = new PushButtonData("cmdLevelCrop_Item", "Căn Chỉnh Level", assemblyPath, "HDTool.LevelCropCommand");
                     cmdLevelCrop_Item_Data.LargeImage = ResourceHelper.CreateLevelCropIcon(32);
                     cmdLevelCrop_Item_Data.Image = ResourceHelper.CreateLevelCropIcon(16);
                     cmdHDToolCropAlignSplit_Btn.AddPushButton(cmdLevelCrop_Item_Data);
+
+                    // Mục 4: Tự Động Crop View (Menu con)
+                    PushButtonData cmdAutoCrop_SubItem_Data = new PushButtonData("cmdAutoCrop_SubItem", "Tự Động Crop View", assemblyPath, "HDTool.AutoCropCommand");
+                    cmdAutoCrop_SubItem_Data.LargeImage = ResourceHelper.CreateAutoCropIcon(32);
+                    cmdAutoCrop_SubItem_Data.Image = ResourceHelper.CreateAutoCropIcon(16);
+                    cmdHDToolCropAlignSplit_Btn.AddPushButton(cmdAutoCrop_SubItem_Data);
                 }
+
+                // PushButton Riêng Biệt (Lớn 32x32): TỰ ĐỘNG CROP VIEW (THEO LỆNH SẾP HỒ)
+                PushButtonData cmdHDToolAutoCrop_Data = new PushButtonData(
+                    "cmdHDToolAutoCrop", 
+                    "Tự Động\nCrop View", 
+                    assemblyPath, 
+                    "HDTool.AutoCropCommand"
+                );
+                cmdHDToolAutoCrop_Data.ToolTip = "[HDTOOL] Tự động tạo và căn chỉnh Crop View bao quanh toàn bộ các đối tượng có trong View vừa tạo (Sơ đồ không gian 3D, Mặt bằng, Mặt cắt, Viewport trên Sheet).";
+                cmdHDToolAutoCrop_Data.LargeImage = ResourceHelper.CreateAutoCropIcon(32);
+                cmdHDToolAutoCrop_Data.Image = ResourceHelper.CreateAutoCropIcon(16);
+                panel_1.AddItem(cmdHDToolAutoCrop_Data);
 
                 // ==================================================================
                 // PANEL 2 : KHỐI LƯỢNG MEP
@@ -83,6 +107,13 @@ namespace HDTool
                 cmdHDToolDuctQuantity_Data.LargeImage = ResourceHelper.CreateDuctQuantityIcon(32);
                 cmdHDToolDuctQuantity_Data.Image = ResourceHelper.CreateDuctQuantityIcon(16);
                 panel_2.AddItem(cmdHDToolDuctQuantity_Data);
+
+                // PushButton: Dựng Ống Gió Từ CAD Link (MỚI VERSION 70 - THEO LỆNH SẾP HỒ)
+                PushButtonData cmdHDToolCadToDuct_Data = new PushButtonData("cmdHDToolCadToDuct", "Dựng Ống Gió\nTừ CAD", assemblyPath, "HDTool.CadToDuctCommand");
+                cmdHDToolCadToDuct_Data.ToolTip = "[HDTOOL] Tự động nhận diện tuyến ống, size WxH, cút, côn đồng tâm, chân rẽ Tap và dựng lại mô hình 3D ống gió hoàn chỉnh từ bản vẽ CAD Link.";
+                cmdHDToolCadToDuct_Data.LargeImage = ResourceHelper.CreateCadToDuctIcon(32);
+                cmdHDToolCadToDuct_Data.Image = ResourceHelper.CreateCadToDuctIcon(16);
+                panel_2.AddItem(cmdHDToolCadToDuct_Data);
 
                 // ==================================================================
                 // PANEL 3 : QUẢN LÝ BẢN VẼ & SHEET
@@ -122,7 +153,6 @@ namespace HDTool
                 cmdHDToolMenu_Data.Image = ResourceHelper.CreateHDToolMenuIcon(16);
                 panel_4.AddItem(cmdHDToolMenu_Data);
 
-
                 // Dam bao CLR nhan dien Assembly dong cho Hot Reload
                 ToolHotReloadManager.EnsureAssemblyResolve();
 
@@ -140,6 +170,152 @@ namespace HDTool
                 TaskDialog.Show("Loi Khoi Dong HDTOOL", ex.Message);
                 return Result.Failed;
             }
+        }
+
+        /// <summary>
+        /// Bơm nút Tự Động Crop View vào Ribbon Panel động khi Revit đang mở (Hot Reload Ribbon Injection)
+        /// </summary>
+        public static void EnsureAutoCropButtonDynamic(UIApplication uiapp)
+        {
+            try
+            {
+                if (uiapp == null) return;
+                string tabName = "HDTOOL";
+                List<RibbonPanel> panels = uiapp.GetRibbonPanels(tabName);
+                if (panels == null) return;
+
+                foreach (RibbonPanel p in panels)
+                {
+                    if (p.Name.Equals("Căn Chỉnh Đối Tượng", StringComparison.OrdinalIgnoreCase))
+                    {
+                        bool hasAutoCrop = false;
+                        IList<RibbonItem> items = p.GetItems();
+                        if (items != null)
+                        {
+                            foreach (RibbonItem it in items)
+                            {
+                                if (it != null && (it.Name.Equals("cmdHDToolAutoCrop", StringComparison.OrdinalIgnoreCase) ||
+                                    it.ItemText.Contains("Crop View")))
+                                {
+                                    hasAutoCrop = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!hasAutoCrop)
+                        {
+                            string assemblyPath = string.Empty;
+                            // 1. Lấy chính xác đường dẫn Assembly gốc từ các nút có sẵn trên Panel để tương thích 100% với LoadContext của Revit
+                            foreach (RibbonPanel pnlCheck in panels)
+                            {
+                                foreach (RibbonItem ri in pnlCheck.GetItems())
+                                {
+                                    PushButton pb = ri as PushButton;
+                                    if (pb != null && !string.IsNullOrEmpty(pb.AssemblyName) && System.IO.File.Exists(pb.AssemblyName))
+                                    {
+                                        assemblyPath = pb.AssemblyName;
+                                        break;
+                                    }
+                                    SplitButton sb = ri as SplitButton;
+                                    if (sb != null)
+                                    {
+                                        foreach (PushButton subPb in sb.GetItems())
+                                        {
+                                            if (subPb != null && !string.IsNullOrEmpty(subPb.AssemblyName) && System.IO.File.Exists(subPb.AssemblyName))
+                                            {
+                                                assemblyPath = subPb.AssemblyName;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (!string.IsNullOrEmpty(assemblyPath)) break;
+                                }
+                                if (!string.IsNullOrEmpty(assemblyPath)) break;
+                            }
+
+                            if (string.IsNullOrEmpty(assemblyPath) || !System.IO.File.Exists(assemblyPath))
+                            {
+                                assemblyPath = Assembly.GetExecutingAssembly().Location;
+                            }
+                            if (string.IsNullOrEmpty(assemblyPath) || !System.IO.File.Exists(assemblyPath))
+                            {
+                                assemblyPath = @"c:\Users\Nguye\Desktop\ADDIN REVIT\Build\HDTOOL.dll";
+                            }
+
+                            PushButtonData btnData = new PushButtonData(
+                                "cmdHDToolAutoCrop",
+                                "Tự Động\nCrop View",
+                                assemblyPath,
+                                "HDTool.AutoCropCommand"
+                            );
+                            btnData.ToolTip = "[HDTOOL] Tự động tạo và căn chỉnh Crop View bao quanh toàn bộ các đối tượng có trong View vừa tạo (Sơ đồ không gian 3D, Mặt bằng, Mặt cắt, Viewport trên Sheet).";
+                            btnData.LargeImage = ResourceHelper.CreateAutoCropIcon(32);
+                            btnData.Image = ResourceHelper.CreateAutoCropIcon(16);
+                            p.AddItem(btnData);
+                        }
+                        break;
+                    }
+                }
+                EnsureCadToDuctButtonDynamic(uiapp, panels);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Bơm nút Dựng Ống Gió Từ CAD Link vào Panel Khối Lượng MEP khi Hot Reload
+        /// </summary>
+        public static void EnsureCadToDuctButtonDynamic(UIApplication uiapp, List<RibbonPanel> panels = null)
+        {
+            try
+            {
+                if (uiapp == null) return;
+                if (panels == null) panels = uiapp.GetRibbonPanels("HDTOOL");
+                if (panels == null) return;
+
+                foreach (RibbonPanel p in panels)
+                {
+                    if (p.Name.Equals("Khối Lượng MEP", StringComparison.OrdinalIgnoreCase))
+                    {
+                        bool hasCadToDuct = false;
+                        foreach (RibbonItem it in p.GetItems())
+                        {
+                            if (it != null && (it.Name.Equals("cmdHDToolCadToDuct", StringComparison.OrdinalIgnoreCase) ||
+                                it.ItemText.Contains("Từ CAD")))
+                            {
+                                hasCadToDuct = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasCadToDuct)
+                        {
+                            string assemblyPath = Assembly.GetExecutingAssembly().Location;
+                            foreach (RibbonItem ri in p.GetItems())
+                            {
+                                PushButton pb = ri as PushButton;
+                                if (pb != null && !string.IsNullOrEmpty(pb.AssemblyName) && System.IO.File.Exists(pb.AssemblyName))
+                                {
+                                    assemblyPath = pb.AssemblyName;
+                                    break;
+                                }
+                            }
+                            if (string.IsNullOrEmpty(assemblyPath) || !System.IO.File.Exists(assemblyPath))
+                            {
+                                assemblyPath = @"c:\Users\Nguye\Desktop\ADDIN REVIT\Build\HDTOOL.dll";
+                            }
+
+                            PushButtonData btnData = new PushButtonData("cmdHDToolCadToDuct", "Dựng Ống Gió\nTừ CAD", assemblyPath, "HDTool.CadToDuctCommand");
+                            btnData.ToolTip = "[HDTOOL] Tự động nhận diện tuyến ống, size WxH, cút, côn đồng tâm, chân rẽ Tap và dựng lại mô hình 3D ống gió hoàn chỉnh từ bản vẽ CAD Link.";
+                            btnData.LargeImage = ResourceHelper.CreateCadToDuctIcon(32);
+                            btnData.Image = ResourceHelper.CreateCadToDuctIcon(16);
+                            p.AddItem(btnData);
+                        }
+                        break;
+                    }
+                }
+            }
+            catch { }
         }
 
         private void OnViewActivated(object sender, Autodesk.Revit.UI.Events.ViewActivatedEventArgs e)
