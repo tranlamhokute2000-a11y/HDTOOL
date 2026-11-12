@@ -1,4 +1,4 @@
-﻿using Autodesk.Revit.UI;
+using Autodesk.Revit.UI;
 using TextBox = System.Windows.Forms.TextBox;
 using System;
 using System.Drawing;
@@ -11,7 +11,7 @@ using Point = System.Drawing.Point;
 
 namespace HDTool
 {
-    public class UpdateToolForm : Form
+    public class UpdateToolForm : HDToolBaseForm
     {
         private System.Windows.Forms.Panel pnlHeader;
         private Label lblTitle;

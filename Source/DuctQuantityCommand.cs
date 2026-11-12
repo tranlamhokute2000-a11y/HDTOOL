@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -367,7 +367,7 @@ namespace HDTool
     /// Form Thống Kê Khối Lượng Ống Gió HVAC (Tôn m² & Phụ Kiện Chuẩn TCVN 5687:2010 / SMACNA)
     /// ĐÃ TỐI ƯU HÓA SIÊU TỐC: Không lag đơ máy, không khóa UI, Highlight tức thì 60 FPS
     /// </summary>
-    public class DuctQuantityForm : System.Windows.Forms.Form
+    public class DuctQuantityForm : HDToolBaseForm
     {
         private Document _doc;
         private UIDocument _uidoc;
@@ -1861,7 +1861,7 @@ namespace HDTool
     /// <summary>
     /// Dialog cho phép người dùng lựa chọn bất kỳ Parameter nào của Dự Án hoặc Hệ Thống Ống Gió để thêm vào bảng
     /// </summary>
-    public class AddDuctProjectParameterDialog : System.Windows.Forms.Form
+    public class AddDuctProjectParameterDialog : HDToolBaseForm
     {
         public string SelectedParamName { get; private set; }
 
@@ -1947,6 +1947,7 @@ namespace HDTool
             this.Controls.Add(lbParams);
             this.Controls.Add(btnOk);
             this.Controls.Add(btnCancel);
+            this.CancelButton = btnCancel;
         }
 
         private void FilterList()
@@ -2040,7 +2041,7 @@ namespace HDTool
     /// <summary>
     /// Há»™p thoáº¡i chá»n Trang in (Sheet) vÃ  tá»± Ä‘á»™ng Ä‘áº·t Báº£ng Thá»‘ng KÃª Khá»‘i LÆ°á»£ng á»ng GiÃ³ Chuáº©n HadoMEE
     /// </summary>
-    public class DuctPlaceSheetForm : System.Windows.Forms.Form
+    public class DuctPlaceSheetForm : HDToolBaseForm
     {
         private Document _doc;
         private UIDocument _uidoc;
@@ -2230,6 +2231,7 @@ namespace HDTool
             this.Controls.Add(chkActivateSheet);
             this.Controls.Add(btnPlaceNow);
             this.Controls.Add(btnCancel);
+            this.CancelButton = btnCancel;
 
             this.ResumeLayout(false);
         }

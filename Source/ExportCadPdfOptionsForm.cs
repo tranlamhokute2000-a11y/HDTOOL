@@ -19,7 +19,7 @@ namespace HDTool
         Cad
     }
 
-    public class ExportCadPdfOptionsForm : System.Windows.Forms.Form
+    public class ExportCadPdfOptionsForm : HDToolBaseForm
     {
         private Document _doc;
         private List<SheetItem> _sheets;

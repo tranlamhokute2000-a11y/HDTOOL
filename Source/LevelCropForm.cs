@@ -9,7 +9,7 @@ using Autodesk.Revit.UI.Selection;
 
 namespace HDTool
 {
-    public class LevelCropForm : System.Windows.Forms.Form
+    public class LevelCropForm : HDToolBaseForm
     {
         private UIDocument _uidoc;
         private Document _doc;

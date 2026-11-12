@@ -20,7 +20,8 @@ export class CentralModelTable {
 
   constructor() {
     this.group = new THREE.Group();
-    this.group.position.set(0, 0, 0);
+    this.group.position.set(-4.0, 0, -7.2);
+    this.group.scale.setScalar(0.56);
 
     // 1. Round Display Table (r = 3.2m, height 0.75m)
     const tableTopGeo = new THREE.CylinderGeometry(3.2, 3.2, 0.1, 32);
@@ -212,6 +213,7 @@ export class CentralModelTable {
     });
 
     this.confettiParticles = new THREE.Points(geometry, material);
+    this.confettiParticles.position.copy(this.group.position);
     scene.add(this.confettiParticles);
   }
 

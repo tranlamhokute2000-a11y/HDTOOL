@@ -40,7 +40,7 @@ namespace HDTool
     /// Cửa sổ HUD Modeless tương tác soi sáng, đối soát khối lượng trực tiếp trên Sheet:
     /// "CHECK VAR PLUMBING" - Tốc độ tức thì, không bao giờ đơ bản vẽ, nhận diện vĩnh viễn khi mở lại!
     /// </summary>
-    public class CheckVarPlumbingForm : System.Windows.Forms.Form
+    public class CheckVarPlumbingForm : HDToolBaseForm
     {
         private UIDocument _uidoc;
         private ExternalEvent _extEvent;

@@ -15,7 +15,7 @@ namespace HDTool
     /// <summary>
     /// Bảng điều khiển tích hợp 2-trong-1: Căn Chỉnh Lưới Trục (Grids) và Cao Độ (Level) trên cùng 1 giao diện Tab
     /// </summary>
-    public class CropAlignOptionForm : System.Windows.Forms.Form
+    public class CropAlignOptionForm : HDToolBaseForm
     {
         private UIDocument _uidoc;
         private Document _doc;
@@ -112,8 +112,6 @@ namespace HDTool
             _doc = uidoc.Document;
             _activeView = uidoc.ActiveView;
             _isSheet = (_activeView is ViewSheet);
-
-            ToolHotReloadManager.DisconnectAnyActiveMcpPort();
 
             LoadContextData();
             InitializeComponent();

@@ -75,14 +75,7 @@ namespace HDTool
                 _instance.FormClosed += (s, e) => { _instance = null; };
 
                 IntPtr hMain = uiapp.MainWindowHandle;
-                if (hMain != IntPtr.Zero)
-                {
-                    _instance.Show(new RevitWindowWrapper(hMain));
-                }
-                else
-                {
-                    _instance.Show();
-                }
+                HDToolModelessHost.ShowModeless(_instance, hMain);
 
                 return Result.Succeeded;
             }

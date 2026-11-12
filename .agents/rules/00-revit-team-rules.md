@@ -38,3 +38,7 @@ trigger: always_on
 8. **Mọi tính năng đều phải thao tác được trên bản vẽ (Modeless Dialog 100% - Lệnh Sếp Hồ)**:
    - Từ bây giờ trở đi, TẤT CẢ các chức năng của HDTOOL khi mở cửa sổ lên thì **MỌI THAO TÁC ĐỀU PHẢI LÀM ĐƯỢC TRÊN BẢN VẼ** (Pan, Zoom, xoay 3D, chọn đối tượng, chuyển Sheet).
    - Bắt buộc dùng **Modeless Dialog (`Show(owner)` + `ExternalEvent`)**, **TUYỆT ĐỐI KHÔNG DÙNG `ShowDialog()`** khóa màn hình Revit.
+
+9. **Ấn phím `ESC` thoát lệnh cho MỌI công cụ hiện tại & phát triển mới (Lệnh Sếp Hồ)**:
+   - TẤT CẢ các chức năng/cửa sổ của HDTOOL (bao gồm công cụ mới phát triển sau này) khi người dùng không dùng nữa chỉ cần **ấn phím `ESC` là thoát được lệnh ngay lập tức**, không phải di chuột bấm nút `Đóng` hay `X`.
+   - Mọi Form bắt buộc kế thừa **`HDToolBaseForm`** (`Source/HDToolExternalEvent.cs`), gán `CancelButton` và gọi `this.Activate()` sau khi `Show()` / quay lại từ `Pick`.

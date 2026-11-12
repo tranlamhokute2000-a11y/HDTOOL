@@ -4,16 +4,18 @@
 
 ## 1. GIỚI THIỆU TỔNG QUAN
 
-**HDTOOL (Version 71)** là bộ công cụ chuyên nghiệp toàn diện dành riêng cho Autodesk Revit (hỗ trợ đa phiên bản: Revit 2024, 2025, 2026, 2027...), phục vụ đắc lực cho Kỹ sư MEP và Kiến trúc sư:
+**HDTOOL (Version 83)** là bộ công cụ chuyên nghiệp toàn diện dành riêng cho Autodesk Revit (hỗ trợ đa phiên bản: Revit 2024, 2025, 2026, 2027...), phục vụ đắc lực cho Kỹ sư MEP và Kiến trúc sư:
 
 > [!NOTE]
-> **ĐẶC QUYỀN TRẢI NGHIỆM TỰ DO TRÊN BẢN VẼ (MODELESS DIALOG 100% - VERSION 71)**:
-> Toàn bộ các công cụ của HDTOOL (Dựng Ống Gió Từ Hình Vẽ CAD, Tự Động Crop View, Căn Chỉnh Grids/Level, Thống Kê Ống Nước, Khối Lượng Ống Gió, Xuất/Cập Nhật Danh Mục Bản Vẽ, Menu HDTOOL, Cập Nhật Tool) đều hoạt động ở chế độ **Modeless Dialog 60 FPS**. Khi mở bất kỳ cửa sổ nào, kỹ sư **VẪN THAO TÁC HOÀN TOÀN TỰ DO TRÊN BẢN VẼ REVIT** (Pan, Zoom, xoay 3D Isometric, chọn đối tượng, chuyển Tab View/Sheet) mà không bao giờ bị khóa màn hình.
+> **ĐẶC QUYỀN TRẢI NGHIỆM TỰ DO TRÊN BẢN VẼ & ẤN PHÍM `ESC` THOÁT LỆNH TỨC THÌ (VERSION 83)**:
+> Toàn bộ các công cụ của HDTOOL (Dựng Ống Gió Từ Hình Vẽ CAD, Tự Động Crop View, Căn Chỉnh Grids/Level, Thống Kê Ống Nước, Khối Lượng Ống Gió, Xuất/Cập Nhật Danh Mục Bản Vẽ, Menu HDTOOL, Cập Nhật Tool) đều hoạt động ở chế độ **Modeless Dialog 60 FPS** — khi mở bất kỳ cửa sổ nào, kỹ sư **VẪN THAO TÁC HOÀN TOÀN TỰ DO TRÊN BẢN VẼ REVIT** (Pan, Zoom, xoay 3D Isometric, chọn đối tượng, chuyển Tab View/Sheet). Khi không dùng nữa, **chỉ cần ấn phím `ESC` là thoát/đóng ngay công cụ** mà không cần di chuột bấm `Đóng`.
 
-1. **Dựng Mô Hình Hệ Thống Ống Gió 3D Từ HÌNH VẼ CAD Link [MỚI ĐỈNH CAO VERSION 71 - CHUẨN KỸ SƯ HVAC]**:
-   - **Nhận diện trực tiếp bằng HÌNH VẼ HÌNH HỌC (Không phụ thuộc Layer)**: Tự động nhận diện Hình chữ nhật (Ống gió thẳng), Hình thang (Côn thu đồng tâm $800 \to 500$), Chân rẽ Tap vát 45° đâm sườn ống, Cút chuyển hướng & Chạc chia Tee.
-   - **Thao tác 1-Click thông minh**: Bấm **`🎯 PICK CHỌN HÌNH VẼ TUYẾN ỐNG`** và click vào 1 đoạn ống trên CAD Link $\to$ Tool tự dò toàn bộ chuỗi tuyến ống nối tiếp, trích xuất Text `WxH` (`800x350`, `500x300`, `350x300`) từ file DWG gốc & lan truyền kích thước **BFS** cho đoạn thiếu chữ.
-   - Xem trước danh sách toàn tuyến trên bảng **Live Preview DataGridView** trước khi bấm **`🚀 DỰNG MÔ HÌNH REVIT 3D`**.
+1. **Dựng Mô Hình Hệ Thống Ống Gió 3D Từ HÌNH VẼ CAD Link [CHUẨN KỸ SƯ BIM]**:
+   - **Nhận diện mũi tên `QLEADER` / `MULTILEADER` & Đọc đúng `W` trước `H` sau**: Tự động trích xuất cả mũi tên chỉ dẫn (`LEADER` / `MULTILEADER`) gắn với Text `WxH` ở xa ngoài ống (ví dụ `OAD 2200x550: EI60`), tự sửa hướng trục cho đoạn ống cổ ngắn (`Length < Width`, như `647x2200` hay `911x2000`) và ưu tiên gán chuẩn `W` trước `H` sau ngay tại đầu mũi tên chỉ tới.
+   - **Tách riêng hoàn toàn các tuyến giao chéo (Crossing Duct Isolation)**: Tự động phân tách các tuyến ống đi ngang qua nhau ở khác cao độ / khác hệ thống / khác màu CAD (ví dụ tuyến dọc `OAD 1700x400` màu Cyan cắt ngang qua tuyến ngang `EAD 1200x300` màu Đỏ), **không gộp chung khi Pick tuyến, không nối nhầm Tap/Cross và không bắt chéo Text WxH**; tự động nối cầu 2 nửa ống đồng trục nếu nét CAD bị cắt ở chỗ đi ngang qua ống khác.
+   - **Phân rã Quần ống gió / Chạc Y / Ngã ba thành Ống thẳng + Côn đồng tâm + Chân rẽ đúng chiều CAD & Lọc mũi tên rỗng**: Tại mọi vị trí ngã 3, chạc chia chữ Y / quần ống gió hoặc giật cấp trên CAD (ví dụ `OAD 600x300` + `1000x300` + `OAD 400x250`), Add-in gộp liền mạch ống chủ, nối chuyển size bằng **Côn thu đồng tâm**, đâm nhánh bằng **Chân rẽ `TakeoffTap` tự xoay khớp đúng chiều vát 45° bản vẽ CAD**, ưu tiên sử dụng **Family phụ kiện có sẵn trong Revit**, và bỏ qua hoàn toàn mũi tên chỉ hướng gió không kèm text để bảo toàn 100% ống thật.
+   - **Nhận diện đúng 100% Ống Gió & Loại bỏ triệt để đối tượng giả ống**: Tự động nhận diện Hình chữ nhật (Ống gió thẳng), **Cút cong bán kính lớn** (`Arc` đồng tâm & `PolyLine` đến 250 đỉnh), Côn thu đồng tâm, Chân rẽ Tap; đồng thời **tự động loại bỏ không cần chọn Layer**: hộp miệng gió gạch chéo X/V, miệng gió đầu nhánh, khung nét đứt `IAQ`, và thiết bị phòng máy (`ATT`, `MFD`/`OBD`/`NRD`, quạt, Hatch `ANSI37`).
+   - **Trích xuất Text `.dwg` chuẩn xác, Đúng thứ tự `W` trước `H` sau & Không mặc định Cao Độ Tim**: Bấm **`🎯 PICK CHỌN HÌNH VẼ TUYẾN ỐNG`** $\to$ Tool đọc Text `WxH` chuẩn **`W` trước – `H` sau** (`EAD 350x300` $\Rightarrow W=350, H=300$), khớp ống **bọc chống cháy EI60**, hiển thị chẩn đoán trong **Live Preview DataGridView**; kỹ sư tự nhập **Cao Độ Tim Hệ Thống (mm)** rồi bấm **`🚀 DỰNG MÔ HÌNH REVIT 3D`**.
 2. **Tự Động Tạo & Căn Chỉnh Crop View (Auto Crop Box) [CƠ CHẾ HIỂU Ý NGƯỜI DÙNG]**: Tự động tính toán Bounding Box 3D bao quanh toàn bộ các đối tượng mô hình có trong View vừa tạo (Sơ đồ không gian 3D, Mặt bằng, Mặt cắt, Viewport trên Sheet), chỉ giữ đối tượng trong phạm vi Crop hiện tại, không dãn to ra trục khác.
 3. **Căn chỉnh Lưới trục (Grids)** trên Mặt bằng, Mặt đứng, Mặt cắt & Trang in (Sheet) theo khung **Crop View** theo 4 hướng **Top, Bottom, Left, Right (mm)** cân đối chuẩn xác. Tự động kiểm tra Unhide và kéo các trục bị ẩn / kéo lệch về sát mép bản vẽ.
 4. **Căn chỉnh Cao độ (Level)** trên Mặt cắt, Mặt đứng & Trang in (Sheet) theo khung **Crop View** theo 2 đầu **Left, Right (mm)**.
@@ -182,12 +184,12 @@ Công cụ bóc tách khối lượng chuyên sâu dành riêng cho hệ thống
 ## PHẦN VIII: HƯỚNG DẪN CÀI ĐẶT ADD-IN HDTOOL (BỘ CÀI ĐẶT 1-FILE)
 
 Bộ cài đặt HDTOOL được đóng gói thành **1 file `.exe` duy nhất**, độc lập hoàn toàn:
-- **Tên file cài đặt**: **`HDTOOL_Setup_Version_70.exe`** (tự động lưu 2 version gần nhất là Version 69 và Version 70).
+- **Tên file cài đặt**: **`HDTOOL_Setup_Version_80.exe`** (tự động lưu 2 version gần nhất là Version 79 và Version 80).
 - **Vị trí lưu trữ**: Tất cả file cài đặt và đóng gói **chỉ sinh ra bên trong thư mục dự án (`c:\Users\Nguye\Desktop\ADDIN REVIT`)**, tuyệt đối không sinh file ra Desktop.
-- **Cơ chế lưu trữ 2 Version gần nhất**: Hệ thống tự động lưu giữ **đúng 2 version mới nhất** (hiện tại là `Version 69` và `Version 70`), các version cũ hơn tự động xóa sạch.
+- **Cơ chế lưu trữ 2 Version gần nhất**: Hệ thống tự động lưu giữ **đúng 2 version mới nhất** (hiện tại là `Version 79` và `Version 80`), các version cũ hơn tự động xóa sạch.
 
 ### Cách sử dụng bộ cài đặt:
-1. Gửi duy nhất 1 file **`HDTOOL_Setup_Version_70.exe`** qua Zalo, Drive, USB hoặc Email.
-2. Nhấp đúp chuột vào file **`HDTOOL_Setup_Version_70.exe`**.
+1. Gửi duy nhất 1 file **`HDTOOL_Setup_Version_80.exe`** qua Zalo, Drive, USB hoặc Email.
+2. Nhấp đúp chuột vào file **`HDTOOL_Setup_Version_80.exe`**.
 3. Cửa sổ cài đặt HadoMEE mở ra, tự động phát hiện phiên bản Revit trên máy (Revit 2024, 2025, 2026, 2027...).
 4. Bấm nút màu đỏ: **`🚀 CÀI ĐẶT ADD-IN HDTOOL`**. Báo "Cài đặt thành công" là xong ngay trong 1 giây!

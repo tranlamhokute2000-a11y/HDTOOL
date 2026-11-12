@@ -131,20 +131,33 @@ export class AgentAnimator {
 
     switch (role) {
       case 'api-developer':
-        // Fast keyboard typing
-        this.rig.torsoMesh.rotation.x = 0.15; // slouch slightly
+      case 'geometry':
+      case 'ui':
+        // Fast keyboard typing & screen scanning
+        this.rig.torsoMesh.rotation.x = 0.14;
         this.rig.leftArm.rotation.x = -0.7;
         this.rig.rightArm.rotation.x = -0.7;
-        this.rig.leftForearm.rotation.x = -0.9 + Math.sin(t * 18 * rate) * 0.15;
-        this.rig.rightForearm.rotation.x = -0.9 + Math.cos(t * 20 * rate) * 0.15;
-        this.rig.headGroup.rotation.x = -0.1 + Math.sin(t * 5) * 0.04;
+        this.rig.leftForearm.rotation.x = -0.9 + Math.sin(t * 16 * rate) * 0.16;
+        this.rig.rightForearm.rotation.x = -0.9 + Math.cos(t * 18 * rate) * 0.16;
+        this.rig.headGroup.rotation.x = -0.08 + Math.sin(t * 4) * 0.04;
+        this.rig.headGroup.rotation.y = Math.sin(t * 1.8) * 0.12;
+        break;
+
+      case 'coordinator':
+      case 'orchestrator':
+      case 'monitor':
+        // Coordinating with tablet, glancing across team zones
+        this.rig.leftArm.rotation.x = -0.65;
+        this.rig.leftForearm.rotation.x = -0.6;
+        this.rig.rightArm.rotation.x = -0.5 + Math.sin(t * 4) * 0.15;
+        this.rig.headGroup.rotation.y = Math.sin(t * 1.4) * 0.35;
         break;
 
       case 'reviewer':
-        // Examining document, then stamping
+      case 'verifier':
+        // Inspecting code diff & running Build stamp check
         this.rig.leftArm.rotation.x = -0.6;
         this.rig.leftForearm.rotation.x = -0.5;
-        // Right hand stamps down periodically
         const stampCycle = Math.sin(t * 4);
         if (stampCycle > 0.6) {
           this.rig.rightArm.rotation.x = -0.3;

@@ -15,7 +15,7 @@ namespace HDTool
     /// Hỗ trợ tính năng Excel AutoFill Drag Handle: Quét chọn rồi kéo chuột tự động tăng dần số đuôi
     /// giống hệt tính năng trong bảng Microsoft Excel theo lệnh của Sếp Hồ (HadoMEE).
     /// </summary>
-    public class BatchEditSheetNumberForm : Form
+    public class BatchEditSheetNumberForm : HDToolBaseForm
     {
         private List<SheetItem> _allSheets;
         private List<SheetItem> _selectedSheets;

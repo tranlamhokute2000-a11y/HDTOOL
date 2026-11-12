@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <RevitAddIns>
   <!-- 1. Ứng dụng chính HDTOOL (Ribbon Tab HDTOOL & các công cụ) -->
   <AddIn Type="Application">
@@ -84,6 +84,66 @@
     <Assembly>HDTOOL\HDTOOL.dll</Assembly>
     <FullClassName>HDTool.AutoCropCommand</FullClassName>
     <ClientId>F8B2A1C3-5D4E-4A7B-9C0D-1E2F3A4B5C6D</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 10. Lệnh Bảng Điều Khiển Tích Hợp Grids / Level -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Căn Chỉnh Grids / Level</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.CropAlignCommand</FullClassName>
+    <ClientId>4E7A1B9C-2D3F-4A81-8E5C-9B0D1F2A3C4E</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 11. Lệnh Thống Kê Khối Lượng Ống Gió HVAC -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Khối Lượng Ống Gió</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.DuctQuantityCommand</FullClassName>
+    <ClientId>6A9D2C4E-8F1B-4B73-9C2E-3D4A5F6B7C8D</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 12. Lệnh Dựng Ống Gió 3D Từ CAD Link -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Dựng Ống Gió Từ CAD</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.CadToDuctCommand</FullClassName>
+    <ClientId>8C1F4E6A-3B7D-4D92-A1C4-5E6F7A8B9C0D</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 13. Lệnh CHECK VAR PLUMBING -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - CHECK VAR PLUMBING</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.PickTableHighlightCommand</FullClassName>
+    <ClientId>5D2E8F1A-7C4B-4E36-B8D2-6F7A8B9C0D1E</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 14. Lệnh Khớp Tỷ Lệ Bảng Khối Lượng -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Khớp Tỷ Lệ Bảng Khối Lượng</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.FitTableScaleCommand</FullClassName>
+    <ClientId>7F3A9B2C-1D6E-4F58-C9E3-7A8B9C0D1E2F</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 15. Lệnh Cập Nhật Tool / Hot Reload -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Cập Nhật Tool</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.UpdateToolCommand</FullClassName>
+    <ClientId>9B4C1D3E-6F2A-4A79-D0F4-8B9C0D1E2F3A</ClientId>
     <VendorId>HDTOOL</VendorId>
     <VendorDescription>HDTOOL BIM Development</VendorDescription>
   </AddIn>

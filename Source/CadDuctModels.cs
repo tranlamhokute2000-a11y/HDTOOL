@@ -32,6 +32,7 @@ namespace HDTool
         public CadConnectionKind Kind { get; set; }
         public CadDuctSegment BridgePolygon { get; set; }
         public XYZ JunctionPoint { get; set; }
+        public XYZ TapBevelDirection { get; set; }
 
         public CadConnectionEdge(CadDuctSegment a, CadDuctSegment b, CadConnectionKind kind, CadDuctSegment bridge = null, XYZ junction = null)
         {
@@ -40,6 +41,7 @@ namespace HDTool
             Kind = kind;
             BridgePolygon = bridge;
             JunctionPoint = junction;
+            TapBevelDirection = (bridge != null) ? bridge.TapBevelDirection : null;
         }
     }
 
@@ -63,12 +65,16 @@ namespace HDTool
         public double CenterElevationMm { get; set; }
 
         public string LayerName { get; set; }
+        public int ColorRgb { get; set; }
         public string TextLabel { get; set; }
         public bool HasDirectText { get; set; }
         public string SizeSource { get; set; }
 
         // Lưu toàn bộ các đỉnh đa giác 2D/3D để kiểm tra Pick trực tiếp và giao cắt hình học
         public List<XYZ> PolygonVertices { get; set; }
+
+        // Hướng vát 45° của Chân rẽ Shoe-Tap theo bản vẽ thiết kế CAD (từ cổ nhánh về phía miệng loe dọc thân ống chính)
+        public XYZ TapBevelDirection { get; set; }
 
         public ElementId CreatedDuctId { get; set; }
 
@@ -77,19 +83,23 @@ namespace HDTool
         public List<CadConnectionEdge> Connections { get; set; }
         public bool IsProcessed { get; set; }
 
+        private static long _nextSegmentSeq = 0;
+
         public CadDuctSegment()
         {
-            Id = Guid.NewGuid().ToString("N").Substring(0, 8);
+            long seq = System.Threading.Interlocked.Increment(ref _nextSegmentSeq);
+            Id = seq.ToString() + "_" + Guid.NewGuid().ToString("N").Substring(0, 6);
             ShapeKind = CadShapeKind.StraightDuct;
             ConnectedNeighbors = new List<CadDuctSegment>();
             Connections = new List<CadConnectionEdge>();
             PolygonVertices = new List<XYZ>();
             WidthMm = 300;
             Width2Mm = 300;
-            HeightMm = 300;
-            CenterElevationMm = 3200;
+            HeightMm = 0;
+            CenterElevationMm = 0;
+            ColorRgb = -1;
             TextLabel = string.Empty;
-            SizeSource = "Mặc định / Lan truyền";
+            SizeSource = "Chưa có ghi chú";
             HasDirectText = false;
             IsProcessed = false;
         }
@@ -121,6 +131,7 @@ namespace HDTool
         /// </summary>
         public bool ContainsPointXY(XYZ pt, double marginFeet = 0.0)
         {
+            if (pt == null) return false;
             if (PolygonVertices != null && PolygonVertices.Count >= 3)
             {
                 if (IsPointInPolygonXY(pt, PolygonVertices)) return true;
@@ -134,8 +145,9 @@ namespace HDTool
                         if (DistPointToSegmentXY(pt, v1, v2) <= marginFeet) return true;
                     }
                 }
+                return false;
             }
-            // Fallback kiểm tra khoảng cách tới trục tim <= nửa bề rộng + margin
+            // Fallback kiểm tra khoảng cách tới trục tim <= nửa bề rộng + margin (khi không có PolygonVertices)
             double halfW = (Math.Max(WidthMm, Width2Mm) * 0.5 / 304.8) + marginFeet;
             return DistanceToPointXY(pt) <= halfW;
         }
@@ -179,6 +191,8 @@ namespace HDTool
         public double HeightMm { get; set; }
         public XYZ Position { get; set; }
         public string LayerName { get; set; }
+        public XYZ LeaderArrowPoint { get; set; }
+        public bool HasLeaderArrow { get; set; }
 
         public CadTextNote(string text, double w, double h, XYZ pos, string layer)
         {
@@ -223,5 +237,125 @@ namespace HDTool
         public XYZ MidEnd { get; set; }
         public XYZ Direction { get; set; }
         public string LayerName { get; set; }
+    }
+
+    public enum CadExclusionKind
+    {
+        Unknown = 0,
+        Grille,         // Miệng gió / hộp cổ miệng gió (Rule 4: ống dừng ở mép hộp)
+        RiserDrop,      // Hộp cổ đứng / xuyên sàn có chéo X + SOLID
+        AnnotationBox,  // Khung ghi chú / cảm biến (vd khung nét đứt vàng chứa "IAQ")
+        Damper,         // Van gió MFD / OBD / NRD / FD / VCD
+        Attenuator,     // Tiêu âm ATT (vỏ + vách tiêu âm song song + HATCH)
+        FanEquipment,   // Quạt / ống mềm / thiết bị trong phòng máy quạt (Rule 3)
+        PlenumHatch,    // Vùng Hatch ANSI37 / Trouser Piece / hộp gió đặc
+        ArrowSymbol     // Ký hiệu mũi tên chỉ hướng gió
+    }
+
+    /// <summary>
+    /// Vùng loại trừ nhận diện trực tiếp từ Block/Hatch/Annotation trong file DWG gốc
+    /// (giúp loại bỏ triệt để miệng gió, van, tiêu âm, quạt, hộp IAQ, hatch mà không ép chọn Layer)
+    /// </summary>
+    public class CadExclusionZone
+    {
+        public CadExclusionKind Kind { get; set; }
+        public string BlockName { get; set; }
+        public string LayerName { get; set; }
+        public string TagText { get; set; }
+        public XYZ Center { get; set; }
+        public List<XYZ> Corners { get; set; }
+        public XYZ MinPt { get; set; }
+        public XYZ MaxPt { get; set; }
+
+        public CadExclusionZone()
+        {
+            Kind = CadExclusionKind.Unknown;
+            BlockName = string.Empty;
+            LayerName = string.Empty;
+            TagText = string.Empty;
+            Corners = new List<XYZ>();
+        }
+
+        public void ComputeBoundsFromCorners()
+        {
+            if (Corners == null || Corners.Count == 0) return;
+            double minX = double.MaxValue, minY = double.MaxValue;
+            double maxX = double.MinValue, maxY = double.MinValue;
+            double sx = 0, sy = 0;
+            for (int i = 0; i < Corners.Count; i++)
+            {
+                XYZ p = Corners[i];
+                if (p == null) continue;
+                if (p.X < minX) minX = p.X;
+                if (p.Y < minY) minY = p.Y;
+                if (p.X > maxX) maxX = p.X;
+                if (p.Y > maxY) maxY = p.Y;
+                sx += p.X;
+                sy += p.Y;
+            }
+            if (minX <= maxX && minY <= maxY)
+            {
+                MinPt = new XYZ(minX, minY, 0.0);
+                MaxPt = new XYZ(maxX, maxY, 0.0);
+                if (Center == null) Center = new XYZ(sx / Corners.Count, sy / Corners.Count, 0.0);
+            }
+        }
+
+        public bool ContainsPointXY(XYZ pt, double marginFeet = 0.0)
+        {
+            if (pt == null) return false;
+            if (MinPt != null && MaxPt != null)
+            {
+                if (pt.X < MinPt.X - marginFeet || pt.X > MaxPt.X + marginFeet ||
+                    pt.Y < MinPt.Y - marginFeet || pt.Y > MaxPt.Y + marginFeet)
+                {
+                    return false;
+                }
+            }
+            if (Corners != null && Corners.Count >= 3)
+            {
+                if (CadDuctSegment.IsPointInPolygonXY(pt, Corners)) return true;
+                if (marginFeet > 0)
+                {
+                    for (int i = 0; i < Corners.Count; i++)
+                    {
+                        XYZ a = Corners[i];
+                        XYZ b = Corners[(i + 1) % Corners.Count];
+                        if (CadDuctSegment.DistPointToSegmentXY(pt, a, b) <= marginFeet) return true;
+                    }
+                }
+                return false;
+            }
+            return MinPt != null && MaxPt != null;
+        }
+
+        public bool OverlapsBoxXY(double minX, double minY, double maxX, double maxY, double padFeet = 0.0)
+        {
+            if (MinPt == null || MaxPt == null) return false;
+            return !(maxX + padFeet < MinPt.X || minX - padFeet > MaxPt.X
+                  || maxY + padFeet < MinPt.Y || minY - padFeet > MaxPt.Y);
+        }
+
+        public double GetAreaFeet2()
+        {
+            if (Corners != null && Corners.Count >= 3)
+            {
+                double sum = 0.0;
+                int n = Corners.Count;
+                for (int i = 0; i < n; i++)
+                {
+                    XYZ p1 = Corners[i];
+                    XYZ p2 = Corners[(i + 1) % n];
+                    sum += (p1.X * p2.Y) - (p2.X * p1.Y);
+                }
+                double area = Math.Abs(sum) * 0.5;
+                if (area > 1e-8) return area;
+            }
+            if (MinPt != null && MaxPt != null)
+            {
+                return Math.Max(0.0, (MaxPt.X - MinPt.X) * (MaxPt.Y - MinPt.Y));
+            }
+            return 0.0;
+        }
     }
 }

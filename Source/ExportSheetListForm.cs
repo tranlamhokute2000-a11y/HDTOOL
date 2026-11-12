@@ -14,7 +14,7 @@ using Point = System.Drawing.Point;
 
 namespace HDTool
 {
-    public class ExportSheetListForm : System.Windows.Forms.Form
+    public class ExportSheetListForm : HDToolBaseForm
     {
         private Document _doc;
         private List<SheetItem> _allSheets;

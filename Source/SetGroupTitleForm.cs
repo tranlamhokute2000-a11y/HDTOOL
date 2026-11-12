@@ -8,7 +8,7 @@ using Point = System.Drawing.Point;
 
 namespace HDTool
 {
-    public class SetGroupTitleForm : Form
+    public class SetGroupTitleForm : HDToolBaseForm
     {
         private Label lblDesc;
         private ComboBox cmbDisciplineName;

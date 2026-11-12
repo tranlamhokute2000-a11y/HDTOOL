@@ -118,9 +118,44 @@ namespace HDTool
             }
         }
 
+        public static void EnableEscToClose(Form form, Button cancelButton = null)
+        {
+            if (form == null || form.IsDisposed) return;
+
+            form.KeyPreview = true;
+            if (cancelButton != null && form.CancelButton == null)
+            {
+                form.CancelButton = cancelButton;
+            }
+
+            if (form is HDToolBaseForm) return;
+            if (object.Equals(form.Tag, "HDTOOL_ESC_BOUND")) return;
+
+            if (form.Tag == null)
+            {
+                form.Tag = "HDTOOL_ESC_BOUND";
+            }
+
+            form.KeyDown += delegate(object s, KeyEventArgs e)
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    if (form.Modal)
+                    {
+                        form.DialogResult = DialogResult.Cancel;
+                    }
+                    form.Close();
+                }
+            };
+        }
+
         public static void ShowModeless(Form form, IntPtr revitMainHwnd)
         {
             if (form == null || form.IsDisposed) return;
+
+            EnableEscToClose(form);
 
             if (form.WindowState == FormWindowState.Minimized)
             {
@@ -141,6 +176,45 @@ namespace HDTool
 
             form.BringToFront();
             form.Activate();
+        }
+    }
+
+    /// <summary>
+    /// Lớp Form chuẩn toàn cục của HDTOOL (Modeless & Modal):
+    /// Mọi cửa sổ công cụ hiện tại và phát triển mới sau này BẮT BUỘC kế thừa lớp này
+    /// để luôn hỗ trợ ấn phím ESC thoát lệnh ngay lập tức (không cần di chuột bấm Đóng/X).
+    /// </summary>
+    public class HDToolBaseForm : System.Windows.Forms.Form
+    {
+        public HDToolBaseForm()
+        {
+            this.KeyPreview = true;
+        }
+
+        /// <summary>
+        /// Cho phép Form con xử lý trước khi ESC đóng cửa sổ (VD: tắt highlight 3D, hủy ô đang edit).
+        /// Trả về true nếu chỉ muốn dừng ở bước xử lý phụ (giữ Form mở); trả về false để đóng Form ngay.
+        /// </summary>
+        protected virtual bool OnBeforeEscapeClose()
+        {
+            return false;
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                if (!OnBeforeEscapeClose())
+                {
+                    if (this.Modal)
+                    {
+                        this.DialogResult = DialogResult.Cancel;
+                    }
+                    this.Close();
+                }
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

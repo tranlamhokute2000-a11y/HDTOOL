@@ -1,11 +1,10 @@
-import { OfficeEvent } from '../events/bridge.js';
+import { OfficeEvent, SwarmBoardMessage } from '../events/bridge.js';
 import { ROLES } from '../agents/roles.js';
-import * as THREE from 'three';
 
 export class LogPanel {
   private container: HTMLElement;
   private countEl: HTMLElement;
-  private events: OfficeEvent[] = [];
+  private events: Array<{ agent: string; badge: string; color: string; time: string; detail: string; seq?: number }> = [];
   public onEventClick?: (agentId: string) => void;
 
   constructor() {
@@ -13,10 +12,33 @@ export class LogPanel {
     this.countEl = document.getElementById('log-count')!;
   }
 
-  public addEvent(ev: OfficeEvent) {
-    this.events.unshift(ev);
-    if (this.events.length > 50) this.events.pop();
+  public setBoardMessages(messages: SwarmBoardMessage[]) {
+    this.events = [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      const role = ROLES[m.agent];
+      this.events.push({
+        agent: m.agent,
+        badge: role ? role.badge : '⚡',
+        color: role ? role.color : '#2563EB',
+        time: m.time || '',
+        detail: `#${m.seq}: ${m.text}`,
+        seq: m.seq
+      });
+    }
+    this.render();
+  }
 
+  public addEvent(ev: OfficeEvent) {
+    const role = ROLES[ev.agent];
+    this.events.unshift({
+      agent: ev.agent,
+      badge: role ? role.badge : '●',
+      color: role ? role.color : '#64748B',
+      time: this.formatTime(ev.ts),
+      detail: ev.detail || ev.event
+    });
+    if (this.events.length > 60) this.events.pop();
     this.render();
   }
 
@@ -26,35 +48,38 @@ export class LogPanel {
   }
 
   private render() {
-    this.countEl.textContent = `${this.events.length} sự kiện`;
+    if (!this.container || !this.countEl) return;
+    this.countEl.textContent = `${this.events.length} mục`;
     this.container.innerHTML = '';
 
-    const displayEvents = this.events.slice(0, 14);
-
-    displayEvents.forEach(ev => {
-      const role = ROLES[ev.agent];
-      const roleColor = role ? role.color : '#8DA2B3';
-      const roleBadge = role ? role.badge : '●';
-      const roleName = role ? role.shortName : ev.agent;
-
-      const timeStr = this.formatTime(ev.ts);
-
+    this.events.slice(0, 30).forEach(ev => {
       const item = document.createElement('div');
-      item.className = `log-item ${ev.inferred ? 'inferred' : ''}`;
-      item.style.borderLeftColor = roleColor;
+      item.className = 'board-log-item';
+      item.style.borderLeftColor = ev.color;
 
-      item.innerHTML = `
-        <div class="log-item-header">
-          <span style="color: ${roleColor}; font-weight:700;">${roleBadge} ${roleName}</span>
-          <span>${timeStr}</span>
-        </div>
-        <div class="log-item-detail">${ev.detail || ev.event}</div>
-      `;
+      const header = document.createElement('div');
+      header.className = 'board-log-header';
+
+      const who = document.createElement('span');
+      who.style.color = ev.color;
+      who.style.fontWeight = '700';
+      who.textContent = `${ev.badge} ${ev.agent}`;
+
+      const time = document.createElement('span');
+      time.textContent = ev.time;
+
+      header.appendChild(who);
+      header.appendChild(time);
+
+      const body = document.createElement('div');
+      body.className = 'board-log-detail';
+      body.textContent = ev.detail.length > 180 ? ev.detail.slice(0, 179) + '…' : ev.detail;
+
+      item.appendChild(header);
+      item.appendChild(body);
 
       item.addEventListener('click', () => {
-        if (this.onEventClick) {
-          this.onEventClick(ev.agent);
-        }
+        if (this.onEventClick) this.onEventClick(ev.agent);
       });
 
       this.container.appendChild(item);
@@ -63,11 +88,14 @@ export class LogPanel {
 
   private formatTime(ts: string): string {
     try {
-      const date = new Date(ts);
-      return date.toTimeString().split(' ')[0];
+      if (!ts) return '';
+      if (/^\d{4}-\d{2}-\d{2}/.test(ts)) {
+        const d = new Date(ts);
+        return isNaN(d.getTime()) ? ts : d.toTimeString().split(' ')[0];
+      }
+      return ts;
     } catch {
       return '';
     }
   }
 }
-

@@ -8,7 +8,7 @@ echo    HDTOOL PREVIEW STUDIO - AUTODESK REVIT RIBBON UI DESIGNER (WIN 11)
 echo =====================================================================
 echo Đang mở Studio trên Trình duyệt Cốc Cốc để Sếp Hồ xem trước và sắp xếp...
 
-set "HTML_PATH=%~dp0HDTool_PreviewStudio.html"
+set "HTML_PATH=%~dp0PreviewStudio\HDTool_PreviewStudio.html"
 set "COCCOC=C:\Program Files\CocCoc\Browser\Application\browser.exe"
 
 if exist "%COCCOC%" (

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -59,7 +59,7 @@ namespace HDTool
         FittingsOnly = 2
     }
 
-    public class MepQuantityInspectorForm : System.Windows.Forms.Form
+    public class MepQuantityInspectorForm : HDToolBaseForm
     {
         private UIDocument _uidoc;
         private Document _doc;
@@ -3430,7 +3430,7 @@ namespace HDTool
     /// <summary>
     /// Hộp thoại trực quan cho phép người dùng chọn Sheet mong muốn, chọn định dạng bảng (Excel hoặc Schedule) và tùy ý ẩn / hiện các cột
     /// </summary>
-    public class SelectSheetDialog : System.Windows.Forms.Form
+    public class SelectSheetDialog : HDToolBaseForm
     {
         private List<ViewSheet> _sheets;
 
@@ -3723,7 +3723,7 @@ namespace HDTool
     /// 3. Loại bỏ các parameter khi không dùng đến
     /// 4. Đồng bộ tự động 1:1 theo Schedule Revit
     /// </summary>
-    public class AddProjectParameterDialog : System.Windows.Forms.Form
+    public class AddProjectParameterDialog : HDToolBaseForm
     {
         public AddProjectParamAction Action { get; private set; }
         public string SelectedParamName { get; private set; }
@@ -3958,7 +3958,7 @@ namespace HDTool
         }
     }
 
-    public class BatchAssignParamDialog : System.Windows.Forms.Form
+    public class BatchAssignParamDialog : HDToolBaseForm
     {
         public string SelectedParam { get; private set; }
         public string NewValue { get; private set; }

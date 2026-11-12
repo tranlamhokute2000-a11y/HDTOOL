@@ -88,38 +88,6 @@ namespace HDTool
             }
         }
 
-        public static ImageSource CreateQuickPickIcon(int size)
-        {
-            using (Bitmap bmp = new Bitmap(size, size))
-            {
-                using (Graphics g = Graphics.FromImage(bmp))
-                {
-                    g.SmoothingMode = SmoothingMode.AntiAlias;
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.Clear(System.Drawing.Color.Transparent);
-
-                    float scale = size / 32.0f;
-
-                    // Vẽ biểu tượng con trỏ click chuột hoặc thước đo
-                    using (System.Drawing.Pen linePen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(41, 128, 185), 2.0f * scale))
-                    {
-                        g.DrawLine(linePen, 2f * scale, 16f * scale, 26f * scale, 16f * scale);
-                    }
-
-                    // Vẽ hồng tâm / chọn (Target)
-                    using (System.Drawing.Pen targetPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(231, 76, 60), 1.8f * scale))
-                    {
-                        g.DrawEllipse(targetPen, 9f * scale, 9f * scale, 14f * scale, 14f * scale);
-                        g.DrawLine(targetPen, 16f * scale, 6f * scale, 16f * scale, 26f * scale);
-                        g.DrawLine(targetPen, 6f * scale, 16f * scale, 26f * scale, 16f * scale);
-                    }
-                }
-
-                return ConvertToImageSource(bmp);
-            }
-        }
-
         public static ImageSource CreateGridCropIcon(int size)
         {
             using (Bitmap bmp = new Bitmap(size, size))

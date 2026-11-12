@@ -12,7 +12,7 @@ using Point = System.Drawing.Point;
 
 namespace HDTool
 {
-    public class UpdateSheetListPreviewForm : System.Windows.Forms.Form
+    public class UpdateSheetListPreviewForm : HDToolBaseForm
     {
         private Document _doc;
         private List<SheetUpdateItem> _allItems;

@@ -6,60 +6,71 @@ export class DemoRunner {
   private isRunning = false;
   private timer: any = null;
   private onDispatch: (event: OfficeEvent) => void;
+  public onComplete?: () => void;
 
   constructor(onDispatch: (event: OfficeEvent) => void) {
     this.onDispatch = onDispatch;
   }
 
-  public async loadEvents(): Promise<boolean> {
+  public setEvents(events: OfficeEvent[]) {
+    this.events = events || [];
+    this.currentIndex = 0;
+  }
+
+  public async loadEvents(toolId: string = 'demo:office'): Promise<boolean> {
     try {
-      // Try loading from /api/history?tool=demo-tool
-      const res = await fetch('/api/history?tool=demo-tool');
+      const res = await fetch(`/api/history?tool=${encodeURIComponent(toolId)}`);
       if (res.ok) {
         const data = await res.json();
         if (data.events && data.events.length > 0) {
           this.events = data.events;
+          this.currentIndex = 0;
           return true;
         }
       }
-    } catch (e) { }
-
+    } catch { }
     return false;
   }
 
-  public start(speedMultiplier: number = 1.0) {
+  public start(speedMultiplier: number = 1.0, loop = true) {
     if (this.isRunning || this.events.length === 0) return;
     this.isRunning = true;
-    this.step(speedMultiplier);
+    this.step(speedMultiplier, loop);
   }
 
-  private step(speedMultiplier: number) {
+  private step(speedMultiplier: number, loop: boolean) {
     if (!this.isRunning) return;
 
     if (this.currentIndex >= this.events.length) {
-      // Loop after 5s pause
-      setTimeout(() => {
-        this.currentIndex = 0;
-        this.step(speedMultiplier);
-      }, 5000);
+      this.isRunning = false;
+      if (this.onComplete) this.onComplete();
+      if (loop) {
+        this.timer = setTimeout(() => {
+          this.currentIndex = 0;
+          this.isRunning = true;
+          this.step(speedMultiplier, true);
+        }, 4500);
+      }
       return;
     }
 
     const currentEv = this.events[this.currentIndex];
     this.onDispatch(currentEv);
 
-    // Compute interval to next event (approx 1.5s per event, total ~95s for 63 events)
-    let delay = 1600 / speedMultiplier;
-    if (currentEv.event === 'progress') delay = 900 / speedMultiplier;
+    let delay = 1400 / speedMultiplier;
+    if (currentEv.event === 'progress') delay = 850 / speedMultiplier;
     if (currentEv.event === 'handoff') delay = 2200 / speedMultiplier;
 
     this.currentIndex++;
-    this.timer = setTimeout(() => this.step(speedMultiplier), delay);
+    this.timer = setTimeout(() => this.step(speedMultiplier, loop), delay);
   }
 
   public stop() {
     this.isRunning = false;
-    if (this.timer) clearTimeout(this.timer);
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
   }
 
   public setSpeed(speed: number) {
@@ -69,4 +80,3 @@ export class DemoRunner {
     }
   }
 }
-

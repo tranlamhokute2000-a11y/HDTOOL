@@ -175,9 +175,6 @@ namespace HDTool
                 // 6. Đồng bộ sang thư mục Addins của Revit để lần sau khởi động vẫn dùng bản mới
                 SyncToRevitAddinsFolder(dllPath);
 
-                // 7. Ngắt kết nối hoàn toàn cổng MCP (nếu phiên bản trước đang mở)
-                DisconnectAnyActiveMcpPort();
-
                 statusMessage = string.Format(
                     "Đã nạp thành công phiên bản mới ({0:N0} bytes) vào Revit!",
                     dllBytes.Length
@@ -189,41 +186,6 @@ namespace HDTool
                 statusMessage = "Lỗi khi nạp file DLL vào Revit:\n" + ex.Message;
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Ngắt kết nối hoàn toàn cổng MCP và đóng cửa sổ AI Chat nếu đang chạy từ phiên trước
-        /// </summary>
-        public static void DisconnectAnyActiveMcpPort()
-        {
-            try
-            {
-                object listenerObj = AppDomain.CurrentDomain.GetData("HDTOOL_MCP_ACTIVE_TCP_LISTENER");
-                if (listenerObj != null)
-                {
-                    MethodInfo stopMethod = listenerObj.GetType().GetMethod("Stop", BindingFlags.Public | BindingFlags.Instance);
-                    if (stopMethod != null)
-                    {
-                        stopMethod.Invoke(listenerObj, null);
-                    }
-                    AppDomain.CurrentDomain.SetData("HDTOOL_MCP_ACTIVE_TCP_LISTENER", null);
-                    AppDomain.CurrentDomain.SetData("HDTOOL_MCP_ACTIVE_PORT", null);
-                }
-            }
-            catch { }
-
-            try
-            {
-                foreach (System.Windows.Forms.Form f in System.Windows.Forms.Application.OpenForms)
-                {
-                    if (f != null && f.GetType().Name == "AIChatMcpForm")
-                    {
-                        f.Close();
-                        break;
-                    }
-                }
-            }
-            catch { }
         }
 
         /// <summary>

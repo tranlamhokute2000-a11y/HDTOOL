@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Van phong Agent Revit 3D - HadoMEE</title>
+  <title>Văn phòng Agent 3D · HadoMEE Workspace</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,674 +12,747 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      user-select: none;
     }
-    body, html {
+    html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #0F2236;
+      background: #DCE8F5;
       font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #EDF1EE;
+      color: #0F172A;
     }
     #canvas-container {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       z-index: 1;
     }
     #hud-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       z-index: 10;
       pointer-events: none;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
     }
     .interactive {
       pointer-events: auto;
     }
-    #top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-      background: rgba(15, 34, 54, 0.88);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(141, 162, 179, 0.25);
-      gap: 15px;
-    }
-    .top-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .brand-title {
-      font-weight: 800;
-      font-size: 15px;
-      letter-spacing: 0.5px;
-      color: #EDF1EE;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .brand-badge {
-      background: #FF8A1F;
-      color: #0F2236;
-      font-weight: 800;
-      font-size: 11px;
-      padding: 2px 7px;
-      border-radius: 4px;
-    }
-    .tool-selector {
-      background: #142E47;
-      color: #EDF1EE;
-      border: 1px solid #1D5FD1;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-      cursor: pointer;
-    }
-    .status-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .status-live {
-      background: rgba(45, 190, 112, 0.2);
-      color: #2DBE70;
-      border: 1px solid #2DBE70;
-    }
-    .status-demo {
-      background: rgba(245, 183, 0, 0.2);
-      color: #F5B700;
-      border: 1px solid #F5B700;
-    }
-    .status-catching {
-      background: rgba(29, 95, 209, 0.2);
-      color: #60A5FA;
-      border: 1px solid #1D5FD1;
-    }
-    .top-center {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .stage-indicator {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #CDAE83;
-    }
-    .timer-display {
-      font-family: monospace;
-      font-size: 14px;
-      color: #8DA2B3;
-      background: rgba(0, 0, 0, 0.25);
-      padding: 3px 8px;
-      border-radius: 4px;
-    }
-    .top-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-hud {
-      background: #142E47;
-      color: #EDF1EE;
-      border: 1px solid rgba(141, 162, 179, 0.3);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-    .btn-hud:hover {
-      background: #1D5FD1;
-      border-color: #1D5FD1;
-    }
-    .btn-hud.active {
-      background: #1D5FD1;
-      border-color: #60A5FA;
-    }
-    #main-hud-area {
-      flex: 1;
-      position: relative;
-      display: flex;
-      justify-content: flex-end;
-      padding: 15px;
-      pointer-events: none;
-    }
-    #log-panel {
-      width: 320px;
-      max-height: calc(100vh - 190px);
-      background: rgba(15, 34, 54, 0.88);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(141, 162, 179, 0.25);
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    #log-panel.collapsed {
-      transform: translateX(335px);
-    }
-    .panel-header {
-      padding: 10px 14px;
-      background: rgba(20, 46, 71, 0.8);
-      border-bottom: 1px solid rgba(141, 162, 179, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 13px;
-      font-weight: 700;
-      color: #EDF1EE;
-    }
-    .log-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .log-item {
-      padding: 7px 10px;
-      background: rgba(20, 46, 71, 0.45);
-      border-left: 3px solid #8DA2B3;
-      border-radius: 4px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: background 0.15s;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-    .log-item:hover {
-      background: rgba(29, 95, 209, 0.3);
-    }
-    .log-item.inferred {
-      border-left-style: dashed;
-      background: rgba(20, 46, 71, 0.25);
-    }
-    .log-item-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10.5px;
-      color: #8DA2B3;
-      font-weight: 600;
-    }
-    .log-item-detail {
-      color: #EDF1EE;
-      line-height: 1.35;
-      word-break: break-word;
-    }
-    #agent-card {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      width: 290px;
-      background: rgba(15, 34, 54, 0.94);
+
+    /* === TOP HEADER BAR (Light Modern Workspace matching Screenshot) === */
+    #top-header {
+      background: rgba(255, 255, 255, 0.96);
       backdrop-filter: blur(12px);
-      border: 1px solid #1D5FD1;
-      border-radius: 10px;
-      padding: 14px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .agent-card-header {
+      border-bottom: 1px solid #E2E8F0;
+      padding: 12px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid rgba(141, 162, 179, 0.2);
-      padding-bottom: 8px;
+      gap: 16px;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
     }
-    .agent-card-name {
-      font-weight: 800;
-      font-size: 14px;
-      color: #FF8A1F;
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 280px;
+    }
+    .header-kicker-row {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
-    .agent-card-role {
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       font-size: 11px;
-      color: #8DA2B3;
-    }
-    .agent-card-status {
-      font-size: 12px;
-      color: #EDF1EE;
-      line-height: 1.4;
-      background: rgba(20, 46, 71, 0.5);
-      padding: 8px;
-      border-radius: 6px;
-    }
-    #metrics-panel {
-      position: absolute;
-      bottom: 65px;
-      left: 20px;
-      display: flex;
-      gap: 10px;
-    }
-    .metric-badge {
-      background: rgba(15, 34, 54, 0.88);
-      backdrop-filter: blur(6px);
-      border: 1px solid rgba(141, 162, 179, 0.25);
-      padding: 6px 12px;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 68px;
-    }
-    .metric-label {
-      font-size: 10px;
-      color: #8DA2B3;
+      font-weight: 700;
+      letter-spacing: 0.6px;
       text-transform: uppercase;
-      font-weight: 600;
+      color: #0F766E;
     }
-    .metric-val {
-      font-size: 16px;
-      font-weight: 800;
-      color: #EDF1EE;
-    }
-    .metric-val.pass { color: #2DBE70; }
-    .metric-val.fail { color: #E5484D; }
-    .metric-val.warn { color: #F5B700; }
-    #ask-user-banner {
-      display: none;
-      position: absolute;
-      top: 65px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #FF8A1F;
-      color: #0F2236;
-      padding: 10px 20px;
-      border-radius: 8px;
-      box-shadow: 0 6px 20px rgba(255, 138, 31, 0.4);
-      font-weight: 700;
-      font-size: 14px;
-      align-items: center;
-      gap: 14px;
-      z-index: 20;
-    }
-    .btn-confirm {
-      background: #0F2236;
-      color: #EDF1EE;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    #bottom-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-      background: rgba(15, 34, 54, 0.88);
-      backdrop-filter: blur(8px);
-      border-top: 1px solid rgba(141, 162, 179, 0.25);
-      gap: 15px;
-    }
-    .cam-presets {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .timeline-controls {
-      flex: 1;
-      max-width: 600px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .timeline-slider {
-      flex: 1;
-      accent-color: #1D5FD1;
-      cursor: pointer;
-    }
-    .speed-tag {
-      font-size: 12px;
-      font-weight: 700;
-      color: #60A5FA;
-      min-width: 35px;
-    }
-  
-    /* STATUS COUNTER BADGES */
-    .status-counter-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .badge-work {
-      background: rgba(6, 78, 59, 0.7);
-      border: 1px solid #10B981;
-      color: #A7F3D0;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
-    }
-    .badge-work:hover {
-      background: rgba(6, 78, 59, 0.95);
-      border-color: #34D399;
-      box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
-    }
-    .badge-idle {
-      background: rgba(30, 41, 59, 0.7);
-      border: 1px solid #64748B;
-      color: #CBD5E1;
-    }
-    .badge-idle:hover {
-      background: rgba(30, 41, 59, 0.95);
-      border-color: #94A3B8;
-    }
-    .pulse-dot-green {
+    .live-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background: #10B981;
-      box-shadow: 0 0 8px #10B981;
-      animation: pulseAnim 1.4s infinite;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      animation: pulse-dot 1.6s infinite;
     }
-    @keyframes pulseAnim {
-      0% { transform: scale(0.9); opacity: 0.8; }
-      50% { transform: scale(1.3); opacity: 1; }
-      100% { transform: scale(0.9); opacity: 0.8; }
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.65; }
     }
-
-    /* ROSTER PANEL (LEFT DRAWER) */
-    #roster-panel {
-      position: absolute;
-      top: 65px;
-      left: 15px;
-      width: 330px;
-      max-height: calc(100vh - 145px);
-      background: rgba(15, 34, 54, 0.94);
-      backdrop-filter: blur(12px);
-      border: 1px solid #1D5FD1;
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
-      z-index: 15;
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
-    }
-    #roster-panel.hidden {
-      display: none;
-    }
-    .roster-header {
-      padding: 12px 16px;
-      background: rgba(20, 46, 71, 0.85);
-      border-bottom: 1px solid rgba(141, 162, 179, 0.25);
+    .header-title-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .roster-title {
-      font-size: 13.5px;
+    .header-title {
+      font-size: 24px;
       font-weight: 800;
-      color: #EDF1EE;
+      letter-spacing: -0.5px;
+      color: #0F172A;
+    }
+    .header-title span {
+      color: #2563EB;
+    }
+    .source-select {
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      color: #0F172A;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      font-family: inherit;
+      max-width: 340px;
+      cursor: pointer;
+      outline: none;
+    }
+    .source-select:focus {
+      border-color: #2563EB;
+    }
+    .header-subtitle {
+      font-size: 12.5px;
+      color: #64748B;
+      line-height: 1.35;
+    }
+
+    .header-right {
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
-    .roster-list {
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 999px;
+      padding: 7px 13px;
+      font-size: 12.5px;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .stat-chip:hover {
+      background: #F1F5F9;
+      border-color: #CBD5E1;
+    }
+    .stat-chip strong {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .btn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      color: #1E293B;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-pill:hover {
+      background: #F1F5F9;
+      border-color: #CBD5E1;
+    }
+    .btn-pill.active {
+      background: #EFF6FF;
+      border-color: #3B82F6;
+      color: #1D4ED8;
+    }
+    .btn-primary-dark {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0F172A;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 12.5px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+      transition: all 0.15s;
+    }
+    .btn-primary-dark:hover {
+      background: #1E293B;
+      transform: translateY(-1px);
+    }
+
+    /* === ZONE FILTER BAR & VIEW CONTROLS === */
+    #viewport-area {
       flex: 1;
-      overflow-y: auto;
-      padding: 10px;
+      position: relative;
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      justify-content: space-between;
+      padding: 14px 20px;
+      pointer-events: none;
     }
-    .roster-card {
-      padding: 9px 12px;
-      background: rgba(20, 46, 71, 0.5);
-      border-radius: 8px;
-      border-left: 4px solid #64748B;
+    .controls-top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .zone-stack {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      transition: all 0.2s;
+      gap: 8px;
+      align-items: flex-start;
     }
-    .roster-card.working {
-      background: rgba(6, 78, 59, 0.35);
-      border-left-color: #10B981;
-    }
-    .roster-card:hover {
-      background: rgba(29, 95, 209, 0.35);
-    }
-    .roster-card-top {
+    .zone-tabs {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 7px;
+      flex-wrap: wrap;
     }
-    .roster-agent-name {
+    .zone-tab {
+      background: rgba(255, 255, 255, 0.92);
+      color: #334155;
+      border: 1px solid rgba(203, 213, 225, 0.9);
+      border-radius: 999px;
+      padding: 6px 13px;
+      font-size: 12.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+      transition: all 0.15s;
+    }
+    .zone-tab:hover {
+      background: #FFFFFF;
+      color: #0F172A;
+      transform: translateY(-1px);
+    }
+    .zone-tab.active {
+      background: #0F172A;
+      color: #FFFFFF;
+      border-color: #0F172A;
+    }
+    .action-subrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-walk {
+      background: #047857;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12.5px;
       font-weight: 700;
-      font-size: 13px;
-      color: #EDF1EE;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(4, 120, 87, 0.28);
+      transition: all 0.15s;
+    }
+    .btn-walk:hover {
+      background: #065F46;
+    }
+    .btn-walk.active {
+      background: #DC2626;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+    }
+    .btn-replay {
+      background: rgba(255, 255, 255, 0.94);
+      color: #1D4ED8;
+      border: 1px solid #93C5FD;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+      transition: all 0.15s;
+    }
+    .btn-replay:hover {
+      background: #EFF6FF;
+    }
+    .btn-replay.active {
+      background: #2563EB;
+      color: #FFFFFF;
+      border-color: #2563EB;
+    }
+
+    .zoom-toolbar {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid #CBD5E1;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      flex-shrink: 0;
+    }
+    .zoom-btn {
+      background: transparent;
+      border: none;
+      border-right: 1px solid #E2E8F0;
+      color: #1E293B;
+      width: 36px;
+      height: 34px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s;
+    }
+    .zoom-btn:last-child {
+      border-right: none;
+    }
+    .zoom-btn:hover {
+      background: #F1F5F9;
+    }
+
+    /* === BOTTOM ROW (Agent Card + Replay Scrubber + Hint) === */
+    .controls-bottom-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    #agent-card {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      width: 340px;
+      max-width: calc(100vw - 40px);
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(12px);
+      border: 1px solid #CBD5E1;
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+    }
+    .agent-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .agent-card-name {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .agent-card-role {
+      font-size: 11.5px;
+      color: #64748B;
+      margin-top: 2px;
+    }
+    .card-badges-row {
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
     }
-    .roster-tag {
-      font-size: 10px;
-      font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 10px;
+    .zone-pill-small {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .card-status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .pill-work { background: #D1FAE5; color: #065F46; }
+    .pill-wait { background: #FEF3C7; color: #92400E; }
+    .pill-fail { background: #FEE2E2; color: #991B1B; }
+    .pill-idle { background: #F1F5F9; color: #475569; }
+    .agent-card-action {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #0F172A;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .card-recent-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748B;
       text-transform: uppercase;
       letter-spacing: 0.4px;
     }
-    .tag-work {
-      background: #047857;
-      color: #A7F3D0;
-      border: 1px solid #10B981;
+    .card-recent-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 140px;
+      overflow-y: auto;
     }
-    .tag-idle {
-      background: #334155;
-      color: #94A3B8;
-      border: 1px solid #475569;
+    .card-recent-row {
+      font-size: 11.5px;
+      color: #334155;
+      line-height: 1.35;
+      padding: 3px 0;
+      border-bottom: 1px dashed #E2E8F0;
+      word-break: break-word;
     }
-    .tag-wait {
-      background: #B45309;
-      color: #FDE68A;
-      border: 1px solid #F59E0B;
-    }
-    .roster-task-detail {
+    .empty-recent {
       font-size: 11.5px;
       color: #94A3B8;
+    }
+
+    #replay-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.88);
+      color: #FFFFFF;
+      padding: 7px 14px;
+      border-radius: 999px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.25);
+    }
+    .replay-ctrl-btn {
+      background: rgba(255, 255, 255, 0.14);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .replay-ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .hint-pill {
+      margin-left: auto;
+      background: rgba(15, 23, 42, 0.68);
+      color: #F8FAFC;
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 7px 13px;
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+    }
+
+    /* === RIGHT DRAWER: WORKER ROSTER & SWARM BOARD === */
+    #roster-panel {
+      position: fixed;
+      top: 78px;
+      right: 16px;
+      bottom: 54px;
+      width: 380px;
+      max-width: calc(100vw - 32px);
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(14px);
+      border: 1px solid #CBD5E1;
+      border-radius: 16px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 25;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
+    }
+    #roster-panel.hidden {
+      transform: translateX(420px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .drawer-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #E2E8F0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #F8FAFC;
+    }
+    .drawer-tabs {
+      display: flex;
+      gap: 6px;
+    }
+    .drawer-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #64748B;
+      font-size: 12.5px;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 5px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .drawer-tab.active {
+      background: #FFFFFF;
+      color: #0F172A;
+      border-color: #CBD5E1;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .worker-card {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .worker-card:hover {
+      background: #EFF6FF;
+      border-color: #93C5FD;
+    }
+    .worker-card.is-working {
+      background: #ECFDF5;
+      border-color: #6EE7B7;
+    }
+    .worker-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .worker-card-name {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    .worker-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #64748B;
+    }
+    .worker-task-line {
+      font-size: 12px;
+      color: #334155;
+      font-weight: 500;
       line-height: 1.35;
       word-break: break-word;
     }
-    .btn-zoom-agent {
-      background: #142E47;
-      color: #60A5FA;
-      border: 1px solid rgba(96, 165, 250, 0.4);
-      padding: 3px 8px;
-      border-radius: 4px;
+    .worker-fly-btn {
+      align-self: flex-start;
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      color: #1D4ED8;
+      border-radius: 6px;
+      padding: 3px 9px;
       font-size: 11px;
       font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
-      margin-top: 2px;
-      align-self: flex-start;
-      transition: all 0.15s;
     }
-    .btn-zoom-agent:hover {
-      background: #1D5FD1;
+    .worker-fly-btn:hover {
+      background: #2563EB;
       color: #FFFFFF;
-      border-color: #1D5FD1;
+      border-color: #2563EB;
     }
 
-    </style>
+    .board-log-item {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-left: 4px solid #2563EB;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .board-log-item:hover {
+      background: #EFF6FF;
+    }
+    .board-log-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: #64748B;
+    }
+    .board-log-detail {
+      font-size: 12px;
+      color: #1E293B;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    #ask-user-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      color: #78350F;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-top: 8px;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+    .btn-confirm {
+      background: #0F172A;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <div id="canvas-container"></div>
 
   <div id="hud-overlay">
-    <!-- TOP BAR -->
-    <div id="top-bar" class="interactive">
-      <div class="top-left">
-        <div class="brand-title">
-          <img src="/hadomee_logo.png" alt="HadoMEE" style="height: 30px; background: white; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); vertical-align: middle;">
-          <span style="color: #FF8A1F; font-size: 13px; font-weight: 800; letter-spacing: 0.5px;">&#9733; TAT CA VI HA DO THAN YEU &#9733;</span>
+    <!-- TOP WHITE WORKSPACE HEADER -->
+    <header id="top-header" class="interactive">
+      <div class="header-left">
+        <div class="header-kicker-row">
+          <span class="live-pill">
+            <span class="live-dot"></span>
+            <span id="status-text">HADOMEE AGENT WORKSPACE · TRỰC TIẾP</span>
+          </span>
+          <span id="current-stage" style="font-size:11px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:2px 8px; border-radius:999px;">ĐANG SẴN SÀNG</span>
+          <span id="session-timer" style="font-size:11px; font-family:monospace; color:#64748B;">00:00:00</span>
         </div>
-        <select id="tool-select" class="tool-selector">
-          <option value="boc-khoi-luong-ong-gio">Boc khoi luong ong gio & Phu kien HVAC</option>
-          <option value="danh-so-phong">Danh so phong tu dong</option>
-          <option value="demo-tool">Demo Tool</option>
-        </select>
-        <div id="status-badge" class="status-badge status-live">
-          <span id="status-dot">&#9679;</span>
-          <span id="status-text">TRUC TIEP</span>
+        <div class="header-title-row">
+          <h1 class="header-title">Văn phòng Agent <span>3D</span></h1>
+          <select id="tool-select" class="source-select" title="Chọn Swarm trực tiếp hoặc Tool Revit đang chạy"></select>
         </div>
-        <button id="btn-commander" class="btn-hud" style="background: linear-gradient(135deg, #1D5FD1, #FF8A1F); color: #FFFFFF; font-weight: 800; border: none; box-shadow: 0 2px 8px rgba(255,138,31,0.4);" title="Tram Chi Huy Truong">&#11088; SEP HO (CHI HUY TRUONG)</button>
-        
-        <!-- STATUS COUNTERS (ROSTER) -->
-        <div id="badge-working" class="status-counter-badge badge-work" title="Click xem danh sách Agent đang làm việc">
-          <span class="pulse-dot-green"></span>
-          <span>DANG LAM VIEC:</span>
-          <strong id="counter-working" style="font-size: 13.5px;">1</strong>
-        </div>
-
-        <div id="badge-idle" class="status-counter-badge badge-idle" title="Click xem danh sách Agent đang nghỉ">
-          <span>💤</span>
-          <span>DANG NGHI:</span>
-          <strong id="counter-idle" style="font-size: 13.5px;">11</strong>
-        </div>
-
-        <button id="btn-toggle-roster" class="btn-hud" style="background: #1E3A8A; color: #93C5FD; border-color: #3B82F6;" title="Mo danh sach chi tiet 12 Agent">&#128101; Doi Ngu Agent</button>
+        <p id="header-subtitle" class="header-subtitle">Quan sát đội Worker theo từng khu vực. Chọn nhân vật để xem việc đang làm và Hội đồng Swarm.</p>
       </div>
 
-      <div class="top-center">
-        <div class="stage-indicator">
-          <span>Giai doan:</span>
-          <span id="current-stage" style="color: #60A5FA; font-weight: 800;">SPEC</span>
+      <div class="header-right">
+        <div id="badge-working" class="stat-chip" title="Số Worker đang xử lý tác vụ">
+          <span class="chip-dot" style="background:#10B981;"></span>
+          <strong id="counter-working">0</strong> đang làm
         </div>
-        <div class="timer-display" id="session-timer">00:00:00</div>
-      </div>
+        <div id="badge-waiting" class="stat-chip" title="Số Worker đang chờ phản hồi">
+          <span class="chip-dot" style="background:#F59E0B;"></span>
+          <strong id="counter-waiting">0</strong> chờ xử lý
+        </div>
+        <div id="badge-enabled" class="stat-chip" title="Tổng số Worker đang bật trong văn phòng">
+          <span class="chip-dot" style="background:#3B82F6;"></span>
+          <strong id="counter-enabled">0</strong> đang bật
+        </div>
 
-      <div class="top-right">
-        <button id="btn-tod" class="btn-hud" title="Chuyen Ngay / Hoang hon / Dem">&#9728; Ngay</button>
-        <button id="btn-director" class="btn-hud active" title="Bat/Tat camera Dao dien">&#127916; Dao dien: BAT</button>
-        <button id="btn-audio" class="btn-hud" title="Bat/Tat am thanh WebAudio">&#128264; Tat tieng</button>
-        <button id="btn-toggle-log" class="btn-hud" title="Dong/Mo nhat ky">&#128203; Nhat ky</button>
+        <button id="btn-low-gfx" class="btn-pill" title="Giảm đổ bóng & cảnh quan ngoài trời">🧊 Đồ họa nhẹ</button>
+        <button id="btn-director" class="btn-pill" title="Tự động lia camera theo Worker đang thao tác">👁️ Xem chuyển động</button>
+        <button id="btn-tod" class="btn-pill" title="Đổi ánh sáng Ngày / Hoàng hôn / Đêm">☀️ Ngày</button>
+        <button id="btn-toggle-roster" class="btn-primary-dark">Đội Worker →</button>
       </div>
-    </div>
+    </header>
 
-    <!-- MAIN BODY AREA -->
-    <div id="main-hud-area">
-      <!-- STAFF ROSTER PANEL (LEFT DRAWER) -->
-      <div id="roster-panel" class="interactive">
-        <div class="roster-header">
-          <div class="roster-title">
-            <span>&#127970; TRANG THAI 12 AGENT HADOMEE</span>
+    <!-- VIEWPORT HUD AREA -->
+    <div id="viewport-area">
+      <div>
+        <div class="controls-top-row">
+          <div class="zone-stack interactive">
+            <div id="zone-tabs" class="zone-tabs"></div>
+            <div class="action-subrow">
+              <button id="btn-walk" class="btn-walk" title="Chế độ đi bộ dạo quanh văn phòng bằng bàn phím WASD">🚶 Đi bộ (WASD)</button>
+              <button id="btn-replay-swarm" class="btn-replay" title="Phát lại toàn bộ hoạt động giao việc & xử lý của Swarm">▶ Xem lại quy trình</button>
+            </div>
           </div>
-          <button id="btn-close-roster" style="background:none; border:none; color:#8DA2B3; font-size:16px; cursor:pointer;" title="Dong">&#10005;</button>
-        </div>
-        <div id="roster-list" class="roster-list"></div>
-      </div>
-      <!-- ASK USER BANNER -->
-      <div id="ask-user-banner" class="interactive">
-        <span>&#10071; Can Sep Ho xac nhan: <strong id="ask-user-detail">Ghi de du lieu hang loat?</strong></span>
-        <button id="btn-confirm-reply" class="btn-confirm">Dong y (Phan hoi)</button>
-      </div>
 
-      <!-- AGENT CARD POPUP -->
-      <div id="agent-card" class="interactive">
-        <div class="agent-card-header">
-          <div>
-            <div id="card-agent-name" class="agent-card-name">&#129517; Dieu phoi</div>
-            <div id="card-agent-role" class="agent-card-role">orchestrator</div>
+          <div class="zoom-toolbar interactive">
+            <button id="btn-zoom-in" class="zoom-btn" title="Phóng to">+</button>
+            <button id="btn-zoom-out" class="zoom-btn" title="Thu nhỏ">−</button>
+            <button id="btn-cam-reset" class="zoom-btn" title="Đặt lại toàn cảnh">↻</button>
+            <button id="btn-fullscreen" class="zoom-btn" title="Toàn màn hình">⛶</button>
           </div>
-          <button id="btn-close-card" style="background:none; border:none; color:#8DA2B3; font-size:16px; cursor:pointer;">&#10005;</button>
         </div>
-        <div id="card-agent-action" class="agent-card-status">Dang doc rules va PROJECT.md</div>
-        <div style="font-size:11px; color:#8DA2B3; font-weight:600;">Su kien gan nhat:</div>
-        <div id="card-recent-events" style="display:flex; flex-direction:column; gap:4px; font-size:11px;"></div>
-      </div>
 
-      <!-- METRICS BADGES -->
-      <div id="metrics-panel" class="interactive">
-        <div class="metric-badge">
-          <span class="metric-label">Vong sua</span>
-          <span id="metric-round" class="metric-val">0/2</span>
-        </div>
-        <div class="metric-badge">
-          <span class="metric-label">Test Dat</span>
-          <span id="metric-test-pass" class="metric-val pass">0</span>
-        </div>
-        <div class="metric-badge">
-          <span class="metric-label">Test Loi</span>
-          <span id="metric-test-fail" class="metric-val fail">0</span>
-        </div>
-        <div class="metric-badge">
-          <span class="metric-label">Chan</span>
-          <span id="metric-block" class="metric-val fail">0</span>
-        </div>
-        <div class="metric-badge">
-          <span class="metric-label">Bat Bug</span>
-          <span id="metric-bugs" class="metric-val warn">0</span>
+        <div id="ask-user-banner" class="interactive">
+          <span>❗ Cần Sếp Hồ xác nhận: <strong id="ask-user-detail">Đang chờ phê duyệt</strong></span>
+          <button id="btn-confirm-reply" class="btn-confirm">Đồng ý (Phản hồi)</button>
         </div>
       </div>
 
-      <!-- EVENT LOG PANEL -->
-      <div id="log-panel" class="interactive">
-        <div class="panel-header">
-          <span>NHAT KY SU KIEN AGENT</span>
-          <span id="log-count" style="font-size:11px; color:#8DA2B3;">0 su kien</span>
+      <div class="controls-bottom-row">
+        <!-- SELECTED WORKER CARD -->
+        <div id="agent-card" class="interactive">
+          <div class="agent-card-top">
+            <div>
+              <div id="card-agent-name" class="agent-card-name">🧭 coordinator</div>
+              <div id="card-agent-role" class="agent-card-role">Điều phối Swarm</div>
+            </div>
+            <button id="btn-close-card" style="background:none;border:none;color:#64748B;font-size:16px;cursor:pointer;" title="Đóng">✕</button>
+          </div>
+          <div class="card-badges-row">
+            <span id="card-agent-zone" class="zone-pill-small">Điều phối</span>
+            <span id="card-agent-status-pill" class="card-status-pill pill-idle">● Sẵn sàng</span>
+          </div>
+          <div id="card-agent-action" class="agent-card-action">Đang sẵn sàng tại bàn làm việc</div>
+          <div class="card-recent-title">Việc vừa làm & Tin nhắn gần đây</div>
+          <div id="card-recent-events" class="card-recent-list"></div>
         </div>
-        <div id="log-list" class="log-list"></div>
+
+        <!-- REPLAY CONTROLS (ONLY SHOWN IN REPLAY/DEMO MODE) -->
+        <div id="replay-bar" class="interactive">
+          <button id="btn-play-pause" class="replay-ctrl-btn">⏸ Tạm dừng</button>
+          <button id="btn-speed" class="replay-ctrl-btn">x1</button>
+          <button id="btn-back-live" class="replay-ctrl-btn" style="background:#10B981; border-color:#10B981;">● Về trực tiếp</button>
+        </div>
+
+        <div id="nav-hint" class="hint-pill interactive">Kéo để xoay 360° · cuộn để phóng to · chuột phải để trượt</div>
       </div>
     </div>
 
-    <!-- BOTTOM BAR -->
-    <div id="bottom-bar" class="interactive">
-      <div class="cam-presets">
-        <span style="font-size:12px; color:#8DA2B3; margin-right:4px;">Goc nhin:</span>
-        <button class="btn-hud btn-cam" data-cam="1">1 Toan canh</button>
-        <button class="btn-hud btn-cam" data-cam="2">2 Tren xuong</button>
-        <button class="btn-hud btn-cam" data-cam="3">3 Thiet ke</button>
-        <button class="btn-hud btn-cam" data-cam="4">4 Lap trinh</button>
-        <button class="btn-hud btn-cam" data-cam="5">5 Kiem dinh</button>
+    <!-- SLIDE-OVER DRAWER: WORKER ROSTER & BOARD LOG -->
+    <aside id="roster-panel" class="interactive hidden">
+      <div class="drawer-header">
+        <div class="drawer-tabs">
+          <button id="tab-btn-workers" class="drawer-tab active">Đội Worker</button>
+          <button id="tab-btn-board" class="drawer-tab">Hội đồng & Nhật ký (<span id="log-count">0 mục</span>)</button>
+        </div>
+        <button id="btn-close-roster" style="background:none;border:none;color:#64748B;font-size:17px;cursor:pointer;" title="Đóng">✕</button>
       </div>
-
-      <div class="timeline-controls">
-        <button id="btn-play-pause" class="btn-hud">&#9208; Tam dung</button>
-        <input type="range" id="timeline-slider" class="timeline-slider" min="0" max="100" value="100">
-        <button id="btn-speed" class="btn-hud speed-tag">x1</button>
-        <button id="btn-live" class="btn-hud" style="color:#2DBE70;">&#9679; Ve truc tiep</button>
-      </div>
-    </div>
+      <div id="roster-list" class="drawer-body"></div>
+      <div id="log-list" class="drawer-body" style="display:none;"></div>
+    </aside>
   </div>
 
   <script type="module" src="/src/main.ts"></script>

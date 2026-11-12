@@ -9,7 +9,7 @@ using Point = System.Drawing.Point;
 
 namespace HDTool
 {
-    public class HDToolMainForm : System.Windows.Forms.Form
+    public class HDToolMainForm : HDToolBaseForm
     {
         private UIDocument _uidoc;
         private Document _doc;

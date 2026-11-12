@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -19,7 +19,7 @@ namespace HDTool
     /// Đảm bảo 100% thông tin, nhãn chữ, nút bấm hiển thị đầy đủ, không bao giờ bị che khuất
     /// Tuân thủ nghiêm ngặt Quy Tắc Giao Diện theo lệnh Sếp Hồ (HadoMEE).
     /// </summary>
-    public class AutoCropForm : System.Windows.Forms.Form
+    public class AutoCropForm : HDToolBaseForm
     {
         private UIDocument _uidoc;
         private Document _doc;
@@ -645,7 +645,7 @@ namespace HDTool
                 }
                 finally
                 {
-                    try { if (this.InvokeRequired) this.Invoke(new Action(() => this.Show())); else this.Show(); } catch { }
+                    try { if (this.InvokeRequired) this.Invoke(new Action(() => { this.Show(); this.BringToFront(); this.Activate(); })); else { this.Show(); this.BringToFront(); this.Activate(); } } catch { }
                 }
             };
 

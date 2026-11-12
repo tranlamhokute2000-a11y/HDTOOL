@@ -39,3 +39,7 @@ Tài liệu này kích hoạt chế độ ghi nhớ trạng thái làm việc li
    - Từ bây giờ trở đi, TẤT CẢ các chức năng / cửa sổ của HDTOOL khi mở lên để sử dụng thì **MỌI THAO TÁC ĐỀU PHẢI LÀM ĐƯỢC TRÊN BẢN VẼ** (Pan, Zoom, xoay 3D, click chọn ống, chuyển Tab View/Sheet).
    - Bắt buộc 100% dùng kiến trúc **Modeless Dialog (`Show(new RevitWindowWrapper(hwnd))` + `HDToolModelessHost.Run` / `ExternalEvent`)**.
    - **TUYỆT ĐỐI KHÔNG DÙNG `ShowDialog()`** làm khóa cứng giao diện bản vẽ Revit của Sếp Hồ.
+
+9. **Quy tắc ấn phím `ESC` thoát lệnh cho mọi công cụ hiện tại & tương lai (Lệnh Sếp Hồ)**:
+   - TẤT CẢ các chức năng/cửa sổ của HDTOOL (hiện có và phát triển thêm sau này) đều phải hỗ trợ **ấn phím `ESC` là thoát ngay cửa sổ công cụ**, không nhất thiết phải di chuột bấm `Đóng` / `X`.
+   - Mọi Form bắt buộc kế thừa **`HDToolBaseForm`** (`Source/HDToolExternalEvent.cs` — `KeyPreview = true` + `ProcessCmdKey` bắt `Keys.Escape`), kết hợp gán `CancelButton` và gọi `this.Activate()` sau mỗi lần `Pick` trên bản vẽ.

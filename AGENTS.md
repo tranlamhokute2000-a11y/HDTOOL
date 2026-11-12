@@ -104,3 +104,12 @@ Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong
   - Khi người dùng mở bất kỳ cửa sổ nào của HDTOOL (Tự Động Crop View, Căn Chỉnh Grids / Level, Thống Kê Ống Nước, Khối Lượng Ống Gió, Xuất Danh Mục Bản Vẽ, Cập Nhật Danh Mục, Menu HDTOOL, Cập Nhật Tool...): Người dùng **VẪN PHẢI THAO TÁC HOÀN TOÀN TỰ DO TRÊN BẢN VẼ REVIT** (Pan, Zoom, xoay 3D Isometric, click chọn đối tượng, chuyển Tab View / Sheet khác...).
   - **Bắt buộc 100% kiến trúc Modeless Dialog**: Mở cửa sổ bằng `form.Show(new RevitWindowWrapper(revitHwnd))` kết hợp `HDToolModelessHost.Run` / `ExternalEvent`.
   - **TUYỆT ĐỐI CẤM SỬ DỤNG `ShowDialog()`** cho các cửa sổ chức năng của HDTOOL vì `ShowDialog()` sẽ khóa cứng màn hình Revit, không cho kỹ sư thao tác trên bản vẽ.
+
+---
+
+## 8. QUY TẮC ẤN PHÍM `ESC` ĐỂ THOÁT LỆNH NGAY LẬP TỨC CHO MỌI CÔNG CỤ (LỆNH SẾP HỒ)
+
+- **Bắt buộc cho TẤT CẢ công cụ hiện tại VÀ mọi công cụ phát triển mới sau này**:
+  - Khi người dùng không dùng nữa chỉ cần **ấn phím `ESC` là thoát/đóng ngay cửa sổ công cụ** mà không cần di chuột bấm nút `Đóng` hay `X`.
+  - Mọi `Form` trong HDTOOL (kể cả Form chính lẫn các hộp thoại con) **BẮT BUỘC kế thừa `HDToolBaseForm`** (trong `Source/HDToolExternalEvent.cs`) — lớp chuẩn tích hợp `KeyPreview = true` + `ProcessCmdKey(Keys.Escape)` (kèm `CancelButton = btnClose/btnCancel` và `this.Activate()` sau khi quay lại từ thao tác `Pick` trên Revit).
+  - Nếu cửa sổ có hành vi phụ khi ấn `ESC` (VD: tắt highlight 3D hoặc hủy chế độ đang gõ ô `DataGridView`), chỉ cần override `OnBeforeEscapeClose()` trong `HDToolBaseForm`.

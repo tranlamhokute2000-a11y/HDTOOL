@@ -18,5 +18,5 @@ Tạo trải nghiệm người dùng hiện đại, thanh thoát chuẩn Windows
 3. **Giao diện Cửa sổ (WinForms / WPF)**:
    - Màu sắc nhận diện HadoMEE: Xanh navy `#182b49`, Cam điểm nhấn `#d97706`, Xanh ngọc `#10b981`.
    - Luôn bật `DoubleBuffered` cho các bảng DataGridView để chống giật nháy hình.
-   - Hỗ trợ phím tắt ESC đóng form, Enter thực thi.
+   - **Bắt buộc kế thừa `HDToolBaseForm`** (`Source/HDToolExternalEvent.cs`) cho mọi cửa sổ Form (chính & hộp thoại con) để ấn phím `ESC` thoát lệnh ngay ở bất kỳ control nào (không cần di chuột bấm `Đóng`), gán `CancelButton`, `AcceptButton` hợp lý và gọi `this.Activate()` sau thao tác `Pick` trên bản vẽ.
 
