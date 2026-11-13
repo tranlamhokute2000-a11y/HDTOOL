@@ -1,33 +1,30 @@
 # TRẠNG THÁI LÀM VIỆC GẦN NHẤT (SESSION STATE)
 
-- **Thời gian cập nhật**: 2026-11-13 16:18
-- **Phiên bản hiện tại**: **Version 93** (`HDTOOL_Setup_Version_93.exe`)
-- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_92.exe` và `HDTOOL_Setup_Version_93.exe` (0 file trên Desktop)
+- **Thời gian cập nhật**: 2026-11-13 16:50
+- **Phiên bản hiện tại**: **Version 95** (`HDTOOL_Setup_Version_95.exe`)
+- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_94.exe` và `HDTOOL_Setup_Version_95.exe` (0 file trên Desktop)
 
 ## 1. Công việc vừa hoàn thành
-- **Nâng cấp đột phá tính năng Xuất Bản Vẽ Sang AutoCAD & Quy Đổi Layer MEP theo lệnh Sếp Hồ**:
-  1. **Tự động nhận diện chính xác các hệ thống MEP đang hiển thị trong View (Loại bỏ 100% hệ thống bị ẩn)**:
-     - Hàm `ScanVisibleMepSystemsInViews` quét trực tiếp các đối tượng MEP visible trong View/Sheet được chọn.
-     - Tự động loại bỏ triệt để các phần tử bị ẩn qua:
-       * `Hide Elements in View` (`elem.IsHidden(view)`)
-       * View Filter bị tắt Visibility (`view.GetFilterVisibility(filterId) == false`)
-       * Category bị tắt trong View (`view.GetCategoryHidden(catId)`)
-     - Bảng quy đổi chỉ hiển thị đúng các hệ thống MEP thực tế đang xuất hiện trên bản vẽ, không còn hiển thị danh sách tĩnh hàng chục dòng thừa thãi.
-     - Khi chuyển đổi qua lại giữa *View Đang Vẽ*, *Danh Sách Sheet*, hoặc *Danh Sách View Dự Án*, hệ thống tự động quét lại và cập nhật bảng tương ứng.
-  2. **Bảng màu AutoCAD Select Color ACI chuẩn 100% (`CadColorPickerDialog.cs`)**:
-     - Tái hiện chính xác 100% hộp thoại `Select Color` của AutoCAD (giao diện, tab Index Color, ma trận màu 24 cột x 10 hàng, hàng màu chuẩn 1-9, hàng sắc xám 250-255, nút ByLayer, ByBlock, khung preview màu, ô nhập Color: 1-255).
-     - Khi click đúp hoặc click vào ô cột `Màu Sắc CAD`, cửa sổ chọn màu AutoCAD lập tức xuất hiện cho người dùng chọn trực quan.
-     - Tự động tính toán và hiển thị chính xác mã Index Color và giá trị RGB (như Index 134: `0,127,127`, Index 1: `255,0,0`...).
-  3. **Cho phép đổi tên Layer CAD tùy ý & Lưu cấu hình mặc định**:
-     - Cột *Tên Layer CAD (Xuất Ra)* cho phép người dùng gõ sửa đổi tên theo ý muốn.
-     - Sau khi lưu hoặc xuất, Add-in tự động ghi nhớ cấu hình vào file JSON `%APPDATA%\Autodesk\Revit\Addins\HDTOOL\mep_cad_layer_mapping.json`. Lần sau mở bất kỳ dự án nào, khi quét thấy hệ thống đó sẽ tự động áp dụng đúng Tên Layer và Màu Sắc đã lưu.
-  4. **Kế thừa Modeless 100% & Phím ESC thoát lệnh ngay lập tức**:
-     - Cả cửa sổ chính và hộp thoại chọn màu CAD đều kế thừa `HDToolBaseForm`, ấn phím `ESC` là đóng/thoát lệnh ngay lập tức.
+- **Khắc phục triệt để lỗi "Tên Layer và Màu sắc CAD không thay đổi theo thiết lập công cụ, vẫn giữ tên mặc định template Revit"**:
+  1. **Nguyên nhân gốc rễ**:
+     - Trong file DWG do Revit xuất ra: Tên layer ống nước và phụ kiện mang tiền tố dự án/template mặc định (như `DSC_P-PIPE-____-OTLN P_VENT PIPE _TH_-1`, `DSC_P-PIPE-____-CNTR-1`, `DSC_P-PIPE-____-OTLN-1` hoặc `P-PIPE-MED_`). Ký tự dấu ngoặc đơn `(` và `)` trong tên hệ thống `P_VENT PIPE (TH)` bị Revit thay thế thành dấu gạch dưới `_TH_`.
+     - Script AutoLISP trước đó tìm kiếm layer bằng `(wcmatch layUpper "*P_VENT PIPE (TH)*")`, do đó bị trượt (không khớp ký tự dấu ngoặc), dẫn đến bỏ qua hoàn toàn không di chuyển đối tượng nào sang layer đích.
+     - Đồng thời, các nét tim ống (`CNTR`) và viền ống (`OTLN`) không mang tên hệ thống nên bị bỏ sót; và nếu file DWG đang được mở trong AutoCAD bởi người dùng thì thao tác ghi đè file bị từ chối do file lock.
+  2. **Giải pháp khắc phục toàn diện (Dual-Action Strategy)**:
+     - **Tầng 1 (Revit API - `ApplyLayerMappingToCategories`)**:
+       * Duyệt qua toàn bộ `ExportLayerKey` trong `ExportLayerTable`: Mọi category/subcategory có chứa từ khóa `"Pipe"` (hoặc `"Duct"`) đều được định hướng sẵn sang `TargetCadLayerName` và mã màu ACI do người dùng chọn ngay từ khi xuất.
+     - **Tầng 2 (AutoCAD Core Engine hậu kỳ - AutoLISP thông minh)**:
+       * **Xử lý chuyên sâu cho View 1 hệ thống (Single System per Group)**: Khi trong View chỉ có 1 hệ thống Pipes (như `P_VENT PIPE (TH)`), AutoLISP tự động chuyển toàn bộ 100% đối tượng trên mọi layer chứa `*PIPE*` (tim ống, viền ống, phụ kiện, v.v.) sang layer đích `TargetCadLayerName` (ví dụ `P-PIPE-THOATNUOC`).
+       * **Trích xuất System Tokens linh hoạt**: Chuẩn hóa ký tự đặc biệt, chuyển dấu ngoặc `()` thành `_` và tách từ khóa (`VENT`, `TH`, `PIPE`...), đảm bảo so khớp chuẩn xác 100% bất kể cách đặt tên của Revit template.
+       * **Chuyển màu ByLayer**: Đặt màu tất cả đối tượng về ByLayer (`256`), xóa bỏ TrueColor override, và đặt màu của Layer đích thành đúng mã màu ACI (Index 1-255).
+       * **Cơ chế chống khóa file (File Lock Resilience)**: Thử ghi đè an toàn với retry; nếu file đang mở trong AutoCAD thì tự động xuất sang file dự phòng `{Tên_Bản_Vẽ}_REMAP.dwg` và thông báo rõ ràng cho Sếp Hồ.
+  3. **Biên dịch & Đóng gói**:
+     - Biên dịch thành công 0 lỗi -> **HDTOOL Version 95** (`HDTOOL_Setup_Version_95.exe`).
+     - Tự động đồng bộ Hot Reload sang `%APPDATA%\Autodesk\Revit\Addins\2024\HDTOOL`.
+     - Giữ nguyên tắc chỉ lưu 2 version gần nhất (Version 94 và Version 95), 0 file trên Desktop.
 
 ## 2. File liên quan
-- `Source/CadColorPickerDialog.cs` (Hộp thoại chọn màu chuẩn AutoCAD ACI)
-- `Source/CadExportMepService.cs` (Thêm `ScanVisibleMepSystemsInViews`, xử lý View Filter, Category Hidden)
-- `Source/ExportCadOptionsForm.cs` (Tích hợp quét View tự động, gắn sự kiện chọn màu CAD trực quan)
-- `Source/CadLayerMappingModels.cs` (Đồng bộ chuẩn màu ACI RGB)
-- `SKILL.md`, `.agents/skills/hdtool/SKILL.md`
+- `Source/CadExportMepService.cs`
+- `Source/ExportCadOptionsForm.cs`
 - `Build.ps1`, `VERSION.txt`
+- `SKILL.md`, `.agents/skills/hdtool/SKILL.md`

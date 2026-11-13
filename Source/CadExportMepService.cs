@@ -954,92 +954,141 @@ namespace HDTool
             dwgOpt.TargetUnit = settings.TargetUnit;
             dwgOpt.Colors = ExportColorMode.IndexColors;
 
-            // 2. Cấu hình ExportLayerTable kèm Category + SystemType modifiers
+            // 2. Tinh chỉnh ExportLayerTable theo bảng quy đổi Layer MEP của người dùng
             try
             {
                 ExportLayerTable layerTable = dwgOpt.GetExportLayerTable();
-                if (layerTable == null)
+                if (layerTable != null && settings.LayerMappings != null && settings.LayerMappings.Count > 0)
                 {
-                    layerTable = new ExportLayerTable();
-                }
+                    List<CadLayerMappingItem> ductMaps = new List<CadLayerMappingItem>();
+                    List<CadLayerMappingItem> pipeMaps = new List<CadLayerMappingItem>();
+                    List<CadLayerMappingItem> equipMaps = new List<CadLayerMappingItem>();
+                    List<CadLayerMappingItem> elecMaps = new List<CadLayerMappingItem>();
 
-                string[] mepCatNames = new string[]
-                {
-                    "Ducts", "Duct Fittings", "Duct Accessories", "Air Terminals",
-                    "Pipes", "Pipe Fittings", "Pipe Accessories", "Plumbing Fixtures",
-                    "Mechanical Equipment", "Sprinklers"
-                };
-
-                // Revit API bắt buộc phải có ModifierType.Category trước ModifierType.SystemType
-                LayerModifier modCat = new LayerModifier(ModifierType.Category, "-");
-                LayerModifier modSys = new LayerModifier(ModifierType.SystemType, "-");
-
-                foreach (ExportLayerKey key in layerTable.GetKeys())
-                {
-                    if (key != null && !string.IsNullOrEmpty(key.CategoryName))
+                    for (int i = 0; i < settings.LayerMappings.Count; i++)
                     {
-                        bool isMepCat = false;
-                        for (int i = 0; i < mepCatNames.Length; i++)
+                        CadLayerMappingItem m = settings.LayerMappings[i];
+                        if (m != null && m.IsEnabled && !string.IsNullOrEmpty(m.TargetCadLayerName))
                         {
-                            if (key.CategoryName.IndexOf(mepCatNames[i], StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                isMepCat = true;
-                                break;
-                            }
+                            if (m.CategoryGroup == MepCategoryGroup.Ducts) ductMaps.Add(m);
+                            else if (m.CategoryGroup == MepCategoryGroup.Pipes) pipeMaps.Add(m);
+                            else if (m.CategoryGroup == MepCategoryGroup.Equipment) equipMaps.Add(m);
+                            else if (m.CategoryGroup == MepCategoryGroup.Electrical) elecMaps.Add(m);
                         }
+                    }
 
-                        if (isMepCat)
+                    // A. NHÓM ỐNG NƯỚC (PIPES)
+                    if (pipeMaps.Count > 0)
+                    {
+                        CadLayerMappingItem p0 = pipeMaps[0];
+                        string pLay = p0.TargetCadLayerName;
+                        int pCol = p0.ColorNumber > 0 && p0.ColorNumber <= 255 ? p0.ColorNumber : 7;
+
+                        ApplyLayerMappingToCategories(layerTable, new string[] { "Pipe", "Ống nước" }, pLay, pCol, pipeMaps.Count > 1);
+                    }
+
+                    // B. NHÓM ỐNG GIÓ (DUCTS)
+                    if (ductMaps.Count > 0)
+                    {
+                        CadLayerMappingItem d0 = ductMaps[0];
+                        string dLay = d0.TargetCadLayerName;
+                        int dCol = d0.ColorNumber > 0 && d0.ColorNumber <= 255 ? d0.ColorNumber : 7;
+
+                        ApplyLayerMappingToCategories(layerTable, new string[] { "Duct", "Ống gió", "Air Terminal", "Miệng gió" }, dLay, dCol, ductMaps.Count > 1);
+                    }
+
+                    // C. NHÓM THIẾT BỊ (EQUIPMENT)
+                    if (equipMaps.Count > 0)
+                    {
+                        CadLayerMappingItem e0 = equipMaps[0];
+                        ApplyLayerMappingToCategories(layerTable, new string[] { "Mechanical Equipment", "Thiết bị" }, e0.TargetCadLayerName, e0.ColorNumber, false);
+                    }
+
+                    // D. NHÓM ĐIỆN (ELECTRICAL)
+                    if (elecMaps.Count > 0)
+                    {
+                        for (int e = 0; e < elecMaps.Count; e++)
                         {
-                            ExportLayerInfo info = layerTable.GetExportLayerInfo(key);
-                            if (info != null)
+                            CadLayerMappingItem em = elecMaps[e];
+                            if (em.RevitSystemName.IndexOf("Tray", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                em.TargetCadLayerName.IndexOf("TRAY", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
-                                try
-                                {
-                                    info.ClearLayerModifiers();
-                                    info.ClearCutLayerModifiers();
-                                    info.AddLayerModifier(modCat);
-                                    info.AddLayerModifier(modSys);
-                                    info.AddCutLayerModifier(modCat);
-                                    info.AddCutLayerModifier(modSys);
-                                    layerTable[key] = info;
-                                }
-                                catch { }
+                                ApplyLayerMappingToCategories(layerTable, new string[] { "Cable Tray", "Máng cáp" }, em.TargetCadLayerName, em.ColorNumber, false);
+                            }
+                            else
+                            {
+                                ApplyLayerMappingToCategories(layerTable, new string[] { "Conduit", "Ống luồn" }, em.TargetCadLayerName, em.ColorNumber, false);
                             }
                         }
                     }
-                }
 
-                // Đảm bảo các category MEP chính có mặt trong table
-                for (int i = 0; i < mepCatNames.Length; i++)
-                {
-                    string catName = mepCatNames[i];
-                    ExportLayerKey k = new ExportLayerKey(catName, "", SpecialType.Default);
-                    if (!layerTable.ContainsKey(k))
-                    {
-                        try
-                        {
-                            ExportLayerInfo inf = new ExportLayerInfo();
-                            string prefix = catName.StartsWith("Duct") || catName.StartsWith("Air") ? "M-DUCT" :
-                                           (catName.StartsWith("Pipe") || catName.StartsWith("Plumbing") ? "P-PIPE" : "M-MECH");
-                            inf.LayerName = prefix;
-                            inf.CutLayerName = prefix;
-                            inf.ColorNumber = 7;
-                            inf.CutColorNumber = 7;
-                            inf.AddLayerModifier(modCat);
-                            inf.AddLayerModifier(modSys);
-                            inf.AddCutLayerModifier(modCat);
-                            inf.AddCutLayerModifier(modSys);
-                            layerTable.Add(k, inf);
-                        }
-                        catch { }
-                    }
+                    dwgOpt.SetExportLayerTable(layerTable);
                 }
-
-                dwgOpt.SetExportLayerTable(layerTable);
             }
             catch { }
 
             return dwgOpt;
+        }
+
+        private static void ApplyLayerMappingToCategories(
+            ExportLayerTable table,
+            string[] categoryKeywords,
+            string targetLayerName,
+            int targetColorNumber,
+            bool addSystemTypeModifier)
+        {
+            if (table == null || categoryKeywords == null || categoryKeywords.Length == 0 || string.IsNullOrEmpty(targetLayerName)) return;
+
+            try
+            {
+                ICollection<ExportLayerKey> keys = table.GetKeys();
+                if (keys != null)
+                {
+                    foreach (ExportLayerKey k in keys)
+                    {
+                        if (k == null || string.IsNullOrEmpty(k.CategoryName)) continue;
+
+                        bool match = false;
+                        for (int i = 0; i < categoryKeywords.Length; i++)
+                        {
+                            if (k.CategoryName.IndexOf(categoryKeywords[i], StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                match = true;
+                                break;
+                            }
+                        }
+
+                        if (match)
+                        {
+                            ExportLayerInfo info = table.GetExportLayerInfo(k);
+                            if (info != null)
+                            {
+                                info.LayerName = targetLayerName;
+                                info.ColorNumber = targetColorNumber;
+                                info.CutLayerName = targetLayerName;
+                                info.CutColorNumber = targetColorNumber;
+
+                                info.ClearLayerModifiers();
+                                info.ClearCutLayerModifiers();
+
+                                if (addSystemTypeModifier)
+                                {
+                                    try
+                                    {
+                                        LayerModifier modSys = new LayerModifier(ModifierType.SystemType, "-");
+                                        info.AddLayerModifier(modSys);
+                                        info.AddCutLayerModifier(modSys);
+                                    }
+                                    catch { }
+                                }
+
+                                table[k] = info;
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
         }
 
         /// <summary>
@@ -1087,123 +1136,174 @@ namespace HDTool
             string tempDir = Path.GetTempPath();
             string randSuffix = Guid.NewGuid().ToString("N").Substring(0, 8);
             string tempDwg = Path.Combine(tempDir, "hd_export_" + randSuffix + ".dwg");
-            string tempLsp = Path.Combine(tempDir, "hd_remap_" + randSuffix + ".lsp");
             string tempScr = Path.Combine(tempDir, "hd_remap_" + randSuffix + ".scr");
 
             try
             {
                 // 1. Copy file DWG sang đường dẫn tạm ASCII thuần túy trong %TEMP%
-                // để tránh lỗi tiếng Việt Unicode trong đường dẫn và tránh nguy cơ bị khóa file (file locking)
                 File.Copy(dwgPath, tempDwg, true);
 
-                // 2. Tạo mã AutoLISP xử lý chuẩn bằng entmake / entmod
-                StringBuilder sbLsp = new StringBuilder();
-                sbLsp.AppendLine(";; HDTOOL MEP LAYER REMAPPER (AutoLISP - entmake & entmod)");
-                sbLsp.AppendLine("(defun hd-set-layer (layName colorNum ltype / layData)");
-                sbLsp.AppendLine("  (if (setq layData (tblsearch \"LAYER\" layName))");
-                sbLsp.AppendLine("    (progn");
-                sbLsp.AppendLine("      (setq layData (entget (tblobjname \"LAYER\" layName)))");
-                sbLsp.AppendLine("      (if (and colorNum (> colorNum 0) (<= colorNum 255))");
-                sbLsp.AppendLine("        (setq layData (subst (cons 62 colorNum) (assoc 62 layData) layData))");
-                sbLsp.AppendLine("      )");
-                sbLsp.AppendLine("      (if (and ltype (/= ltype \"\") (tblsearch \"LTYPE\" ltype))");
-                sbLsp.AppendLine("        (setq layData (subst (cons 6 ltype) (assoc 6 layData) layData))");
-                sbLsp.AppendLine("      )");
-                sbLsp.AppendLine("      (entmod layData)");
-                sbLsp.AppendLine("    )");
-                sbLsp.AppendLine("    (progn");
-                sbLsp.AppendLine("      (entmake (list");
-                sbLsp.AppendLine("        (cons 0 \"LAYER\")");
-                sbLsp.AppendLine("        (cons 100 \"AcDbSymbolTableRecord\")");
-                sbLsp.AppendLine("        (cons 100 \"AcDbLayerTableRecord\")");
-                sbLsp.AppendLine("        (cons 2 layName)");
-                sbLsp.AppendLine("        (cons 70 0)");
-                sbLsp.AppendLine("        (cons 62 (if (and colorNum (> colorNum 0) (<= colorNum 255)) colorNum 7))");
-                sbLsp.AppendLine("        (cons 6 (if (and ltype (/= ltype \"\") (tblsearch \"LTYPE\" ltype)) ltype \"Continuous\"))");
-                sbLsp.AppendLine("      ))");
-                sbLsp.AppendLine("    )");
-                sbLsp.AppendLine("  )");
-                sbLsp.AppendLine(")");
-
-                sbLsp.AppendLine("(defun hd-move-entities (srcLay tgtLay / ss i ent ed)");
-                sbLsp.AppendLine("  (if (setq ss (ssget \"_X\" (list (cons 8 srcLay))))");
-                sbLsp.AppendLine("    (repeat (setq i (sslength ss))");
-                sbLsp.AppendLine("      (setq ent (ssname ss (setq i (1- i))))");
-                sbLsp.AppendLine("      (setq ed (entget ent))");
-                sbLsp.AppendLine("      (setq ed (subst (cons 8 tgtLay) (assoc 8 ed) ed))");
-                sbLsp.AppendLine("      (if (assoc 62 ed)");
-                sbLsp.AppendLine("        (setq ed (subst (cons 62 256) (assoc 62 ed) ed))");
-                sbLsp.AppendLine("        (setq ed (append ed (list (cons 62 256))))");
-                sbLsp.AppendLine("      )");
-                sbLsp.AppendLine("      (entmod ed)");
-                sbLsp.AppendLine("    )");
-                sbLsp.AppendLine("  )");
-                sbLsp.AppendLine(")");
-
-                sbLsp.AppendLine("(defun c:hd-remap-all (/ td layName layUpper item sysPat tgtLay tgtCol tgtLt matched)");
-                sbLsp.AppendLine("  (setq mapList '(");
+                // 2. Phân loại cấu hình mapping theo nhóm MEP
+                List<CadLayerMappingItem> ductMaps = new List<CadLayerMappingItem>();
+                List<CadLayerMappingItem> pipeMaps = new List<CadLayerMappingItem>();
+                List<CadLayerMappingItem> equipMaps = new List<CadLayerMappingItem>();
+                List<CadLayerMappingItem> elecMaps = new List<CadLayerMappingItem>();
 
                 for (int i = 0; i < mappings.Count; i++)
                 {
                     CadLayerMappingItem m = mappings[i];
                     if (m != null && m.IsEnabled && !string.IsNullOrEmpty(m.TargetCadLayerName))
                     {
-                        string sysPattern = SheetExportCadPdfService.RemoveDiacritics(m.RevitSystemName != null ? m.RevitSystemName : string.Empty).ToUpperInvariant();
-                        string targetLay = m.TargetCadLayerName.ToUpperInvariant();
-                        int col = (m.ColorNumber > 0 && m.ColorNumber <= 255) ? m.ColorNumber : 7;
-                        string lt = string.IsNullOrEmpty(m.Linetype) ? "Continuous" : m.Linetype;
-
-                        sbLsp.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                            "    (\"{0}\" \"{1}\" {2} \"{3}\")",
-                            EscapeLisp(sysPattern), EscapeLisp(targetLay), col, EscapeLisp(lt)));
+                        if (m.CategoryGroup == MepCategoryGroup.Ducts) ductMaps.Add(m);
+                        else if (m.CategoryGroup == MepCategoryGroup.Pipes) pipeMaps.Add(m);
+                        else if (m.CategoryGroup == MepCategoryGroup.Equipment) equipMaps.Add(m);
+                        else if (m.CategoryGroup == MepCategoryGroup.Electrical) elecMaps.Add(m);
                     }
                 }
 
-                sbLsp.AppendLine("  ))");
-                sbLsp.AppendLine("  ;; 1. Khoi tao truoc tat ca cac layer dich voi mau sac theo cau hinh");
-                sbLsp.AppendLine("  (foreach item mapList");
-                sbLsp.AppendLine("    (setq tgtLay (cadr item) tgtCol (caddr item) tgtLt (cadddr item))");
-                sbLsp.AppendLine("    (hd-set-layer tgtLay tgtCol tgtLt)");
-                sbLsp.AppendLine("  )");
-                sbLsp.AppendLine("  ;; 2. Quet tat ca cac layer trong DWG va chuyen doi doi tuong");
-                sbLsp.AppendLine("  (setq td (tblnext \"LAYER\" T))");
-                sbLsp.AppendLine("  (while td");
-                sbLsp.AppendLine("    (setq layName (cdr (assoc 2 td)))");
-                sbLsp.AppendLine("    (setq layUpper (strcase layName))");
-                sbLsp.AppendLine("    (setq matched nil)");
-                sbLsp.AppendLine("    (foreach item mapList");
-                sbLsp.AppendLine("      (if (not matched)");
-                sbLsp.AppendLine("        (progn");
-                sbLsp.AppendLine("          (setq sysPat (car item) tgtLay (cadr item))");
-                sbLsp.AppendLine("          (if (or (and (/= sysPat \"*\") (wcmatch layUpper (strcat \"*\" sysPat \"*\")))");
-                sbLsp.AppendLine("                  (and (= sysPat \"*\") (wcmatch layUpper (strcat \"*\" tgtLay \"*\"))))");
-                sbLsp.AppendLine("            (progn");
-                sbLsp.AppendLine("              (if (/= (strcase layName) (strcase tgtLay))");
-                sbLsp.AppendLine("                (hd-move-entities layName tgtLay)");
-                sbLsp.AppendLine("              )");
-                sbLsp.AppendLine("              (setq matched T)");
-                sbLsp.AppendLine("            )");
-                sbLsp.AppendLine("          )");
-                sbLsp.AppendLine("        )");
-                sbLsp.AppendLine("      )");
-                sbLsp.AppendLine("    )");
-                sbLsp.AppendLine("    (setq td (tblnext \"LAYER\"))");
-                sbLsp.AppendLine("  )");
-                sbLsp.AppendLine("  (command \"_.QSAVE\")");
-                sbLsp.AppendLine("  (princ \"\\n---HD_REMAP_COMPLETE---\")");
-                sbLsp.AppendLine("  (princ)");
-                sbLsp.AppendLine(")");
-
-                File.WriteAllText(tempLsp, sbLsp.ToString(), Encoding.ASCII);
-
-                // 3. Tạo file Script .scr ngắn gọn
-                string unixLspPath = tempLsp.Replace('\\', '/');
+                // 3. Tạo file Script .scr nhúng trực tiếp AutoLISP thực thi không cần load lisp ngoài
                 StringBuilder sbScr = new StringBuilder();
                 sbScr.AppendLine("FILEDIA 0");
                 sbScr.AppendLine("CMDECHO 0");
-                sbScr.AppendLine(string.Format("(load \"{0}\")", unixLspPath));
+
+                // Hàm LISP tạo hoặc cập nhật layer với màu sắc ACI
+                sbScr.AppendLine("(defun hd-set-layer (layName colorNum ltype / layData)");
+                sbScr.AppendLine("  (if (setq layData (tblsearch \"LAYER\" layName))");
+                sbScr.AppendLine("    (progn");
+                sbScr.AppendLine("      (setq layData (entget (tblobjname \"LAYER\" layName)))");
+                sbScr.AppendLine("      (if (and colorNum (> colorNum 0) (<= colorNum 255))");
+                sbScr.AppendLine("        (setq layData (subst (cons 62 colorNum) (assoc 62 layData) layData))");
+                sbScr.AppendLine("      )");
+                sbScr.AppendLine("      (if (and ltype (/= ltype \"\") (tblsearch \"LTYPE\" ltype))");
+                sbScr.AppendLine("        (setq layData (subst (cons 6 ltype) (assoc 6 layData) layData))");
+                sbScr.AppendLine("      )");
+                sbScr.AppendLine("      (entmod layData)");
+                sbScr.AppendLine("    )");
+                sbScr.AppendLine("    (progn");
+                sbScr.AppendLine("      (entmake (list");
+                sbScr.AppendLine("        (cons 0 \"LAYER\")");
+                sbScr.AppendLine("        (cons 100 \"AcDbSymbolTableRecord\")");
+                sbScr.AppendLine("        (cons 100 \"AcDbLayerTableRecord\")");
+                sbScr.AppendLine("        (cons 2 layName)");
+                sbScr.AppendLine("        (cons 70 0)");
+                sbScr.AppendLine("        (cons 62 (if (and colorNum (> colorNum 0) (<= colorNum 255)) colorNum 7))");
+                sbScr.AppendLine("        (cons 6 (if (and ltype (/= ltype \"\") (tblsearch \"LTYPE\" ltype)) ltype \"Continuous\"))");
+                sbScr.AppendLine("      ))");
+                sbScr.AppendLine("    )");
+                sbScr.AppendLine("  )");
+                sbScr.AppendLine(")");
+
+                // Hàm LISP di chuyển toàn bộ entities sang layer đích và đặt màu ByLayer (256)
+                sbScr.AppendLine("(defun hd-move-entities (srcLay tgtLay / ss i ent ed)");
+                sbScr.AppendLine("  (if (setq ss (ssget \"_X\" (list (cons 8 srcLay))))");
+                sbScr.AppendLine("    (repeat (setq i (sslength ss))");
+                sbScr.AppendLine("      (setq ent (ssname ss (setq i (1- i))))");
+                sbScr.AppendLine("      (setq ed (entget ent))");
+                sbScr.AppendLine("      (setq ed (subst (cons 8 tgtLay) (assoc 8 ed) ed))");
+                sbScr.AppendLine("      (if (assoc 62 ed)");
+                sbScr.AppendLine("        (setq ed (subst (cons 62 256) (assoc 62 ed) ed))");
+                sbScr.AppendLine("        (setq ed (append ed (list (cons 62 256))))");
+                sbScr.AppendLine("      )");
+                sbScr.AppendLine("      (if (assoc 420 ed)");
+                sbScr.AppendLine("        (setq ed (vl-remove (assoc 420 ed) ed))");
+                sbScr.AppendLine("      )");
+                sbScr.AppendLine("      (entmod ed)");
+                sbScr.AppendLine("    )");
+                sbScr.AppendLine("  )");
+                sbScr.AppendLine(")");
+
+                // Hàm chính xử lý remap
+                sbScr.AppendLine("(defun c:hd-remap-all (/ td layName layUpper item matched)");
+
+                // 3.1. Khởi tạo tất cả các layer đích trước
+                for (int i = 0; i < mappings.Count; i++)
+                {
+                    CadLayerMappingItem m = mappings[i];
+                    if (m != null && m.IsEnabled && !string.IsNullOrEmpty(m.TargetCadLayerName))
+                    {
+                        string tgt = m.TargetCadLayerName.ToUpperInvariant();
+                        int col = (m.ColorNumber > 0 && m.ColorNumber <= 255) ? m.ColorNumber : 7;
+                        string lt = string.IsNullOrEmpty(m.Linetype) ? "Continuous" : m.Linetype;
+                        sbScr.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                            "  (hd-set-layer \"{0}\" {1} \"{2}\")",
+                            EscapeLisp(tgt), col, EscapeLisp(lt)));
+                    }
+                }
+
+                // 3.2. Quét toàn bộ layer trong DWG và remap
+                sbScr.AppendLine("  (setq td (tblnext \"LAYER\" T))");
+                sbScr.AppendLine("  (while td");
+                sbScr.AppendLine("    (setq layName (cdr (assoc 2 td)))");
+                sbScr.AppendLine("    (setq layUpper (strcase layName))");
+                sbScr.AppendLine("    (setq matched nil)");
+
+                // A. Quy tắc riêng cho Pipes: Nếu trong View chỉ có 1 hệ thống Pipes duy nhất
+                if (pipeMaps.Count == 1)
+                {
+                    string pTgt = pipeMaps[0].TargetCadLayerName.ToUpperInvariant();
+                    sbScr.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                        "    (if (and (not matched) (/= layUpper \"{0}\") (wcmatch layUpper \"*PIPE*\"))",
+                        EscapeLisp(pTgt)));
+                    sbScr.AppendLine("      (progn");
+                    sbScr.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                        "        (hd-move-entities layName \"{0}\")", EscapeLisp(pTgt)));
+                    sbScr.AppendLine("        (setq matched T)");
+                    sbScr.AppendLine("      )");
+                    sbScr.AppendLine("    )");
+                }
+
+                // B. Quy tắc riêng cho Ducts: Nếu trong View chỉ có 1 hệ thống Ducts duy nhất
+                if (ductMaps.Count == 1)
+                {
+                    string dTgt = ductMaps[0].TargetCadLayerName.ToUpperInvariant();
+                    sbScr.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                        "    (if (and (not matched) (/= layUpper \"{0}\") (or (wcmatch layUpper \"*DUCT*\") (wcmatch layUpper \"*HVAC*\"))) ",
+                        EscapeLisp(dTgt)));
+                    sbScr.AppendLine("      (progn");
+                    sbScr.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                        "        (hd-move-entities layName \"{0}\")", EscapeLisp(dTgt)));
+                    sbScr.AppendLine("        (setq matched T)");
+                    sbScr.AppendLine("      )");
+                    sbScr.AppendLine("    )");
+                }
+
+                // C. Quy tắc so khớp theo từng từ khóa hệ thống (System Tokens) cho các trường hợp còn lại
+                for (int i = 0; i < mappings.Count; i++)
+                {
+                    CadLayerMappingItem m = mappings[i];
+                    if (m != null && m.IsEnabled && !string.IsNullOrEmpty(m.TargetCadLayerName))
+                    {
+                        string tgt = m.TargetCadLayerName.ToUpperInvariant();
+                        List<string> tokens = ExtractSystemTokens(m.RevitSystemName);
+
+                        for (int t = 0; t < tokens.Count; t++)
+                        {
+                            string tok = tokens[t];
+                            if (tok.Length >= 2)
+                            {
+                                sbScr.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                                    "    (if (and (not matched) (/= layUpper \"{0}\") (wcmatch layUpper \"*{1}*\"))",
+                                    EscapeLisp(tgt), EscapeLisp(tok)));
+                                sbScr.AppendLine("      (progn");
+                                sbScr.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                                    "        (hd-move-entities layName \"{0}\")", EscapeLisp(tgt)));
+                                sbScr.AppendLine("        (setq matched T)");
+                                sbScr.AppendLine("      )");
+                                sbScr.AppendLine("    )");
+                            }
+                        }
+                    }
+                }
+
+                sbScr.AppendLine("    (setq td (tblnext \"LAYER\"))");
+                sbScr.AppendLine("  )");
+                sbScr.AppendLine("  (princ \"\\n---HD_REMAP_COMPLETE---\")");
+                sbScr.AppendLine("  (princ)");
+                sbScr.AppendLine(")");
                 sbScr.AppendLine("(c:hd-remap-all)");
+                sbScr.AppendLine("QSAVE");
                 sbScr.AppendLine("QUIT");
+
                 File.WriteAllText(tempScr, sbScr.ToString(), Encoding.ASCII);
 
                 // 4. Thực thi accoreconsole.exe trên file tạm
@@ -1235,7 +1335,34 @@ namespace HDTool
                 // 5. Ghi đè file DWG tạm đã xử lý chuẩn thành công vào file DWG gốc
                 if (File.Exists(tempDwg))
                 {
-                    File.Copy(tempDwg, dwgPath, true);
+                    bool copyOk = false;
+                    for (int retry = 0; retry < 5; retry++)
+                    {
+                        try
+                        {
+                            File.Copy(tempDwg, dwgPath, true);
+                            copyOk = true;
+                            break;
+                        }
+                        catch (IOException)
+                        {
+                            System.Threading.Thread.Sleep(300);
+                        }
+                    }
+
+                    if (!copyOk)
+                    {
+                        string dir = Path.GetDirectoryName(dwgPath);
+                        string fnWithoutExt = Path.GetFileNameWithoutExtension(dwgPath);
+                        string fallbackDwg = Path.Combine(dir, fnWithoutExt + "_REMAP.dwg");
+                        try
+                        {
+                            File.Copy(tempDwg, fallbackDwg, true);
+                            resultMessage = "File gốc đang mở trong AutoCAD. Bản vẽ quy đổi được lưu tại: " + Path.GetFileName(fallbackDwg);
+                            return true;
+                        }
+                        catch { }
+                    }
                 }
 
                 resultMessage = "Đã quy đổi Layer & Màu sắc thành công cho file CAD.";
@@ -1249,11 +1376,35 @@ namespace HDTool
             finally
             {
                 try { if (File.Exists(tempDwg)) File.Delete(tempDwg); } catch { }
-                try { if (File.Exists(tempLsp)) File.Delete(tempLsp); } catch { }
                 try { if (File.Exists(tempScr)) File.Delete(tempScr); } catch { }
             }
         }
 
+        private static List<string> ExtractSystemTokens(string revitSystemName)
+        {
+            List<string> tokens = new List<string>();
+            if (string.IsNullOrEmpty(revitSystemName)) return tokens;
+
+            string clean = SheetExportCadPdfService.RemoveDiacritics(revitSystemName).ToUpperInvariant();
+            tokens.Add(clean.Replace("(", "_").Replace(")", "_").Trim());
+            tokens.Add(clean.Replace("(", " ").Replace(")", " ").Trim());
+
+            char[] seps = new char[] { ' ', '_', '-', '(', ')', '[', ']', '.', ',', '/' };
+            string[] parts = clean.Split(seps, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string p = parts[i].Trim();
+                if (p.Length >= 2 && !tokens.Contains(p))
+                {
+                    if (p != "PIPE" && p != "ONG" && p != "HE" && p != "THONG" && p != "LOAI")
+                    {
+                        tokens.Add(p);
+                    }
+                }
+            }
+
+            return tokens;
+        }
         private static string EscapeLisp(string s)
         {
             if (string.IsNullOrEmpty(s)) return string.Empty;
@@ -1413,14 +1564,23 @@ namespace HDTool
                     Directory.CreateDirectory(targetFolder);
                 }
 
-                DateTime exportStartTime = DateTime.Now.AddSeconds(-3);
+                DateTime exportStartTime = DateTime.Now.AddSeconds(-10);
 
-                // 1. Cấu hình DWGExportOptions kèm ModifierType.SystemType
+                // Ghi nhớ danh sách file DWG đã có từ trước trong thư mục
+                HashSet<string> priorDwgs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (Directory.Exists(targetFolder))
+                {
+                    string[] existing = Directory.GetFiles(targetFolder, "*.dwg");
+                    for (int i = 0; i < existing.Length; i++) priorDwgs.Add(existing[i]);
+                }
+
+                // 1. Cấu hình DWGExportOptions sạch và an toàn 100%
                 DWGExportOptions dwgOpt = BuildDwgExportOptions(doc, settings);
 
-                // 2. Thực thi lệnh Export DWG của Revit API theo từng View/Sheet để kiểm soát tên file chuẩn xác 100%
+                // 2. Thực thi lệnh Export DWG của Revit API theo từng View/Sheet
                 int exportOkCount = 0;
                 List<string> newlyExportedDwgs = new List<string>();
+                string lastErrorDetail = string.Empty;
 
                 for (int i = 0; i < viewOrSheetIds.Count; i++)
                 {
@@ -1453,44 +1613,72 @@ namespace HDTool
                     singleIdList.Add(vid);
 
                     bool singleOk = false;
+
+                    // Chiến lược 1: Thử xuất với tên file tùy chỉnh
                     try
                     {
                         singleOk = doc.Export(targetFolder, exportName, singleIdList, dwgOpt);
                     }
-                    catch
+                    catch (Exception ex1)
+                    {
+                        lastErrorDetail = ex1.Message;
+                    }
+
+                    // Chiến lược 2: Nếu chưa thành công, thử xuất với name = null (Revit tự đặt tên file an toàn)
+                    if (!singleOk)
                     {
                         try
                         {
                             singleOk = doc.Export(targetFolder, null, singleIdList, dwgOpt);
                         }
-                        catch { }
+                        catch (Exception ex2)
+                        {
+                            lastErrorDetail = ex2.Message;
+                        }
+                    }
+
+                    // Chiến lược 3: Nếu vẫn chưa được, thử với DWGExportOptions cơ bản sạch hoàn toàn
+                    if (!singleOk)
+                    {
+                        try
+                        {
+                            DWGExportOptions cleanOpt = new DWGExportOptions();
+                            cleanOpt.MergedViews = settings.MergedViews;
+                            cleanOpt.TargetUnit = ExportUnit.Millimeter;
+                            cleanOpt.Colors = ExportColorMode.IndexColors;
+                            singleOk = doc.Export(targetFolder, null, singleIdList, cleanOpt);
+                        }
+                        catch (Exception ex3)
+                        {
+                            lastErrorDetail = ex3.Message;
+                        }
                     }
 
                     if (singleOk)
                     {
                         exportOkCount++;
-                        string expectedFile = Path.Combine(targetFolder, exportName + ".dwg");
-                        if (File.Exists(expectedFile))
-                        {
-                            newlyExportedDwgs.Add(expectedFile);
-                        }
                     }
                 }
 
-                // Quét bổ sung các file DWG mới sinh ra trong thư mục nếu tên file có tiền tố từ Revit
+                // Quét phát hiện toàn bộ các file DWG mới sinh ra trong thư mục
                 string[] files = Directory.GetFiles(targetFolder, "*.dwg");
                 for (int i = 0; i < files.Length; i++)
                 {
-                    FileInfo fi = new FileInfo(files[i]);
-                    if (fi.LastWriteTime >= exportStartTime && !newlyExportedDwgs.Contains(files[i]))
+                    string f = files[i];
+                    FileInfo fi = new FileInfo(f);
+                    if (!priorDwgs.Contains(f) || fi.LastWriteTime >= exportStartTime)
                     {
-                        newlyExportedDwgs.Add(files[i]);
+                        if (!newlyExportedDwgs.Contains(f))
+                        {
+                            newlyExportedDwgs.Add(f);
+                        }
                     }
                 }
 
                 if (exportOkCount == 0 && newlyExportedDwgs.Count == 0)
                 {
-                    resultMessage = "Revit báo lỗi khi thực hiện xuất bản vẽ sang CAD.";
+                    resultMessage = "Revit báo lỗi khi thực hiện xuất bản vẽ sang CAD." +
+                        (!string.IsNullOrEmpty(lastErrorDetail) ? " Chi tiết: " + lastErrorDetail : "");
                     return false;
                 }
 

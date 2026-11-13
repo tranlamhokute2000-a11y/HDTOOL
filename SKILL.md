@@ -4,7 +4,7 @@ description: >-
   HDTOOL (Revit 2024–2027): Auto Crop (Vertex-Exact + Liang-Barsky), căn Grids/Level; CAD-to-Duct BIM (trích DWG accoreconsole, lọc giả 4 tầng, tách tuyến giao chéo, ống chính + Transition + Tap ưu tiên Family sẵn, chuẩn WxH); Khối lượng Ống gió TCVN/SMACNA & Ống nước (Live Tracking, CHECK VAR PLUMBING, FitTableScale); Quản lý Sheet & Xuất CAD Quy Đổi Layer MEP (View đang vẽ / Sheet / View dự án; tự động chuyển đổi đối tượng sang đúng Layer & Màu sắc ACI qua AutoLISP entmake/entmod; tự động lưu và nạp cấu hình mặc định); 100% Modeless, ESC thoát lệnh & Hot Reload.
 ---
 
-# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 93)
+# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 95)
 
 ## 1. Kiến Trúc & Quy Chuẩn Bắt Buộc
 - **Build & Đóng gói**: Biên dịch thuần bằng `csc.exe` (C# 5, `.NET Framework 4.8`) qua `Build.ps1` -> `Build/HDTOOL.dll` và bộ cài độc lập `HDTOOL_Setup_Version_{N}.exe` (không dùng MSBuild/`.csproj`).
@@ -67,8 +67,9 @@ description: >-
 
 ## 3. Bản Đồ Mã Nguồn & Vị Trí File
 - Thư mục gốc: `c:\Users\Nguye\Desktop\ADDIN REVIT`
-- **File cài đặt chính thức**: `HDTOOL_Setup_Version_93.exe`
-- **Bộ cài & Lưu trữ**: Chỉ lưu 2 bản mới nhất (`HDTOOL_Setup_Version_92.exe`, `HDTOOL_Setup_Version_93.exe`).
+- **File cài đặt chính thức**: `HDTOOL_Setup_Version_95.exe`
+- **Bộ cài & Lưu trữ**: Chỉ lưu 2 bản mới nhất (`HDTOOL_Setup_Version_94.exe`, `HDTOOL_Setup_Version_95.exe`).
 - **Core Files Xuất CAD & Layer**: `Source/ExportCadCommand.cs`, `Source/ExportCadOptionsForm.cs`, `Source/CadExportMepService.cs`, `Source/CadLayerMappingModels.cs`.
+
 
 
