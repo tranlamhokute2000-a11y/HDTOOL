@@ -465,6 +465,17 @@
         <polygon points="19,14 23,17 19,20" fill="#0284c7"/>
       </svg>`,
 
+      ExportCad: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="26" height="26" rx="3" fill="#0f172a" stroke="#0284c7" stroke-width="1.5"/>
+        <path d="M 3 10 L 29 10" stroke="#0284c7" stroke-width="1"/>
+        <text x="16" y="8.8" font-size="5" font-weight="900" fill="#38bdf8" text-anchor="middle">CAD / DWG</text>
+        <rect x="6" y="13.5" width="8" height="2.2" fill="#06b6d4" rx="0.5"/>
+        <rect x="6" y="17.5" width="8" height="2.2" fill="#f43f5e" rx="0.5"/>
+        <rect x="6" y="21.5" width="8" height="2.2" fill="#10b981" rx="0.5"/>
+        <path d="M 18 16 L 25 20 L 18 24 Z" fill="#f59e0b" stroke="#d97706" stroke-width="0.8"/>
+        <circle cx="25" cy="20" r="1.5" fill="#38bdf8"/>
+      </svg>`,
+
       UpdateTool: `<svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="16" cy="16" r="12" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 2"/>
         <path d="M 11 16 A 5 5 0 1 1 21 16" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
@@ -569,6 +580,14 @@
               commandClass: "HDTool.UpdateSheetListCommand",
               icon: "UpdateSheetList",
               tooltip: "[HDTOOL] Cập nhật lại tên và thông tin Sheet trong Revit từ file Excel."
+            },
+            {
+              id: "cmdHDToolExportCad",
+              name: "Xuất CAD\nQuy Đổi Layer",
+              type: "large",
+              commandClass: "HDTool.ExportCadCommand",
+              icon: "ExportCad",
+              tooltip: "[HDTOOL] Xuất bản vẽ sang AutoCAD & tự động quy đổi Layer/Màu/Nét chuẩn hệ thống MEP (Ducts, Pipes, Equipment)."
             }
           ]
         },
@@ -598,7 +617,7 @@
     };
 
     let layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
-    let selectedButtonId = "cmdHDToolMepQuantity"; // Mặc định mở Form Bóc khối lượng ống nước của Sếp
+    let selectedButtonId = "cmdHDToolExportCad"; // Mặc định mở Form Xuất CAD & Quy Đổi Layer MEP cho Sếp Hồ xem trước
 
     function initStudio() {
       renderRibbon();
@@ -801,6 +820,202 @@
     function escapeHtml(str) {
       return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
+
+    // ================= DỮ LIỆU & LOGIC QUY ĐỔI LAYER MEP (PRESET TCVN, AIA, CUSTOM) =================
+    const CAD_LAYER_PRESETS = {
+      TCVN: [
+        { id: 1, cat: "DUCT", catName: "Ống Gió", revit: "Cấp Gió Tươi / Lạnh (Supply Air)", layer: "M-DUCT-CAPGIO", colorIdx: 4, colorName: "Cyan (4)", colorHex: "#00ffff", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 2, cat: "DUCT", catName: "Ống Gió", revit: "Hồi Gió (Return Air)", layer: "M-DUCT-HOIGIO", colorIdx: 6, colorName: "Magenta (6)", colorHex: "#ff00ff", linetype: "Continuous", lineweight: "0.30 mm" },
+        { id: 3, cat: "DUCT", catName: "Ống Gió", revit: "Thải Gió / Hút Khói (Exhaust / Smoke)", layer: "M-DUCT-THAIGIO", colorIdx: 1, colorName: "Red (1)", colorHex: "#ff0000", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 4, cat: "DUCT", catName: "Ống Gió", revit: "Tăng Áp Cầu Thang (Pressurization)", layer: "M-DUCT-TANGAP", colorIdx: 2, colorName: "Yellow (2)", colorHex: "#ffff00", linetype: "Continuous", lineweight: "0.40 mm" },
+        { id: 5, cat: "DUCT", catName: "Ống Gió", revit: "Phụ Kiện Ống Gió (Duct Fittings)", layer: "M-DUCT-FITTING", colorIdx: 8, colorName: "Dark Gray (8)", colorHex: "#808080", linetype: "Continuous", lineweight: "0.25 mm" },
+        { id: 6, cat: "DUCT", catName: "Ống Gió", revit: "Van Gió & Miệng Gió (Dampers/Grilles)", layer: "M-DUCT-ACCESSRY", colorIdx: 3, colorName: "Green (3)", colorHex: "#00ff00", linetype: "Continuous", lineweight: "0.25 mm" },
+        { id: 7, cat: "PIPE", catName: "Ống Nước", revit: "Cấp Nước Lạnh (Domestic Cold Water)", layer: "P-PIPE-CAPNUOC", colorIdx: 5, colorName: "Blue (5)", colorHex: "#2563eb", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 8, cat: "PIPE", catName: "Ống Nước", revit: "Cấp Nước Nóng (Domestic Hot Water)", layer: "P-PIPE-NUOCNONG", colorIdx: 10, colorName: "Red-Orange (10)", colorHex: "#ea580c", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 9, cat: "PIPE", catName: "Ống Nước", revit: "Thoát Nước Thải (Sanitary Drainage)", layer: "P-PIPE-THOATNUOC", colorIdx: 30, colorName: "Brown (30)", colorHex: "#b45309", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 10, cat: "PIPE", catName: "Ống Nước", revit: "Thoát Nước Mưa (Storm Drainage)", layer: "P-PIPE-THOATNUA", colorIdx: 140, colorName: "Indigo (140)", colorHex: "#6366f1", linetype: "DASHED", lineweight: "0.30 mm" },
+        { id: 11, cat: "PIPE", catName: "Ống Nước", revit: "Thông Hơi (Vent Pipe)", layer: "P-PIPE-THONGHOI", colorIdx: 9, colorName: "Light Gray (9)", colorHex: "#94a3b8", linetype: "HIDDEN", lineweight: "0.20 mm" },
+        { id: 12, cat: "PIPE", catName: "Ống Nước", revit: "PCCC Sprinkler (Fire Protection)", layer: "FP-PIPE-CHUCHAY", colorIdx: 1, colorName: "Red (1)", colorHex: "#dc2626", linetype: "Continuous", lineweight: "0.40 mm" },
+        { id: 13, cat: "PIPE", catName: "Ống Nước", revit: "Nước Chiller Cấp/Về (Chilled Water)", layer: "M-PIPE-CHILLER", colorIdx: 130, colorName: "Sky Blue (130)", colorHex: "#0284c7", linetype: "Continuous", lineweight: "0.40 mm" },
+        { id: 14, cat: "EQUIP", catName: "Thiết Bị", revit: "Thiết Bị Cơ Điện (Mechanical Equipment)", layer: "M-EQUIPMENT", colorIdx: 7, colorName: "White (7)", colorHex: "#f8fafc", linetype: "Continuous", lineweight: "0.25 mm" },
+        { id: 15, cat: "EQUIP", catName: "Thiết Bị", revit: "Thiết Bị Vệ Sinh (Plumbing Fixtures)", layer: "P-EQUIPMENT", colorIdx: 150, colorName: "Teal (150)", colorHex: "#0d9488", linetype: "Continuous", lineweight: "0.25 mm" }
+      ],
+      AIA: [
+        { id: 1, cat: "DUCT", catName: "Ống Gió", revit: "Supply Air (Cấp Gió)", layer: "M-HVAC-SUPP", colorIdx: 4, colorName: "Cyan (4)", colorHex: "#00ffff", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 2, cat: "DUCT", catName: "Ống Gió", revit: "Return Air (Hồi Gió)", layer: "M-HVAC-RETN", colorIdx: 6, colorName: "Magenta (6)", colorHex: "#ff00ff", linetype: "Continuous", lineweight: "0.30 mm" },
+        { id: 3, cat: "DUCT", catName: "Ống Gió", revit: "Exhaust Air (Thải Gió)", layer: "M-HVAC-EXHT", colorIdx: 1, colorName: "Red (1)", colorHex: "#ff0000", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 4, cat: "DUCT", catName: "Ống Gió", revit: "Smoke Extract (Hút Khói)", layer: "M-HVAC-SMOK", colorIdx: 2, colorName: "Yellow (2)", colorHex: "#ffff00", linetype: "DASHED", lineweight: "0.40 mm" },
+        { id: 5, cat: "DUCT", catName: "Ống Gió", revit: "Duct Fittings (Phụ Kiện)", layer: "M-HVAC-FITT", colorIdx: 8, colorName: "Dark Gray (8)", colorHex: "#808080", linetype: "Continuous", lineweight: "0.25 mm" },
+        { id: 6, cat: "DUCT", catName: "Ống Gió", revit: "Dampers / Terminals", layer: "M-HVAC-DAMP", colorIdx: 3, colorName: "Green (3)", colorHex: "#00ff00", linetype: "Continuous", lineweight: "0.25 mm" },
+        { id: 7, cat: "PIPE", catName: "Ống Nước", revit: "Domestic Cold Water (Nước Lạnh)", layer: "P-DOMW-COLD", colorIdx: 5, colorName: "Blue (5)", colorHex: "#2563eb", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 8, cat: "PIPE", catName: "Ống Nước", revit: "Domestic Hot Water (Nước Nóng)", layer: "P-DOMW-HOTW", colorIdx: 10, colorName: "Red-Orange (10)", colorHex: "#ea580c", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 9, cat: "PIPE", catName: "Ống Nước", revit: "Sanitary Drain (Thoát Nước)", layer: "P-SANR-PIPE", colorIdx: 30, colorName: "Brown (30)", colorHex: "#b45309", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 10, cat: "PIPE", catName: "Ống Nước", revit: "Storm Drain (Thoát Nước Mưa)", layer: "P-STRM-PIPE", colorIdx: 140, colorName: "Indigo (140)", colorHex: "#6366f1", linetype: "DASHED", lineweight: "0.30 mm" },
+        { id: 11, cat: "PIPE", revit: "Vent Pipe (Thông Hơi)", layer: "P-VENT-PIPE", colorIdx: 9, colorName: "Light Gray (9)", colorHex: "#94a3b8", linetype: "HIDDEN", lineweight: "0.20 mm" },
+        { id: 12, cat: "PIPE", catName: "Ống Nước", revit: "Fire Protection (PCCC Sprinkler)", layer: "F-PROT-PIPE", colorIdx: 1, colorName: "Red (1)", colorHex: "#dc2626", linetype: "Continuous", lineweight: "0.40 mm" },
+        { id: 13, cat: "PIPE", catName: "Ống Nước", revit: "Chilled Water Supply/Return", layer: "M-CHLW-SUPP", colorIdx: 130, colorName: "Sky Blue (130)", colorHex: "#0284c7", linetype: "Continuous", lineweight: "0.40 mm" },
+        { id: 14, cat: "EQUIP", catName: "Thiết Bị", revit: "Mechanical Equipment", layer: "M-MECH-EQPM", colorIdx: 7, colorName: "White (7)", colorHex: "#f8fafc", linetype: "Continuous", lineweight: "0.25 mm" },
+        { id: 15, cat: "EQUIP", catName: "Thiết Bị", revit: "Plumbing Fixtures", layer: "P-PLUM-FIXT", colorIdx: 150, colorName: "Teal (150)", colorHex: "#0d9488", linetype: "Continuous", lineweight: "0.25 mm" }
+      ],
+      CUSTOM: [
+        { id: 1, cat: "DUCT", catName: "Ống Gió", revit: "Cấp Gió Tươi / Lạnh", layer: "MEP-DUCT-SUPPLY", colorIdx: 4, colorName: "Cyan (4)", colorHex: "#00ffff", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 2, cat: "DUCT", catName: "Ống Gió", revit: "Hồi Gió / Thải Gió", layer: "MEP-DUCT-EXHAUST", colorIdx: 1, colorName: "Red (1)", colorHex: "#ff0000", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 3, cat: "PIPE", catName: "Ống Nước", revit: "Cấp Nước Lạnh / Nóng", layer: "MEP-PIPE-WATER", colorIdx: 5, colorName: "Blue (5)", colorHex: "#2563eb", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 4, cat: "PIPE", catName: "Ống Nước", revit: "Thoát Nước Sinh Hoạt", layer: "MEP-PIPE-DRAIN", colorIdx: 30, colorName: "Brown (30)", colorHex: "#b45309", linetype: "Continuous", lineweight: "0.35 mm" },
+        { id: 5, cat: "PIPE", catName: "Ống Nước", revit: "PCCC Sprinkler", layer: "MEP-PIPE-FIRE", colorIdx: 1, colorName: "Red (1)", colorHex: "#dc2626", linetype: "Continuous", lineweight: "0.40 mm" },
+        { id: 6, cat: "EQUIP", catName: "Thiết Bị", revit: "Thiết Bị Cơ Điện & Vệ Sinh", layer: "MEP-EQUIPMENT", colorIdx: 7, colorName: "White (7)", colorHex: "#f8fafc", linetype: "Continuous", lineweight: "0.25 mm" }
+      ]
+    };
+
+    let activeCadPreset = "TCVN";
+    let activeCadFilter = "ALL";
+    let currentCadMappings = JSON.parse(JSON.stringify(CAD_LAYER_PRESETS.TCVN));
+
+    window.switchCadPreset = function(presetKey) {
+      activeCadPreset = presetKey;
+      currentCadMappings = JSON.parse(JSON.stringify(CAD_LAYER_PRESETS[presetKey] || CAD_LAYER_PRESETS.TCVN));
+      window.renderCadMappingRows();
+      showToastNotice("Đã chuyển sang bộ " + (presetKey === 'TCVN' ? 'Preset TCVN MEP (Việt Nam)' : (presetKey === 'AIA' ? 'Preset AIA/NCS Quốc Tế' : 'Preset Tùy Chỉnh')) + "!");
+    };
+
+    window.filterCadCategory = function(catKey, btnEl) {
+      activeCadFilter = catKey;
+      document.querySelectorAll(".cad-filter-btn").forEach(b => {
+        b.className = "cad-filter-btn px-2.5 py-1 rounded text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700";
+      });
+      if (btnEl) {
+        btnEl.className = "cad-filter-btn px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-600 text-white border border-emerald-400";
+      }
+      window.renderCadMappingRows();
+    };
+
+    window.simulateLoadProject = function() {
+      showToastNotice("🔄 Đã quét dự án Revit: Đọc thành công 15 hệ thống Duct & Pipe Systems!");
+    };
+
+    window.simulateSaveJson = function() {
+      showToastNotice("💾 Đã lưu cấu hình cad_mep_layer_mapping.json vào thư mục dự án!");
+    };
+
+    window.simulateLoadJson = function() {
+      showToastNotice("📂 Đã nạp cấu hình JSON tùy chỉnh từ file thành công!");
+    };
+
+    let activeExportScope = "ACTIVE_VIEW";
+    window.switchExportScope = function(scope) {
+      activeExportScope = scope;
+      const elActive = document.getElementById("cadScopeActiveView");
+      const elSheets = document.getElementById("cadScopeSheets");
+      const elViews = document.getElementById("cadScopeViews");
+      const statusText = document.getElementById("cadExportScopeStatus");
+
+      if (elActive) elActive.style.display = (scope === "ACTIVE_VIEW") ? "block" : "none";
+      if (elSheets) elSheets.style.display = (scope === "SHEETS") ? "block" : "none";
+      if (elViews) elViews.style.display = (scope === "VIEWS") ? "block" : "none";
+
+      if (statusText) {
+        if (scope === "ACTIVE_VIEW") statusText.innerHTML = "Đang chọn: <strong>View Đang Vẽ</strong> (1 view)";
+        else if (scope === "SHEETS") statusText.innerHTML = "Đang chọn: <strong>3</strong> / 4 bản vẽ Sheet";
+        else statusText.innerHTML = "Đang chọn: <strong>4</strong> / 6 View dự án";
+      }
+
+      showToastNotice("Đã chuyển nguồn xuất: " + (scope === "ACTIVE_VIEW" ? "View Đang Vẽ" : (scope === "SHEETS" ? "Danh Sách Sheet" : "Danh Sách View Dự Án")));
+    };
+
+    window.addNewMappingRow = function() {
+      const newId = currentCadMappings.length + 1;
+      currentCadMappings.push({
+        id: newId,
+        cat: "CUSTOM",
+        catName: "Tùy Chọn",
+        revit: "Hệ Thống Mới #" + newId,
+        layer: "M-CUSTOM-LAYER",
+        colorIdx: 2,
+        colorName: "Yellow (2)",
+        colorHex: "#ffff00",
+        linetype: "Continuous",
+        lineweight: "0.35 mm"
+      });
+      window.renderCadMappingRows();
+      showToastNotice("Đã thêm 1 dòng quy đổi Layer mới!");
+    };
+
+    window.deleteMappingRow = function(id) {
+      currentCadMappings = currentCadMappings.filter(r => r.id !== id);
+      window.renderCadMappingRows();
+    };
+
+    function showToastNotice(msg) {
+      const toast = document.getElementById("cadToastMsg");
+      if (toast) {
+        toast.textContent = msg;
+        toast.style.opacity = "1";
+        setTimeout(() => { if (toast) toast.style.opacity = "0"; }, 3500);
+      }
+    }
+
+    window.renderCadMappingRows = function() {
+      const tbody = document.getElementById("cadMappingTableBody");
+      if (!tbody) return;
+
+      const filtered = activeCadFilter === "ALL" 
+        ? currentCadMappings 
+        : currentCadMappings.filter(r => r.cat === activeCadFilter);
+
+      let html = "";
+      filtered.forEach((r, idx) => {
+        let catBadge = "";
+        if (r.cat === 'DUCT') catBadge = `<span class="bg-sky-950/80 text-sky-300 border border-sky-700/60 px-1.5 py-0.5 rounded text-[10px] font-bold">Ống Gió</span>`;
+        else if (r.cat === 'PIPE') catBadge = `<span class="bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 px-1.5 py-0.5 rounded text-[10px] font-bold">Ống Nước</span>`;
+        else catBadge = `<span class="bg-purple-950/80 text-purple-300 border border-purple-700/60 px-1.5 py-0.5 rounded text-[10px] font-bold">Thiết Bị</span>`;
+
+        html += `
+          <tr class="hover:bg-slate-800/60 transition-colors">
+            <td class="p-2 text-center text-slate-400 font-mono text-[11px]">${idx + 1}</td>
+            <td class="p-2">${catBadge}</td>
+            <td class="p-2 font-semibold text-slate-200 text-[11px]">${escapeHtml(r.revit)}</td>
+            <td class="p-2">
+              <input type="text" value="${escapeHtml(r.layer)}" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded px-2 py-1 text-emerald-300 font-mono font-bold text-[11px] outline-none">
+            </td>
+            <td class="p-2">
+              <div class="flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded-sm border border-white/30 inline-block shadow-sm" style="background-color: ${r.colorHex};"></span>
+                <span class="font-mono text-slate-200 text-[11px]">${escapeHtml(r.colorName)}</span>
+              </div>
+            </td>
+            <td class="p-2">
+              <span class="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded font-mono text-slate-300 text-[10px]">${escapeHtml(r.linetype)}</span>
+            </td>
+            <td class="p-2 font-mono text-amber-300 text-[11px]">${escapeHtml(r.lineweight)}</td>
+            <td class="p-2 text-center">
+              <button onclick="window.deleteMappingRow(${r.id})" class="text-slate-500 hover:text-red-400 px-1.5 py-0.5 rounded hover:bg-red-950/40" title="Xóa dòng">✕</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+
+      // Update counters
+      const cntAll = currentCadMappings.length;
+      const cntDuct = currentCadMappings.filter(r => r.cat === 'DUCT').length;
+      const cntPipe = currentCadMappings.filter(r => r.cat === 'PIPE').length;
+      const cntEquip = currentCadMappings.filter(r => r.cat === 'EQUIP').length;
+
+      const badgeAll = document.getElementById("cadCntAll");
+      if (badgeAll) badgeAll.textContent = cntAll;
+      const badgeDuct = document.getElementById("cadCntDuct");
+      if (badgeDuct) badgeDuct.textContent = cntDuct;
+      const badgePipe = document.getElementById("cadCntPipe");
+      if (badgePipe) badgePipe.textContent = cntPipe;
+      const badgeEquip = document.getElementById("cadCntEquip");
+      if (badgeEquip) badgeEquip.textContent = cntEquip;
+
+      const summary = document.getElementById("cadMappingSummary");
+      if (summary) {
+        summary.textContent = `✔ Đang áp dụng ${cntAll} quy tắc quy đổi Layer MEP (${cntDuct} ống gió, ${cntPipe} ống nước, ${cntEquip} thiết bị). 100% đối tượng khi xuất CAD sẽ vào đúng Layer, Màu & Nét quy định!`;
+      }
+    };
 
     // ================= RENDER DIALOG PREVIEW (MÔ PHỎNG 100% FORM WINDOWS 11) =================
     function renderDialogPreview(btn) {
@@ -1147,6 +1362,303 @@
             </div>
           </div>
         `;
+      }
+      // 5. FORM XUẤT BẢN VẼ SANG AUTOCAD & QUY ĐỔI LAYER MEP
+      else if (id === 'cmdHDToolExportCad') {
+        viewport.innerHTML = `
+          <div class="w-full bg-[#1e2430] text-slate-100 rounded-xl shadow-2xl border border-slate-600 overflow-hidden text-xs select-none">
+            <!-- Title Bar -->
+            <div class="bg-[#181d26] px-3 py-2 flex items-center justify-between border-b border-slate-700">
+              <div class="flex items-center gap-2">
+                <span class="text-emerald-400 font-bold">HD</span>
+                <span class="font-semibold text-slate-200">HDTOOL - XUẤT BẢN VẼ SANG AUTOCAD &amp; QUY ĐỔI LAYER HỆ THỐNG MEP</span>
+              </div>
+              <span class="text-slate-400 hover:text-white cursor-pointer" onclick="selectButton('cmdHDToolExportCad')">✕</span>
+            </div>
+
+            <!-- Header Banner -->
+            <div class="bg-gradient-to-r from-[#064e3b] via-[#047857] to-[#0284c7] px-4 py-2.5 border-b border-emerald-900/50 flex items-center justify-between">
+              <div>
+                <h2 class="text-sm font-bold text-white tracking-wide flex items-center gap-2">
+                  <span>📐 XUẤT BẢN VẼ SANG AUTOCAD &amp; QUY ĐỔI LAYER HỆ THỐNG MEP CHUẨN ISO/TCVN</span>
+                  <span class="bg-emerald-500/30 text-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-400/40">Version 78 Preview</span>
+                </h2>
+                <p class="text-[11px] text-emerald-100 mt-0.5">Tự động ánh xạ từng Hệ thống MEP (Duct / Pipe / Thiết bị) sang Layer CAD riêng biệt, chuẩn màu chỉ định, gộp Xref Bind và chuẩn hóa Font chữ tiếng Việt.</p>
+              </div>
+              <div id="cadToastMsg" class="opacity-0 transition-opacity duration-300 bg-black/70 border border-emerald-400/60 text-emerald-300 font-bold px-3 py-1.5 rounded-lg text-[11px] shadow-lg"></div>
+            </div>
+
+            <div class="p-4 space-y-3 bg-[#1e2430]">
+              <!-- KHỐI 1: CẤU HÌNH XUẤT BẢN VẼ & ĐƯỜNG DẪN -->
+              <div class="grid grid-cols-12 gap-3 bg-[#181d26] p-3 rounded-lg border border-slate-700">
+                <!-- Chọn Nguồn Xuất: View Đang Vẽ / Sheet / View Dự Án (Theo lệnh Sếp Hồ) -->
+                <div class="col-span-5 space-y-2 border-r border-slate-700/80 pr-3">
+                  <div class="flex justify-between items-center">
+                    <label class="text-slate-200 font-bold text-[11px] flex items-center gap-1">
+                      <span>📑 Nguồn Đối Tượng Cần Xuất:</span>
+                    </label>
+                    <span id="cadExportScopeStatus" class="text-[10px] text-emerald-400 font-semibold">Đang chọn: <strong>View Đang Vẽ</strong> (1 view)</span>
+                  </div>
+
+                  <!-- 3 Chế Độ Lựa Chọn Nguồn Xuất per chỉ đạo Sếp Hồ -->
+                  <div class="grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded border border-slate-700 text-[10.5px]">
+                    <label class="flex items-center justify-center gap-1 py-1 px-1 rounded cursor-pointer font-bold text-emerald-300 hover:bg-slate-800 transition">
+                      <input type="radio" name="cadScopeRadio" value="ACTIVE_VIEW" checked onchange="window.switchExportScope('ACTIVE_VIEW')">
+                      <span class="whitespace-nowrap">👁 View Đang Vẽ</span>
+                    </label>
+                    <label class="flex items-center justify-center gap-1 py-1 px-1 rounded cursor-pointer font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition">
+                      <input type="radio" name="cadScopeRadio" value="SHEETS" onchange="window.switchExportScope('SHEETS')">
+                      <span class="whitespace-nowrap">📑 Sheet Bản Vẽ</span>
+                    </label>
+                    <label class="flex items-center justify-center gap-1 py-1 px-1 rounded cursor-pointer font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition">
+                      <input type="radio" name="cadScopeRadio" value="VIEWS" onchange="window.switchExportScope('VIEWS')">
+                      <span class="whitespace-nowrap">📐 View Dự Án</span>
+                    </label>
+                  </div>
+
+                  <!-- Container 1: View Đang Vẽ -->
+                  <div id="cadScopeActiveView" class="bg-emerald-950/40 border border-emerald-600/60 p-2.5 rounded-lg space-y-1">
+                    <div class="flex items-center justify-between text-[11px]">
+                      <span class="text-emerald-300 font-bold flex items-center gap-1">
+                        <span>✔</span> View Revit Đang Mở Vẽ Hiện Hành:
+                      </span>
+                      <span class="bg-emerald-500/20 text-emerald-300 text-[9px] font-bold px-1.5 py-0.5 rounded border border-emerald-400/30">Active View</span>
+                    </div>
+                    <div class="font-mono text-white text-[11px] font-bold bg-slate-900/90 py-1.5 px-2 rounded border border-emerald-500/40 truncate">
+                      [FloorPlan] Mặt Bằng Cấp Gió Lầu 1 - HVAC
+                    </div>
+                    <div class="text-[10px] text-slate-400 flex justify-between">
+                      <span>Xuất trực tiếp mô hình MEP từ View đang vẽ</span>
+                      <span class="text-sky-300">Không cần tạo Sheet</span>
+                    </div>
+                  </div>
+
+                  <!-- Container 2: Danh Sách Sheet Bản Vẽ -->
+                  <div id="cadScopeSheets" style="display:none;" class="space-y-1 bg-slate-900/90 p-2 rounded border border-slate-700 max-h-24 overflow-y-auto text-[11px]">
+                    <div class="flex justify-between items-center pb-1 mb-1 border-b border-slate-800 text-[10px]">
+                      <span class="text-slate-400">Chọn Sheet bản vẽ:</span>
+                      <span class="text-sky-400 cursor-pointer hover:underline" onclick="document.querySelectorAll('.cad-sheet-chk').forEach(c => c.checked = true)">Chọn tất cả</span>
+                    </div>
+                    <label class="flex items-center gap-2 text-slate-200 hover:text-white cursor-pointer py-0.5">
+                      <input type="checkbox" checked class="cad-sheet-chk text-emerald-600 rounded">
+                      <span class="font-mono text-emerald-400 font-bold whitespace-nowrap shrink-0">M-01</span>
+                      <span class="truncate">Mặt Bằng Cấp Gió Lầu 1</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-slate-200 hover:text-white cursor-pointer py-0.5">
+                      <input type="checkbox" checked class="cad-sheet-chk text-emerald-600 rounded">
+                      <span class="font-mono text-emerald-400 font-bold whitespace-nowrap shrink-0">M-02</span>
+                      <span class="truncate">Mặt Bằng Hút Khói &amp; Tăng Áp</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-slate-200 hover:text-white cursor-pointer py-0.5">
+                      <input type="checkbox" checked class="cad-sheet-chk text-emerald-600 rounded">
+                      <span class="font-mono text-sky-400 font-bold whitespace-nowrap shrink-0">P-01</span>
+                      <span class="truncate">Mặt Bằng Cấp Thoát Nước Tầng Hầm</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-slate-200 hover:text-white cursor-pointer py-0.5">
+                      <input type="checkbox" class="cad-sheet-chk text-emerald-600 rounded">
+                      <span class="font-mono text-red-400 font-bold whitespace-nowrap shrink-0">FP-01</span>
+                      <span class="truncate">Mặt Bằng Chữa Cháy Sprinkler Tầng Điển Hình</span>
+                    </label>
+                  </div>
+
+                  <!-- Container 3: Danh Sách View Dự Án -->
+                  <div id="cadScopeViews" style="display:none;" class="space-y-1 bg-slate-900/90 p-2 rounded border border-slate-700 max-h-24 overflow-y-auto text-[11px]">
+                    <div class="flex justify-between items-center pb-1 mb-1 border-b border-slate-800 text-[10px]">
+                      <span class="text-slate-400">Chọn View dự án:</span>
+                      <span class="text-sky-400 cursor-pointer hover:underline" onclick="document.querySelectorAll('.cad-view-chk').forEach(c => c.checked = true)">Chọn tất cả</span>
+                    </div>
+                    <label class="flex items-center gap-2 text-slate-200 hover:text-white cursor-pointer py-0.5">
+                      <input type="checkbox" checked class="cad-view-chk text-emerald-600 rounded">
+                      <span class="font-mono text-emerald-400 font-bold whitespace-nowrap shrink-0">[FloorPlan]</span>
+                      <span class="truncate">Mặt Bằng Cấp Gió Lầu 1</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-slate-200 hover:text-white cursor-pointer py-0.5">
+                      <input type="checkbox" checked class="cad-view-chk text-emerald-600 rounded">
+                      <span class="font-mono text-emerald-400 font-bold whitespace-nowrap shrink-0">[FloorPlan]</span>
+                      <span class="truncate">Mặt Bằng Thoát Nước Tầng Hầm</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-slate-200 hover:text-white cursor-pointer py-0.5">
+                      <input type="checkbox" checked class="cad-view-chk text-emerald-600 rounded">
+                      <span class="font-mono text-sky-400 font-bold whitespace-nowrap shrink-0">[CeilingPlan]</span>
+                      <span class="truncate">Trần Cấp Gió &amp; Miệng Gió Lầu 1</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-slate-200 hover:text-white cursor-pointer py-0.5">
+                      <input type="checkbox" checked class="cad-view-chk text-emerald-600 rounded">
+                      <span class="font-mono text-purple-400 font-bold whitespace-nowrap shrink-0">[3D View]</span>
+                      <span class="truncate">Phối Cảnh 3D Trục Kỹ Thuật MEP</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Thư mục lưu & Định dạng DWG -->
+                <div class="col-span-4 space-y-2 border-r border-slate-700/80 pr-3">
+                  <div>
+                    <label class="block text-slate-200 font-bold text-[11px] mb-1">📁 Thư Mục Xuất DWG:</label>
+                    <div class="flex gap-1.5">
+                      <input type="text" value="D:\PROJECTS\HADO_CENTROSA\MEP_CAD_EXPORTS" class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sky-300 font-mono text-[11px] outline-none select-all" readonly>
+                      <button onclick="showToastNotice('Mở hộp thoại chọn thư mục lưu DWG!')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded text-[11px] font-semibold">Chọn...</button>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-slate-300 font-semibold text-[10px] mb-0.5">Phiên Bản AutoCAD:</label>
+                      <select class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-emerald-300 font-mono text-[11px]">
+                        <option selected>AutoCAD 2018 (.dwg)</option>
+                        <option>AutoCAD 2013 (.dwg)</option>
+                        <option>AutoCAD 2010 (.dwg)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-slate-300 font-semibold text-[10px] mb-0.5">Quy Tắc Đặt Tên File:</label>
+                      <select class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-[11px]">
+                        <option selected>[Số Hiệu Sheet] - [Tên Sheet].dwg</option>
+                        <option>[Mã Dự Án]_[Số Hiệu].dwg</option>
+                        <option>Chỉ lấy Số Hiệu Bản Vẽ</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tùy Chọn Xuất DWG Nâng Cao -->
+                <div class="col-span-3 space-y-1.5">
+                  <label class="block text-slate-200 font-bold text-[11px] mb-1">⚙ Tùy Chọn Xuất DWG:</label>
+                  <label class="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
+                    <input type="checkbox" checked class="text-emerald-500 rounded">
+                    <span>Gộp liên kết ngoài (Bind Xrefs)</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
+                    <input type="checkbox" checked class="text-emerald-500 rounded">
+                    <span>Tách View thành khối thống nhất (Merged Views)</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 text-[11px] text-emerald-300 font-bold cursor-pointer">
+                    <input type="checkbox" checked class="text-emerald-500 rounded">
+                    <span>Áp dụng Quy đổi Layer Hệ thống MEP</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
+                    <input type="checkbox" checked class="text-emerald-500 rounded">
+                    <span>Giữ nguyên khung tên (TitleBlock)</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
+                    <input type="checkbox" checked class="text-emerald-500 rounded">
+                    <span>Chuẩn hóa Font tiếng Việt Unicode</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- KHỐI 2: MA TRẬN QUY ĐỔI LAYER MEP (INTERACTIVE DATAGRID) -->
+              <div class="bg-[#141923] rounded-lg border border-slate-700 overflow-hidden">
+                <!-- Toolbar của ma trận Layer -->
+                <div class="px-3 py-2 bg-slate-800/90 border-b border-slate-700 flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-3">
+                    <span class="font-bold text-slate-200 text-[11px] flex items-center gap-1">
+                      <span class="text-emerald-400">🎨</span> BẢNG QUY ĐỔI LAYER HỆ THỐNG MEP:
+                    </span>
+
+                    <!-- Preset Selector -->
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] text-slate-400 font-semibold">Bộ Chuẩn (Preset):</span>
+                      <select onchange="window.switchCadPreset(this.value)" class="bg-slate-900 border border-emerald-500/80 rounded px-2 py-0.5 text-emerald-300 font-bold text-[11px] outline-none">
+                        <option value="TCVN" selected>Preset TCVN MEP (Việt Nam)</option>
+                        <option value="AIA">Preset AIA / NCS Quốc Tế</option>
+                        <option value="CUSTOM">Preset Tùy Chỉnh (Custom)</option>
+                      </select>
+                    </div>
+
+                    <!-- Category Filter Tabs -->
+                    <div class="flex items-center gap-1 bg-slate-900/80 p-0.5 rounded border border-slate-700">
+                      <button onclick="window.filterCadCategory('ALL', this)" class="cad-filter-btn px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white shadow-sm">
+                        Tất Cả (<span id="cadCntAll">15</span>)
+                      </button>
+                      <button onclick="window.filterCadCategory('DUCT', this)" class="cad-filter-btn px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">
+                        Ống Gió (<span id="cadCntDuct">6</span>)
+                      </button>
+                      <button onclick="window.filterCadCategory('PIPE', this)" class="cad-filter-btn px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">
+                        Ống Nước (<span id="cadCntPipe">5</span>)
+                      </button>
+                      <button onclick="window.filterCadCategory('EQUIP', this)" class="cad-filter-btn px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">
+                        Thiết Bị (<span id="cadCntEquip">4</span>)
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex items-center gap-1.5">
+                    <button onclick="window.simulateLoadProject()" class="bg-sky-700 hover:bg-sky-600 text-white font-bold px-2.5 py-1 rounded text-[10px] flex items-center gap-1 shadow-sm">
+                      <span>🔄</span> Tải Hệ Thống Từ Dự Án
+                    </button>
+                    <button onclick="window.simulateSaveJson()" class="bg-indigo-700 hover:bg-indigo-600 text-white font-bold px-2 py-1 rounded text-[10px] flex items-center gap-1 shadow-sm">
+                      <span>💾</span> Lưu JSON
+                    </button>
+                    <button onclick="window.simulateLoadJson()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded text-[10px] flex items-center gap-1">
+                      <span>📂</span> Nạp JSON
+                    </button>
+                    <button onclick="window.addNewMappingRow()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded text-[10px] flex items-center gap-1 shadow-sm">
+                      <span>➕</span> Thêm Dòng
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Bảng DataGrid -->
+                <div class="max-h-56 overflow-y-auto">
+                  <table class="w-full text-[11px] text-left border-collapse">
+                    <thead class="bg-[#181d26] text-slate-300 sticky top-0 border-b border-slate-700">
+                      <tr>
+                        <th class="p-2 w-10 text-center font-bold">STT</th>
+                        <th class="p-2 w-24 font-bold">Phân Loại MEP</th>
+                        <th class="p-2 w-56 font-bold">Hệ Thống Revit (MEP System Type)</th>
+                        <th class="p-2 font-bold text-emerald-400">Tên Layer CAD Mong Muốn</th>
+                        <th class="p-2 w-40 font-bold">Màu Sắc CAD (Color Index)</th>
+                        <th class="p-2 w-28 font-bold">Kiểu Nét (Linetype)</th>
+                        <th class="p-2 w-24 font-bold">Độ Dày (Lineweight)</th>
+                        <th class="p-2 w-12 text-center font-bold">Xóa</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cadMappingTableBody" class="divide-y divide-slate-800 font-sans">
+                      <!-- Rendered by window.renderCadMappingRows() -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Footer Summary Bar của Ma trận -->
+                <div class="px-3 py-1.5 bg-[#181d26] border-t border-slate-700 flex justify-between items-center text-[10px] text-slate-400">
+                  <span>💡 Nhấp đúp vào ô Tên Layer để chỉnh sửa trực tiếp. Màu sắc tuân thủ bảng màu chuẩn AutoCAD ACI (Index 1-255).</span>
+                  <span class="text-emerald-400 font-mono font-bold">Tự động gắn tiền tố &amp; gán Layer Modifier theo System Abbreviation</span>
+                </div>
+              </div>
+
+              <!-- KHỐI 3: THANH ĐIỀU KHIỂN & TIẾN TRÌNH XUẤT CAD -->
+              <div class="flex items-center justify-between gap-3 pt-1">
+                <div class="flex items-center gap-2 text-slate-400 text-[11px]">
+                  <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Sẵn sàng xuất <strong>3 bản vẽ</strong> sang định dạng <strong>AutoCAD 2018 DWG</strong> (15 Layer MEP đã ánh xạ)</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button onclick="selectButton('cmdHDToolExportCad')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2.5 rounded-lg text-xs font-semibold">
+                    Đóng (ESC)
+                  </button>
+                  <button onclick="showToastNotice('🚀 Đang bắt đầu xuất 3 bản vẽ sang AutoCAD theo đúng chuẩn Layer MEP...');" class="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white font-bold px-6 py-2.5 rounded-lg shadow-lg text-xs flex items-center gap-2 transform active:scale-95 transition-all">
+                    <span>🚀</span> BẮT ĐẦU XUẤT CAD &amp; QUY ĐỔI LAYER MEP
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modeless Status Footer -->
+            <div class="bg-[#141923] px-3 py-2 border-t border-slate-700 flex justify-between items-center text-[11px]">
+              <span class="text-emerald-400 font-bold">✔ Chế độ Modeless 100%: Kỹ sư hoàn toàn tự do Pan, Zoom, xoay 3D hoặc chuyển đổi View/Sheet trên Revit trong khi hộp thoại đang mở!</span>
+              <span class="text-slate-400">Phím tắt nhanh: <kbd class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-600 text-slate-200 font-mono text-[10px]">ESC</kbd> để đóng lệnh</span>
+            </div>
+          </div>
+        `;
+
+        // Render ma trận ngay lập tức khi mở dialog
+        setTimeout(() => {
+          if (window.renderCadMappingRows) {
+            window.renderCadMappingRows();
+          }
+        }, 20);
       }
       // 6. CÁC FORM KHÁC
       else {

@@ -4,11 +4,11 @@
 
 ## 1. GIỚI THIỆU TỔNG QUAN
 
-**HDTOOL (Version 83)** là bộ công cụ chuyên nghiệp toàn diện dành riêng cho Autodesk Revit (hỗ trợ đa phiên bản: Revit 2024, 2025, 2026, 2027...), phục vụ đắc lực cho Kỹ sư MEP và Kiến trúc sư:
+**HDTOOL (Version 84)** là bộ công cụ chuyên nghiệp toàn diện dành riêng cho Autodesk Revit (hỗ trợ đa phiên bản: Revit 2024, 2025, 2026, 2027...), phục vụ đắc lực cho Kỹ sư MEP và Kiến trúc sư:
 
 > [!NOTE]
-> **ĐẶC QUYỀN TRẢI NGHIỆM TỰ DO TRÊN BẢN VẼ & ẤN PHÍM `ESC` THOÁT LỆNH TỨC THÌ (VERSION 83)**:
-> Toàn bộ các công cụ của HDTOOL (Dựng Ống Gió Từ Hình Vẽ CAD, Tự Động Crop View, Căn Chỉnh Grids/Level, Thống Kê Ống Nước, Khối Lượng Ống Gió, Xuất/Cập Nhật Danh Mục Bản Vẽ, Menu HDTOOL, Cập Nhật Tool) đều hoạt động ở chế độ **Modeless Dialog 60 FPS** — khi mở bất kỳ cửa sổ nào, kỹ sư **VẪN THAO TÁC HOÀN TOÀN TỰ DO TRÊN BẢN VẼ REVIT** (Pan, Zoom, xoay 3D Isometric, chọn đối tượng, chuyển Tab View/Sheet). Khi không dùng nữa, **chỉ cần ấn phím `ESC` là thoát/đóng ngay công cụ** mà không cần di chuột bấm `Đóng`.
+> **ĐẶC QUYỀN TRẢI NGHIỆM TỰ DO TRÊN BẢN VẼ & ẤN PHÍM `ESC` THOÁT LỆNH TỨC THÌ (VERSION 84)**:
+> Toàn bộ các công cụ của HDTOOL (Dựng Ống Gió Từ Hình Vẽ CAD, Tự Động Crop View, Căn Chỉnh Grids/Level, Thống Kê Ống Nước, Khối Lượng Ống Gió, Xuất CAD Quy Đổi Layer MEP, Xuất/Cập Nhật Danh Mục Bản Vẽ, Menu HDTOOL, Cập Nhật Tool) đều hoạt động ở chế độ **Modeless Dialog 60 FPS** — khi mở bất kỳ cửa sổ nào, kỹ sư **VẪN THAO TÁC HOÀN TOÀN TỰ DO TRÊN BẢN VẼ REVIT** (Pan, Zoom, xoay 3D Isometric, chọn đối tượng, chuyển Tab View/Sheet). Khi không dùng nữa, **chỉ cần ấn phím `ESC` là thoát/đóng ngay công cụ** mà không cần di chuột bấm `Đóng`.
 
 1. **Dựng Mô Hình Hệ Thống Ống Gió 3D Từ HÌNH VẼ CAD Link [CHUẨN KỸ SƯ BIM]**:
    - **Nhận diện mũi tên `QLEADER` / `MULTILEADER` & Đọc đúng `W` trước `H` sau**: Tự động trích xuất cả mũi tên chỉ dẫn (`LEADER` / `MULTILEADER`) gắn với Text `WxH` ở xa ngoài ống (ví dụ `OAD 2200x550: EI60`), tự sửa hướng trục cho đoạn ống cổ ngắn (`Length < Width`, như `647x2200` hay `911x2000`) và ưu tiên gán chuẩn `W` trước `H` sau ngay tại đầu mũi tên chỉ tới.
@@ -16,13 +16,18 @@
    - **Phân rã Quần ống gió / Chạc Y / Ngã ba thành Ống thẳng + Côn đồng tâm + Chân rẽ đúng chiều CAD & Lọc mũi tên rỗng**: Tại mọi vị trí ngã 3, chạc chia chữ Y / quần ống gió hoặc giật cấp trên CAD (ví dụ `OAD 600x300` + `1000x300` + `OAD 400x250`), Add-in gộp liền mạch ống chủ, nối chuyển size bằng **Côn thu đồng tâm**, đâm nhánh bằng **Chân rẽ `TakeoffTap` tự xoay khớp đúng chiều vát 45° bản vẽ CAD**, ưu tiên sử dụng **Family phụ kiện có sẵn trong Revit**, và bỏ qua hoàn toàn mũi tên chỉ hướng gió không kèm text để bảo toàn 100% ống thật.
    - **Nhận diện đúng 100% Ống Gió & Loại bỏ triệt để đối tượng giả ống**: Tự động nhận diện Hình chữ nhật (Ống gió thẳng), **Cút cong bán kính lớn** (`Arc` đồng tâm & `PolyLine` đến 250 đỉnh), Côn thu đồng tâm, Chân rẽ Tap; đồng thời **tự động loại bỏ không cần chọn Layer**: hộp miệng gió gạch chéo X/V, miệng gió đầu nhánh, khung nét đứt `IAQ`, và thiết bị phòng máy (`ATT`, `MFD`/`OBD`/`NRD`, quạt, Hatch `ANSI37`).
    - **Trích xuất Text `.dwg` chuẩn xác, Đúng thứ tự `W` trước `H` sau & Không mặc định Cao Độ Tim**: Bấm **`🎯 PICK CHỌN HÌNH VẼ TUYẾN ỐNG`** $\to$ Tool đọc Text `WxH` chuẩn **`W` trước – `H` sau** (`EAD 350x300` $\Rightarrow W=350, H=300$), khớp ống **bọc chống cháy EI60**, hiển thị chẩn đoán trong **Live Preview DataGridView**; kỹ sư tự nhập **Cao Độ Tim Hệ Thống (mm)** rồi bấm **`🚀 DỰNG MÔ HÌNH REVIT 3D`**.
-2. **Tự Động Tạo & Căn Chỉnh Crop View (Auto Crop Box) [CƠ CHẾ HIỂU Ý NGƯỜI DÙNG]**: Tự động tính toán Bounding Box 3D bao quanh toàn bộ các đối tượng mô hình có trong View vừa tạo (Sơ đồ không gian 3D, Mặt bằng, Mặt cắt, Viewport trên Sheet), chỉ giữ đối tượng trong phạm vi Crop hiện tại, không dãn to ra trục khác.
-3. **Căn chỉnh Lưới trục (Grids)** trên Mặt bằng, Mặt đứng, Mặt cắt & Trang in (Sheet) theo khung **Crop View** theo 4 hướng **Top, Bottom, Left, Right (mm)** cân đối chuẩn xác. Tự động kiểm tra Unhide và kéo các trục bị ẩn / kéo lệch về sát mép bản vẽ.
-4. **Căn chỉnh Cao độ (Level)** trên Mặt cắt, Mặt đứng & Trang in (Sheet) theo khung **Crop View** theo 2 đầu **Left, Right (mm)**.
-5. **Thống Kê Khối Lượng Ống Gió & Phụ Kiện HVAC (TCVN 5687:2010 / SMACNA)**: Tự động tính diện tích tôn m², nhận diện Cút góc/R, Côn thu đọc chuẩn Parameter Chiều dài $L$ ($200\text{ mm}$), Lượn Z có độ chênh cao $H$, sắp xếp hết toàn bộ ống thẳng từ to đến nhỏ rồi mới đến phụ kiện, giao diện **Modeless Dialog 60 FPS**, **Live Tracking** và **Tự Động Cập Nhật thời gian thực** khi sửa thông số trên Revit.
-6. **Thống Kê Khối Lượng Ống Nước & Phụ Kiện MEP**: Bóc cục bộ theo vùng quét, gộp 3 tham số tên phụ kiện phân mảnh làm 1 cột duy nhất, soi sáng 2 chiều (Highlight), kéo thả Schedule vào Sheet.
-7. **Quản Lý & Xuất Danh Mục Bản Vẽ (Sheet List)**: Sửa trực tiếp Số Hiệu & Tên bản vẽ (Inline Edit), đổi số hiệu hàng loạt có kéo chuột tăng đuôi giống Excel, xuất PDF gộp, xuất CAD DWG gộp có đầy đủ Khung tên (TitleBlock), xuất Excel và cập nhật 2 chiều từ Excel.
-8. **Cập Nhật Tool Nóng (In-Memory Hot Reload)**: Cập nhật DLL và tính năng mới trực tiếp ngay trong khi đang mở Revit mà không cần tắt phần mềm.
+2. **Xuất Bản Vẽ Sang AutoCAD & Quy Đổi Layer Hệ Thống MEP [MỚI VERSION 84 - THEO LỆNH SẾP HỒ]**:
+   - **3 Chế độ nguồn xuất linh hoạt**: Xuất trực tiếp **`View Đang Vẽ (Active View)`** (mặt bằng, 3D, mặt cắt đang mở) mà không cần tạo Sheet; xuất danh sách **`Sheet Bản Vẽ`**; hoặc xuất hàng loạt **`View Dự Án`**.
+   - **Ma trận quy đổi Layer MEP (Ducts, Pipes, Equipment)**: Tự động quét toàn bộ `MechanicalSystemType` & `PipingSystemType`, cho phép gán Target CAD Layer, mã màu AutoCAD ACI (1–255), Linetype, Lineweight.
+   - **3 Bộ Preset chuẩn**: TCVN MEP (Việt Nam), AIA / NCS (Quốc tế), Preset Tùy Chỉnh (Custom) và Lưu/Nạp cấu hình JSON.
+   - **Tự động hóa xuất & Hậu kỳ**: Kết hợp `DWGExportOptions` + `ExportLayerTable` (`ModifierType.SystemType`) và kịch bản `accoreconsole.exe` headless chuẩn hóa Layer và màu sắc.
+3. **Tự Động Tạo & Căn Chỉnh Crop View (Auto Crop Box) [CƠ CHẾ HIỂU Ý NGƯỜI DÙNG]**: Tự động tính toán Bounding Box 3D bao quanh toàn bộ các đối tượng mô hình có trong View vừa tạo (Sơ đồ không gian 3D, Mặt bằng, Mặt cắt, Viewport trên Sheet), chỉ giữ đối tượng trong phạm vi Crop hiện tại, không dãn to ra trục khác.
+4. **Căn chỉnh Lưới trục (Grids)** trên Mặt bằng, Mặt đứng, Mặt cắt & Trang in (Sheet) theo khung **Crop View** theo 4 hướng **Top, Bottom, Left, Right (mm)** cân đối chuẩn xác. Tự động kiểm tra Unhide và kéo các trục bị ẩn / kéo lệch về sát mép bản vẽ.
+5. **Căn chỉnh Cao độ (Level)** trên Mặt cắt, Mặt đứng & Trang in (Sheet) theo khung **Crop View** theo 2 đầu **Left, Right (mm)**.
+6. **Thống Kê Khối Lượng Ống Gió & Phụ Kiện HVAC (TCVN 5687:2010 / SMACNA)**: Tự động tính diện tích tôn m², nhận diện Cút góc/R, Côn thu đọc chuẩn Parameter Chiều dài $L$ ($200\text{ mm}$), Lượn Z có độ chênh cao $H$, sắp xếp hết toàn bộ ống thẳng từ to đến nhỏ rồi mới đến phụ kiện, giao diện **Modeless Dialog 60 FPS**, **Live Tracking** và **Tự Động Cập Nhật thời gian thực** khi sửa thông số trên Revit.
+7. **Thống Kê Khối Lượng Ống Nước & Phụ Kiện MEP**: Bóc cục bộ theo vùng quét, gộp 3 tham số tên phụ kiện phân mảnh làm 1 cột duy nhất, soi sáng 2 chiều (Highlight), kéo thả Schedule vào Sheet.
+8. **Quản Lý & Xuất Danh Mục Bản Vẽ (Sheet List)**: Sửa trực tiếp Số Hiệu & Tên bản vẽ (Inline Edit), đổi số hiệu hàng loạt có kéo chuột tăng đuôi giống Excel, xuất PDF gộp, xuất CAD DWG gộp có đầy đủ Khung tên (TitleBlock), xuất Excel và cập nhật 2 chiều từ Excel.
+9. **Cập Nhật Tool Nóng (In-Memory Hot Reload)**: Cập nhật DLL và tính năng mới trực tiếp ngay trong khi đang mở Revit mà không cần tắt phần mềm.
 
 ---
 
@@ -181,15 +186,42 @@ Công cụ bóc tách khối lượng chuyên sâu dành riêng cho hệ thống
 
 ---
 
-## PHẦN VIII: HƯỚNG DẪN CÀI ĐẶT ADD-IN HDTOOL (BỘ CÀI ĐẶT 1-FILE)
+## PHẦN IX: XUẤT BẢN VẼ SANG AUTOCAD & QUY ĐỔI LAYER MEP (MỚI VERSION 85)
+
+### 1. Cách Mở Công Cụ
+- **Cách 1 (Dùng Ngay Trong Phiên Revit Hiện Tại)**:
+  Bấm nút **`Menu HDTOOL`** trên thanh công cụ Ribbon $\rightarrow$ Bấm nút số **`📁 9. XUẤT CAD & QUY ĐỔI LAYER MEP (MẶT BẰNG / SHEET SANG DWG)`**. Cửa sổ Modeless mở ra ngay lập tức mà không cần tắt hay khởi động lại Revit.
+- **Cách 2 (Mở Trực Tiếp Trên Ribbon)**:
+  Bấm nút **`Xuất CAD Quy Đổi Layer`** trên Panel 3 ("Quản Lý Bản Vẽ & Sheet"). *(Áp dụng sau khi chạy bộ cài `HDTOOL_Setup_Version_85.exe` và khởi động lại Revit)*.
+
+### 2. Ba Chế Độ Nguồn Xuất Linh Hoạt
+1. **👁 View Đang Vẽ (Active View - Lựa Chọn Mặc Định)**:
+   - Xuất trực tiếp mô hình MEP từ View mặt bằng (FloorPlan), sơ đồ 3D, mặt cắt (Section) đang mở mà không cần đưa vào Sheet.
+2. **📑 Sheet Bản Vẽ**:
+   - Chọn một hoặc nhiều Sheet trong danh sách để xuất sang các file CAD `.dwg` độc lập với tên chuẩn `[Số Hiệu] - [Tên Bản Vẽ].dwg`.
+3. **📐 View Dự Án**:
+   - Quét chọn hàng loạt View trong toàn bộ cây dự án để xuất sang CAD cùng lúc.
+
+### 3. Ma Trận Quy Đổi Layer Hệ Thống MEP (Ducts, Pipes, Equipment)
+- **Tự Động Nạp Hệ Thống Thực Tế**: Tự động đọc danh sách `MechanicalSystemType` và `PipingSystemType` từ mô hình Revit.
+- **Tùy Biến Đầy Đủ**: Nhấp đúp vào ô để sửa Tên Layer đích, Mã màu AutoCAD ACI (1–255), Kiểu nét (Linetype) và Độ dày nét (Lineweight mm).
+- **Bộ Chuẩn Sẵn Có (Presets)**:
+  - **Preset TCVN MEP**: Cấp gió `M-DUCT-CAPGIO` (Cyan 4), Hồi gió `M-DUCT-HOIGIO` (Magenta 6), Thải gió `M-DUCT-THAIGIO` (Red 1), Cấp nước `P-PIPE-CAPNUOC` (Blue 5), Thoát nước `P-PIPE-THOATNUOC` (30), Chữa cháy `FP-PIPE-CHUACHAY` (Red 1)...
+  - **Preset AIA / NCS Quốc Tế**: `M-DUCT-SUPP`, `M-DUCT-RETN`, `P-DOMW-CWTR`...
+  - **Lưu & Nạp File JSON**: Cho phép lưu cấu hình quy đổi Layer ra file JSON và nạp lại bất cứ lúc nào.
+- **Chuẩn Hóa Hậu Kỳ Tự Động**: Tích hợp engine AutoCAD Core Console xử lý trực tiếp trên file DWG, đảm bảo bản vẽ CAD mở lên có đầy đủ Layer, đúng màu sắc chuẩn 100%.
+
+---
+
+## PHẦN X: HƯỚNG DẪN CÀI ĐẶT ADD-IN HDTOOL (BỘ CÀI ĐẶT 1-FILE)
 
 Bộ cài đặt HDTOOL được đóng gói thành **1 file `.exe` duy nhất**, độc lập hoàn toàn:
-- **Tên file cài đặt**: **`HDTOOL_Setup_Version_80.exe`** (tự động lưu 2 version gần nhất là Version 79 và Version 80).
+- **Tên file cài đặt**: **`HDTOOL_Setup_Version_85.exe`** (tự động lưu 2 version gần nhất là Version 84 và Version 85).
 - **Vị trí lưu trữ**: Tất cả file cài đặt và đóng gói **chỉ sinh ra bên trong thư mục dự án (`c:\Users\Nguye\Desktop\ADDIN REVIT`)**, tuyệt đối không sinh file ra Desktop.
-- **Cơ chế lưu trữ 2 Version gần nhất**: Hệ thống tự động lưu giữ **đúng 2 version mới nhất** (hiện tại là `Version 79` và `Version 80`), các version cũ hơn tự động xóa sạch.
+- **Cơ chế lưu trữ 2 Version gần nhất**: Hệ thống tự động lưu giữ **đúng 2 version mới nhất** (hiện tại là `Version 84` và `Version 85`), các version cũ hơn tự động xóa sạch.
 
 ### Cách sử dụng bộ cài đặt:
-1. Gửi duy nhất 1 file **`HDTOOL_Setup_Version_80.exe`** qua Zalo, Drive, USB hoặc Email.
-2. Nhấp đúp chuột vào file **`HDTOOL_Setup_Version_80.exe`**.
+1. Gửi duy nhất 1 file **`HDTOOL_Setup_Version_85.exe`** qua Zalo, Drive, USB hoặc Email.
+2. Nhấp đúp chuột vào file **`HDTOOL_Setup_Version_85.exe`**.
 3. Cửa sổ cài đặt HadoMEE mở ra, tự động phát hiện phiên bản Revit trên máy (Revit 2024, 2025, 2026, 2027...).
 4. Bấm nút màu đỏ: **`🚀 CÀI ĐẶT ADD-IN HDTOOL`**. Báo "Cài đặt thành công" là xong ngay trong 1 giây!

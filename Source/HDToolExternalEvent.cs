@@ -180,6 +180,86 @@ namespace HDTool
     }
 
     /// <summary>
+    /// Bộ lọc thông điệp Windows toàn cục: Bắt phím ESC ở cấp Message Loop trước khi bất kỳ Control nào
+    /// (TextBox, DataGridView, ComboBox...) kịp nuốt phím, đảm bảo 100% ấn ESC là thoát lệnh ngay lập tức.
+    /// </summary>
+    public class HDToolEscapeMessageFilter : IMessageFilter
+    {
+        private static HDToolEscapeMessageFilter _instance;
+        private static bool _registered = false;
+        private static readonly object _filterLock = new object();
+
+        public static void EnsureRegistered()
+        {
+            if (!_registered)
+            {
+                lock (_filterLock)
+                {
+                    if (!_registered)
+                    {
+                        try
+                        {
+                            if (_instance == null) _instance = new HDToolEscapeMessageFilter();
+                            Application.AddMessageFilter(_instance);
+                            _registered = true;
+                        }
+                        catch { }
+                    }
+                }
+            }
+        }
+
+        public bool PreFilterMessage(ref Message m)
+        {
+            const int WM_KEYDOWN = 0x0100;
+            const int VK_ESCAPE = 0x1B;
+
+            if (m.Msg == WM_KEYDOWN && (int)m.WParam == VK_ESCAPE)
+            {
+                // Kiểm tra Form đang Active
+                Form activeForm = Form.ActiveForm;
+                if (activeForm is HDToolBaseForm)
+                {
+                    try
+                    {
+                        if (activeForm.Modal)
+                        {
+                            activeForm.DialogResult = DialogResult.Cancel;
+                        }
+                        activeForm.Close();
+                        return true;
+                    }
+                    catch { }
+                }
+
+                // Quét trong Application.OpenForms nếu Form chứa Focus
+                FormCollection openForms = Application.OpenForms;
+                if (openForms != null)
+                {
+                    for (int i = openForms.Count - 1; i >= 0; i--)
+                    {
+                        Form f = openForms[i];
+                        if (f is HDToolBaseForm && f.Visible && (f.ContainsFocus || f.Focused))
+                        {
+                            try
+                            {
+                                if (f.Modal)
+                                {
+                                    f.DialogResult = DialogResult.Cancel;
+                                }
+                                f.Close();
+                                return true;
+                            }
+                            catch { }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Lớp Form chuẩn toàn cục của HDTOOL (Modeless & Modal):
     /// Mọi cửa sổ công cụ hiện tại và phát triển mới sau này BẮT BUỘC kế thừa lớp này
     /// để luôn hỗ trợ ấn phím ESC thoát lệnh ngay lập tức (không cần di chuột bấm Đóng/X).
@@ -189,11 +269,23 @@ namespace HDTool
         public HDToolBaseForm()
         {
             this.KeyPreview = true;
+            HDToolEscapeMessageFilter.EnsureRegistered();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            try
+            {
+                this.Activate();
+                this.Focus();
+            }
+            catch { }
         }
 
         /// <summary>
-        /// Cho phép Form con xử lý trước khi ESC đóng cửa sổ (VD: tắt highlight 3D, hủy ô đang edit).
-        /// Trả về true nếu chỉ muốn dừng ở bước xử lý phụ (giữ Form mở); trả về false để đóng Form ngay.
+        /// Cho phép Form con thực hiện dọn dẹp trước khi đóng (VD: tắt highlight 3D, hủy ô đang edit).
+        /// Dù trả về gì thì sau khi dọn dẹp xong Form VẪN LUÔN LUÔN ĐƯỢC ĐÓNG ngay lập tức khi ấn ESC.
         /// </summary>
         protected virtual bool OnBeforeEscapeClose()
         {
@@ -202,19 +294,33 @@ namespace HDTool
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (keyData == Keys.Escape)
+            if ((keyData & Keys.KeyCode) == Keys.Escape)
             {
-                if (!OnBeforeEscapeClose())
+                try { OnBeforeEscapeClose(); } catch { }
+                if (this.Modal)
                 {
-                    if (this.Modal)
-                    {
-                        this.DialogResult = DialogResult.Cancel;
-                    }
-                    this.Close();
+                    this.DialogResult = DialogResult.Cancel;
                 }
+                this.Close();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                try { OnBeforeEscapeClose(); } catch { }
+                if (this.Modal)
+                {
+                    this.DialogResult = DialogResult.Cancel;
+                }
+                this.Close();
+                e.Handled = true;
+                return;
+            }
+            base.OnKeyDown(e);
         }
     }
 }

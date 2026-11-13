@@ -32,6 +32,7 @@ namespace HDTool
         private Button btnUpdateSheetList;
         private Button btnReloadTool;
         private Button btnSmart;
+        private Button btnExportCad;
         private Button btnClose;
 
         public HDToolMainForm(UIDocument uidoc)
@@ -262,10 +263,26 @@ namespace HDTool
             btnCadToDuct.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnCadToDuct.Click += BtnCadToDuct_Click;
 
+            // Button 9: Xuất CAD & Quy Đổi Layer MEP (MỚI THEO LỆNH SẾP HỒ)
+            btnExportCad = new Button();
+            btnExportCad.Location = new Point(16, 680);
+            btnExportCad.Size = new Size(492, 54);
+            btnExportCad.BackColor = Color.FromArgb(15, 118, 110); // Teal / Emerald Accent
+            btnExportCad.ForeColor = Color.White;
+            btnExportCad.FlatStyle = FlatStyle.Flat;
+            btnExportCad.FlatAppearance.BorderSize = 0;
+            btnExportCad.Cursor = Cursors.Hand;
+            btnExportCad.TextAlign = ContentAlignment.MiddleLeft;
+            btnExportCad.Padding = new Padding(15, 0, 0, 0);
+            btnExportCad.Text = "📁  9. XUẤT CAD & QUY ĐỔI LAYER MEP (MẶT BẰNG / SHEET SANG DWG)\r\n" +
+                                "      Xuất trực tiếp View đang vẽ, Sheet hoặc View dự án & tự động quy đổi Layer/Màu/Nét MEP";
+            btnExportCad.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+            btnExportCad.Click += BtnExportCad_Click;
+
             // 10. Button Close
             btnClose = new Button();
             btnClose.Text = "Đóng (ESC)";
-            btnClose.Location = new Point(16, 682);
+            btnClose.Location = new Point(16, 742);
             btnClose.Size = new Size(492, 38);
             btnClose.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             btnClose.Click += (s, e) => this.Close();
@@ -282,10 +299,25 @@ namespace HDTool
             this.Controls.Add(btnReloadTool);
             this.Controls.Add(btnSmart);
             this.Controls.Add(btnCadToDuct);
+            this.Controls.Add(btnExportCad);
             this.Controls.Add(btnClose);
 
-            this.ClientSize = new Size(524, 736);
+            this.ClientSize = new Size(524, 795);
             this.ResumeLayout(false);
+        }
+
+        private void BtnExportCad_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                HDToolModelessHost.EnsureInitialized();
+                ExportCadOptionsForm form = (_uidoc != null) ? new ExportCadOptionsForm(_uidoc) : new ExportCadOptionsForm(_doc);
+                OpenChildModeless(form);
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("HDTOOL XUẤT CAD", "Lỗi mở giao diện Xuất CAD & Quy Đổi Layer MEP: " + ex.Message);
+            }
         }
 
         private void BtnCadToDuct_Click(object sender, EventArgs e)

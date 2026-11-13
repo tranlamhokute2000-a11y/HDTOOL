@@ -134,6 +134,13 @@ namespace HDTool
                 cmdHDToolUpdateSheetList_Data.Image = ResourceHelper.CreateUpdateSheetListIcon(16);
                 panel_3.AddItem(cmdHDToolUpdateSheetList_Data);
 
+                // PushButton: Xuất CAD Quy Đổi Layer (MỚI THEO LỆNH SẾP HỒ)
+                PushButtonData cmdHDToolExportCad_Data = new PushButtonData("cmdHDToolExportCad", "Xuất CAD\nQuy Đổi Layer", assemblyPath, "HDTool.ExportCadCommand");
+                cmdHDToolExportCad_Data.ToolTip = "[HDTOOL] Xuất bản vẽ hoặc View đang vẽ sang AutoCAD (.dwg) & tự động quy đổi Layer/Màu/Nét chuẩn hệ thống MEP (Ducts, Pipes, Equipment).";
+                cmdHDToolExportCad_Data.LargeImage = ResourceHelper.CreateExportCadIcon(32);
+                cmdHDToolExportCad_Data.Image = ResourceHelper.CreateExportCadIcon(16);
+                panel_3.AddItem(cmdHDToolExportCad_Data);
+
                 // ==================================================================
                 // PANEL 4 : HỆ THỐNG & MENU
                 // ==================================================================
@@ -258,6 +265,7 @@ namespace HDTool
                     }
                 }
                 EnsureCadToDuctButtonDynamic(uiapp, panels);
+                EnsureExportCadButtonDynamic(uiapp, panels);
             }
             catch { }
         }
@@ -309,6 +317,62 @@ namespace HDTool
                             btnData.ToolTip = "[HDTOOL] Tự động nhận diện tuyến ống, size WxH, cút, côn đồng tâm, chân rẽ Tap và dựng lại mô hình 3D ống gió hoàn chỉnh từ bản vẽ CAD Link.";
                             btnData.LargeImage = ResourceHelper.CreateCadToDuctIcon(32);
                             btnData.Image = ResourceHelper.CreateCadToDuctIcon(16);
+                            p.AddItem(btnData);
+                        }
+                        break;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Bơm nút Xuất CAD Quy Đổi Layer vào Panel Quản Lý Bản Vẽ & Sheet khi Hot Reload
+        /// </summary>
+        public static void EnsureExportCadButtonDynamic(UIApplication uiapp, List<RibbonPanel> panels = null)
+        {
+            try
+            {
+                if (uiapp == null) return;
+                if (panels == null) panels = uiapp.GetRibbonPanels("HDTOOL");
+                if (panels == null) return;
+
+                foreach (RibbonPanel p in panels)
+                {
+                    if (p.Name.Equals("Quản Lý Bản Vẽ & Sheet", StringComparison.OrdinalIgnoreCase))
+                    {
+                        bool hasExportCad = false;
+                        foreach (RibbonItem it in p.GetItems())
+                        {
+                            if (it != null && (it.Name.Equals("cmdHDToolExportCad", StringComparison.OrdinalIgnoreCase) ||
+                                it.ItemText.Contains("Xuất CAD")))
+                            {
+                                hasExportCad = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasExportCad)
+                        {
+                            string assemblyPath = Assembly.GetExecutingAssembly().Location;
+                            foreach (RibbonItem ri in p.GetItems())
+                            {
+                                PushButton pb = ri as PushButton;
+                                if (pb != null && !string.IsNullOrEmpty(pb.AssemblyName) && System.IO.File.Exists(pb.AssemblyName))
+                                {
+                                    assemblyPath = pb.AssemblyName;
+                                    break;
+                                }
+                            }
+                            if (string.IsNullOrEmpty(assemblyPath) || !System.IO.File.Exists(assemblyPath))
+                            {
+                                assemblyPath = @"c:\Users\Nguye\Desktop\ADDIN REVIT\Build\HDTOOL.dll";
+                            }
+
+                            PushButtonData btnData = new PushButtonData("cmdHDToolExportCad", "Xuất CAD\nQuy Đổi Layer", assemblyPath, "HDTool.ExportCadCommand");
+                            btnData.ToolTip = "[HDTOOL] Xuất bản vẽ hoặc View đang vẽ sang AutoCAD (.dwg) & tự động quy đổi Layer/Màu/Nét chuẩn hệ thống MEP (Ducts, Pipes, Equipment).";
+                            btnData.LargeImage = ResourceHelper.CreateExportCadIcon(32);
+                            btnData.Image = ResourceHelper.CreateExportCadIcon(16);
                             p.AddItem(btnData);
                         }
                         break;

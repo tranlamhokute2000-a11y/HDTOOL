@@ -114,6 +114,14 @@
                                            "commandClass":  "HDTool.UpdateSheetListCommand",
                                            "icon":  "UpdateSheetList",
                                            "tooltip":  "[HDTOOL] Cập nhật lại tên và thông tin Sheet trong Revit từ file Excel."
+                                       },
+                                       {
+                                           "id":  "cmdHDToolExportCad",
+                                           "name":  "Xuất CAD\nQuy Đổi Layer",
+                                           "type":  "large",
+                                           "commandClass":  "HDTool.ExportCadCommand",
+                                           "icon":  "ExportCad",
+                                           "tooltip":  "[HDTOOL] Xuất bản vẽ sang AutoCAD \u0026 tự động quy đổi Layer/Màu/Nét chuẩn hệ thống MEP (Ducts, Pipes, Equipment)."
                                        }
                                    ]
                    },

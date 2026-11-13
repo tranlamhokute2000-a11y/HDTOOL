@@ -222,6 +222,27 @@ namespace HDTool
         }
 
         /// <summary>
+        /// Chuẩn hóa tên file xuất (loại bỏ ký tự cấm của hệ thống tệp Windows: \ / : * ? " < > |)
+        /// </summary>
+        public static string SanitizeFileName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "File";
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            string clean = name;
+            for (int i = 0; i < invalidChars.Length; i++)
+            {
+                clean = clean.Replace(invalidChars[i], '_');
+            }
+            clean = clean.Trim();
+            if (clean.Length > 80)
+            {
+                clean = clean.Substring(0, 80).Trim();
+            }
+            if (string.IsNullOrEmpty(clean)) return "File";
+            return clean;
+        }
+
+        /// <summary>
         /// Chuẩn hóa tên Layout Tab cho AutoCAD (loại bỏ ký tự cấm: \ / : * ? " < > |)
         /// </summary>
         public static string SanitizeLayoutName(string name)

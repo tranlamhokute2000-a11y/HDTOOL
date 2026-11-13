@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -155,16 +155,14 @@ namespace HDTool
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (keyData == Keys.Escape)
+            if ((keyData & Keys.KeyCode) == Keys.Escape)
             {
-                // Nếu đang gõ chỉnh sửa trong ô DataGridView, phím ESC sẽ hủy bỏ nội dung đang gõ trong ô trước
                 if (dgvSheets != null && dgvSheets.IsCurrentCellInEditMode)
                 {
-                    dgvSheets.CancelEdit();
-                    return true;
+                    try { dgvSheets.CancelEdit(); } catch { }
                 }
 
-                // Nhấn ESC tự động đóng/thoát cửa sổ làm việc
+                // Nhấn phím ESC là thoát/đóng cửa sổ làm việc ngay lập tức theo lệnh Sếp Hồ
                 this.Close();
                 return true;
             }

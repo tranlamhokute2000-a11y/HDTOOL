@@ -147,4 +147,14 @@
     <VendorId>HDTOOL</VendorId>
     <VendorDescription>HDTOOL BIM Development</VendorDescription>
   </AddIn>
+
+  <!-- 16. Lệnh Xuất Bản Vẽ Sang CAD Quy Đổi Layer MEP (MỚI THEO LỆNH SẾP HỒ) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Xuất CAD Quy Đổi Layer</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.ExportCadCommand</FullClassName>
+    <ClientId>A7B2C3D4-E5F6-4A1B-8C2D-3E4F5A6B7C8D</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
 </RevitAddIns>

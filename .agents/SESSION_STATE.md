@@ -1,34 +1,33 @@
-# TRẠNG THÁI LÀM VIỆC HIỆN TẠI (SESSION STATE)
+# TRẠNG THÁI LÀM VIỆC GẦN NHẤT (SESSION STATE)
 
-- **Ngày cập nhật gần nhất**: 12/11/2026
-- **Phiên bản hiện tại**: **Version 83** (`HDTOOL_Setup_Version_83.exe`, giữ đúng 2 bản `Version 82` và `Version 83`, Desktop = 0 file)
-- **Tình trạng Build**: Đã nâng cấp CAD-to-Duct BIM ở **Version 83**: chân rẽ `TakeoffTap` tự động khớp đúng chiều vát 45° bản vẽ CAD (`TapBevelDirection` + `EnsureTakeoffTapBevelOrientation`), gộp tuyến thẳng qua Quần ống gió/chạc Y (`MergeCollinearTapHosts`) + cô lập `txOneTap` giảm thiểu lỗi Revit, và lọc bỏ mũi tên chỉ hướng gió rỗng không kèm text (`IsAirflowArrowPolygon` / `TryMatchArrowHeadPair`) để giữ nguyên 100% ống thật; biên dịch `Build.ps1` đạt 0 lỗi, vượt qua `TestEscExit.exe` (20 Form), `VerifyV79.exe`, `VerifyV81.exe` (21/21 PASS) và triển khai sang Revit 2024 / 2025 / 2027.
+- **Thời gian cập nhật**: 2026-11-13 16:18
+- **Phiên bản hiện tại**: **Version 93** (`HDTOOL_Setup_Version_93.exe`)
+- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_92.exe` và `HDTOOL_Setup_Version_93.exe` (0 file trên Desktop)
 
----
+## 1. Công việc vừa hoàn thành
+- **Nâng cấp đột phá tính năng Xuất Bản Vẽ Sang AutoCAD & Quy Đổi Layer MEP theo lệnh Sếp Hồ**:
+  1. **Tự động nhận diện chính xác các hệ thống MEP đang hiển thị trong View (Loại bỏ 100% hệ thống bị ẩn)**:
+     - Hàm `ScanVisibleMepSystemsInViews` quét trực tiếp các đối tượng MEP visible trong View/Sheet được chọn.
+     - Tự động loại bỏ triệt để các phần tử bị ẩn qua:
+       * `Hide Elements in View` (`elem.IsHidden(view)`)
+       * View Filter bị tắt Visibility (`view.GetFilterVisibility(filterId) == false`)
+       * Category bị tắt trong View (`view.GetCategoryHidden(catId)`)
+     - Bảng quy đổi chỉ hiển thị đúng các hệ thống MEP thực tế đang xuất hiện trên bản vẽ, không còn hiển thị danh sách tĩnh hàng chục dòng thừa thãi.
+     - Khi chuyển đổi qua lại giữa *View Đang Vẽ*, *Danh Sách Sheet*, hoặc *Danh Sách View Dự Án*, hệ thống tự động quét lại và cập nhật bảng tương ứng.
+  2. **Bảng màu AutoCAD Select Color ACI chuẩn 100% (`CadColorPickerDialog.cs`)**:
+     - Tái hiện chính xác 100% hộp thoại `Select Color` của AutoCAD (giao diện, tab Index Color, ma trận màu 24 cột x 10 hàng, hàng màu chuẩn 1-9, hàng sắc xám 250-255, nút ByLayer, ByBlock, khung preview màu, ô nhập Color: 1-255).
+     - Khi click đúp hoặc click vào ô cột `Màu Sắc CAD`, cửa sổ chọn màu AutoCAD lập tức xuất hiện cho người dùng chọn trực quan.
+     - Tự động tính toán và hiển thị chính xác mã Index Color và giá trị RGB (như Index 134: `0,127,127`, Index 1: `255,0,0`...).
+  3. **Cho phép đổi tên Layer CAD tùy ý & Lưu cấu hình mặc định**:
+     - Cột *Tên Layer CAD (Xuất Ra)* cho phép người dùng gõ sửa đổi tên theo ý muốn.
+     - Sau khi lưu hoặc xuất, Add-in tự động ghi nhớ cấu hình vào file JSON `%APPDATA%\Autodesk\Revit\Addins\HDTOOL\mep_cad_layer_mapping.json`. Lần sau mở bất kỳ dự án nào, khi quét thấy hệ thống đó sẽ tự động áp dụng đúng Tên Layer và Màu Sắc đã lưu.
+  4. **Kế thừa Modeless 100% & Phím ESC thoát lệnh ngay lập tức**:
+     - Cả cửa sổ chính và hộp thoại chọn màu CAD đều kế thừa `HDToolBaseForm`, ấn phím `ESC` là đóng/thoát lệnh ngay lập tức.
 
-## TÍNH NĂNG / CẬP NHẬT VỪA HOÀN THÀNH
-
-1. **Chống bật bảng lỗi Revit 3D khi dựng hàng loạt ống & Tap (Version 80)**:
-   - `Source/CadToDuctService.cs` (`BuildDuctsInRevit`, `SilentFittingFailuresPreprocessor`, `TryEnsureTapHostCoversBranch`):
-     - Tách dựng hình thành 3 pha trong `TransactionGroup`: (1) Dựng toàn bộ ống thẳng $\to$ (2) Nối đầu-đối-đầu (`Transition`/`CollinearDirect`/`Elbow` có kiểm tra hướng connector `BasisZ` & khoảng cách $\le 8\text{ mm}$) $\to$ (3) Gắn `TakeoffTap` sau cùng khi đầu ống chính đã cố định.
-     - Kiểm tra hình học nhánh `TryEnsureTapHostCoversBranch` (tránh đặt Tap lơ lửng ngoài đầu ống) và gắn `SilentFittingFailuresPreprocessor` tự động xử lý/ngắt lỗi mạng lưới âm thầm.
-
-2. **Nhận diện `QLEADER` / `MULTILEADER` & Phân rã chạc chữ Y -> Chân rẽ `TakeoffTap` (Version 79)**:
-   - `Source/CadDuctModels.cs` & `Source/CadDwgExtractor.cs` (cache `_v6`): Trích thêm `LEADER` (`QLEADER`) + `MULTILEADER` kèm bounding box `TEXT`/`MTEXT` (`hd-text-bbox-wcs`), gán `LeaderArrowPoint` mà không hút nhầm leader của `ATT:`/`Grille`/Van.
-   - `Source/CadToDuctService.cs`:
-     - `OrientShortCollarRectanglesByTopology`: tự chỉnh trục & đúng `WidthMm` cho các đoạn ống cổ ngắn (`Length < Width`, VD `647x2200`, `911x2000`) theo mặt tiếp xúc fitting/ống và mũi tên Leader.
-     - `RunLeaderArrowMatchTier` (Pass 1-L1/L2): ưu tiên khớp `QLEADER`/`MULTILEADER` (kể cả `OAD 2200x550: EI60`) thẳng vào ống tại đầu mũi tên trước Pass 1A.
-     - `BuildGeometricTopology` + `ExtendMainDuctsForTaps`: loại bỏ `TeeBranch` (Y gió), kéo dài ống chính qua vùng phụ kiện Y (`<= 7500mm`) kết hợp Côn đồng tâm + Chân rẽ `TakeoffTap`.
-   - Kiểm thử thực tế trên `THÔNG GIÓ 1.dwg` (`accoreconsole.exe`) & `TestEscExit.exe` (20/20 Form kế thừa `HDToolBaseForm`) đều pass 100%.
-
-2. **Tách biệt tuyến giao chéo (v77) & Chuẩn phím `ESC` / `HDToolBaseForm` (v76)**:
-   - Tách riêng 2 tuyến ống gió đi ngang qua nhau (`ColorRgb`, `ExtractHvacSystemCode`, `XCROSS`, Overpass/Underpass, chống bắt chéo Text `OAD`/`EAD`).
-   - Toàn bộ công cụ dùng `HDToolModelessHost` (Modeless 100%) + kế thừa `HDToolBaseForm` (`ESC` thoát lệnh tức thì).
-
----
-
-## DANH SÁCH FILE QUAN TRỌNG ĐANG DUY TRÌ
-
-- `Build.ps1`, `HDTOOL.addin`, `hdtool_ribbon_layout.json`, `Source/App.cs`, `Source/HDToolExternalEvent.cs`, `Source/ToolHotReloadManager.cs`
-- `Source/CadDuctModels.cs`, `Source/CadDwgExtractor.cs`, `Source/CadToDuctService.cs`, `Source/CadToDuctForm.cs`, `Source/CadToDuctCommand.cs`
-- `SKILL.md`, `.agents/skills/hdtool/SKILL.md`, `C:\Users\Nguye\.gemini\config\skills\hdtool\SKILL.md`, `HUONG_DAN_SU_DUNG.md`, `PreviewStudio/HDTool_PreviewStudio.html`
+## 2. File liên quan
+- `Source/CadColorPickerDialog.cs` (Hộp thoại chọn màu chuẩn AutoCAD ACI)
+- `Source/CadExportMepService.cs` (Thêm `ScanVisibleMepSystemsInViews`, xử lý View Filter, Category Hidden)
+- `Source/ExportCadOptionsForm.cs` (Tích hợp quét View tự động, gắn sự kiện chọn màu CAD trực quan)
+- `Source/CadLayerMappingModels.cs` (Đồng bộ chuẩn màu ACI RGB)
+- `SKILL.md`, `.agents/skills/hdtool/SKILL.md`
+- `Build.ps1`, `VERSION.txt`

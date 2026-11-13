@@ -1,4 +1,4 @@
-# QUY TẮC HOẠT ĐỘNG VÀ DUY TRÌ TRẠNG THÁI LÀM VIỆC (AGENTS.MD)
+﻿# QUY TẮC HOẠT ĐỘNG VÀ DUY TRÌ TRẠNG THÁI LÀM VIỆC (AGENTS.MD)
 
 Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong suốt quá trình hỗ trợ người dùng tại dự án **HDTOOL (ADDIN REVIT)**.
 
@@ -109,7 +109,11 @@ Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong
 
 ## 8. QUY TẮC ẤN PHÍM `ESC` ĐỂ THOÁT LỆNH NGAY LẬP TỨC CHO MỌI CÔNG CỤ (LỆNH SẾP HỒ)
 
-- **Bắt buộc cho TẤT CẢ công cụ hiện tại VÀ mọi công cụ phát triển mới sau này**:
-  - Khi người dùng không dùng nữa chỉ cần **ấn phím `ESC` là thoát/đóng ngay cửa sổ công cụ** mà không cần di chuột bấm nút `Đóng` hay `X`.
-  - Mọi `Form` trong HDTOOL (kể cả Form chính lẫn các hộp thoại con) **BẮT BUỘC kế thừa `HDToolBaseForm`** (trong `Source/HDToolExternalEvent.cs`) — lớp chuẩn tích hợp `KeyPreview = true` + `ProcessCmdKey(Keys.Escape)` (kèm `CancelButton = btnClose/btnCancel` và `this.Activate()` sau khi quay lại từ thao tác `Pick` trên Revit).
-  - Nếu cửa sổ có hành vi phụ khi ấn `ESC` (VD: tắt highlight 3D hoặc hủy chế độ đang gõ ô `DataGridView`), chỉ cần override `OnBeforeEscapeClose()` trong `HDToolBaseForm`.
+- **Bắt buộc tuyệt đối cho TẤT CẢ công cụ hiện tại VÀ MỌI CÔNG CỤ PHÁT TRIỂN MỚI SAU NÀY**:
+  - Khi người dùng không dùng nữa chỉ cần **ấn phím `ESC` là thoát/đóng ngay cửa sổ công cụ lập tức** mà không cần di chuột bấm nút `Đóng` hay `X`.
+  - Mọi `Form` trong HDTOOL (cả Form chính lẫn các hộp thoại con) **BẮT BUỘC kế thừa `HDToolBaseForm`** (trong `Source/HDToolExternalEvent.cs`).
+  - **Kiến trúc 3 tầng đảm bảo 100% không thể bị chặn/nuốt phím ESC**:
+    1. **Tầng 1 - Windows Message Filter toàn cục (`HDToolEscapeMessageFilter`)**: Đón đầu thông điệp `WM_KEYDOWN (VK_ESCAPE = 0x1B)` ở cấp Windows Message Loop trước khi bất kỳ Control con nào (TextBox, DataGridView, TreeView, ComboBox...) kịp can thiệp hay nuốt phím.
+    2. **Tầng 2 - `ProcessCmdKey` & `OnKeyDown`**: Bắt `(keyData & Keys.KeyCode) == Keys.Escape`, lập tức dọn dẹp và gọi `this.Close()` / `DialogResult = DialogResult.Cancel`.
+    3. **Tầng 3 - Tự động Focus (`OnShown` & `ShowModeless`)**: Tự động gọi `this.Activate()` và `this.Focus()` để Form luôn nhận Keyboard Focus sẵn sàng bắt phím ESC.
+  - **TUYỆT ĐỐI CẤM VIẾT LOGIC CHẶN ĐÓNG FORM KHI ẤN ESC**: Kể cả khi ô DataGridView đang ở chế độ gõ chữ (Editing Mode) hay đang có highlight, ấn phím ESC là hủy chỉnh sửa và THOÁT/ĐÓNG FORM NGAY LẬP TỨC!

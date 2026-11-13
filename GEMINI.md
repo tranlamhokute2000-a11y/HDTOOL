@@ -1,4 +1,4 @@
-# WORKSPACE RULES & SESSION MEMORY (GEMINI.MD)
+﻿# WORKSPACE RULES & SESSION MEMORY (GEMINI.MD)
 
 Tài liệu này kích hoạt chế độ ghi nhớ trạng thái làm việc liên tục cho Antigravity:
 
@@ -41,5 +41,6 @@ Tài liệu này kích hoạt chế độ ghi nhớ trạng thái làm việc li
    - **TUYỆT ĐỐI KHÔNG DÙNG `ShowDialog()`** làm khóa cứng giao diện bản vẽ Revit của Sếp Hồ.
 
 9. **Quy tắc ấn phím `ESC` thoát lệnh cho mọi công cụ hiện tại & tương lai (Lệnh Sếp Hồ)**:
-   - TẤT CẢ các chức năng/cửa sổ của HDTOOL (hiện có và phát triển thêm sau này) đều phải hỗ trợ **ấn phím `ESC` là thoát ngay cửa sổ công cụ**, không nhất thiết phải di chuột bấm `Đóng` / `X`.
-   - Mọi Form bắt buộc kế thừa **`HDToolBaseForm`** (`Source/HDToolExternalEvent.cs` — `KeyPreview = true` + `ProcessCmdKey` bắt `Keys.Escape`), kết hợp gán `CancelButton` và gọi `this.Activate()` sau mỗi lần `Pick` trên bản vẽ.
+   - TẤT CẢ các chức năng/cửa sổ của HDTOOL (hiện có và phát triển thêm sau này) đều phải hỗ trợ **ấn phím `ESC` là thoát ngay cửa sổ công cụ lập tức**, không nhất thiết phải di chuột bấm `Đóng` / `X`.
+   - Mọi Form bắt buộc kế thừa **`HDToolBaseForm`** (`Source/HDToolExternalEvent.cs` — tích hợp `HDToolEscapeMessageFilter` đón đầu phím ESC toàn cục, `KeyPreview = true` + `ProcessCmdKey` và `OnKeyDown` bắt `Keys.Escape`, tự động `Activate()` khi hiển thị).
+   - Tuyệt đối không viết logic chặn phím ESC (kể cả ô DataGridView đang gõ chữ: ấn ESC là đóng Form ngay lập tức).

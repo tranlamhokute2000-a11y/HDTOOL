@@ -1,4 +1,4 @@
----
+﻿---
 trigger: always_on
 ---
 
@@ -41,4 +41,4 @@ trigger: always_on
 
 9. **Ấn phím `ESC` thoát lệnh cho MỌI công cụ hiện tại & phát triển mới (Lệnh Sếp Hồ)**:
    - TẤT CẢ các chức năng/cửa sổ của HDTOOL (bao gồm công cụ mới phát triển sau này) khi người dùng không dùng nữa chỉ cần **ấn phím `ESC` là thoát được lệnh ngay lập tức**, không phải di chuột bấm nút `Đóng` hay `X`.
-   - Mọi Form bắt buộc kế thừa **`HDToolBaseForm`** (`Source/HDToolExternalEvent.cs`), gán `CancelButton` và gọi `this.Activate()` sau khi `Show()` / quay lại từ `Pick`.
+   - Mọi Form bắt buộc kế thừa **`HDToolBaseForm`** (`Source/HDToolExternalEvent.cs`), tích hợp `HDToolEscapeMessageFilter` toàn cục đón đầu phím ESC trước mọi control con, kết hợp `ProcessCmdKey`, `OnKeyDown`, gán `CancelButton` và tự động `this.Activate()`. Tuyệt đối không chặn đóng Form khi ấn ESC.

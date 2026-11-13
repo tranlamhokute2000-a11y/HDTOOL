@@ -1698,6 +1698,102 @@ namespace HDTool
             }
         }
 
+        /// <summary>
+        /// Tạo icon Ribbon cho lệnh Xuất CAD & Quy Đổi Layer MEP (cmdHDToolExportCad)
+        /// </summary>
+        public static ImageSource CreateExportCadIcon(int size)
+        {
+            using (Bitmap bmp = new Bitmap(size, size))
+            {
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                    g.Clear(System.Drawing.Color.Transparent);
+
+                    float s = size / 32.0f;
+
+                    // 1. Tờ bản vẽ kỹ thuật nền trắng viền xám xanh
+                    using (GraphicsPath path = new GraphicsPath())
+                    {
+                        path.AddLine(4f * s, 3f * s, 20f * s, 3f * s);
+                        path.AddLine(20f * s, 3f * s, 26f * s, 9f * s);
+                        path.AddLine(26f * s, 9f * s, 26f * s, 29f * s);
+                        path.AddLine(26f * s, 29f * s, 4f * s, 29f * s);
+                        path.CloseFigure();
+
+                        using (SolidBrush sheetBrush = new SolidBrush(System.Drawing.Color.White))
+                        {
+                            g.FillPath(sheetBrush, path);
+                        }
+                        using (Pen borderPen = new Pen(System.Drawing.Color.FromArgb(51, 65, 85), 1.4f * s))
+                        {
+                            g.DrawPath(borderPen, path);
+                        }
+                    }
+
+                    // Góc gấp trang bản vẽ
+                    using (GraphicsPath foldPath = new GraphicsPath())
+                    {
+                        foldPath.AddLine(20f * s, 3f * s, 20f * s, 9f * s);
+                        foldPath.AddLine(20f * s, 9f * s, 26f * s, 9f * s);
+                        using (SolidBrush foldBrush = new SolidBrush(System.Drawing.Color.FromArgb(203, 213, 225)))
+                        {
+                            g.FillPath(foldBrush, foldPath);
+                        }
+                        using (Pen foldPen = new Pen(System.Drawing.Color.FromArgb(71, 85, 105), 1.0f * s))
+                        {
+                            g.DrawPath(foldPen, foldPath);
+                        }
+                    }
+
+                    // 2. Các tầng layer màu sắc MEP trên bản vẽ (Cyan, Magenta, Blue)
+                    using (SolidBrush cyanBrush = new SolidBrush(System.Drawing.Color.FromArgb(6, 182, 212)))
+                    using (SolidBrush magBrush = new SolidBrush(System.Drawing.Color.FromArgb(217, 70, 239)))
+                    using (SolidBrush blueBrush = new SolidBrush(System.Drawing.Color.FromArgb(59, 130, 246)))
+                    {
+                        // Layer 1: Cấp gió (Cyan)
+                        g.FillRectangle(cyanBrush, 7f * s, 9f * s, 11f * s, 2.5f * s);
+                        // Layer 2: Hồi gió (Magenta)
+                        g.FillRectangle(magBrush, 7f * s, 13.5f * s, 14f * s, 2.5f * s);
+                        // Layer 3: Cấp thoát nước (Blue)
+                        g.FillRectangle(blueBrush, 7f * s, 18f * s, 9f * s, 2.5f * s);
+                    }
+
+                    // 3. Huy hiệu CAD / DWG màu đỏ gạch AutoCAD ở góc dưới
+                    using (SolidBrush cadBg = new SolidBrush(System.Drawing.Color.FromArgb(220, 38, 38)))
+                    using (Pen cadBorder = new Pen(System.Drawing.Color.White, 1.2f * s))
+                    {
+                        g.FillRectangle(cadBg, 14f * s, 18f * s, 15f * s, 11f * s);
+                        g.DrawRectangle(cadBorder, 14f * s, 18f * s, 15f * s, 11f * s);
+
+                        if (size >= 32)
+                        {
+                            using (Font f = new Font("Segoe UI", 5.5f * s, FontStyle.Bold))
+                            using (SolidBrush textBrush = new SolidBrush(System.Drawing.Color.White))
+                            using (StringFormat sf = new StringFormat())
+                            {
+                                sf.Alignment = StringAlignment.Center;
+                                sf.LineAlignment = StringAlignment.Center;
+                                g.DrawString("CAD", f, textBrush, new RectangleF(14f * s, 18f * s, 15f * s, 11f * s), sf);
+                            }
+                        }
+                    }
+
+                    // 4. Mũi tên xuất (Export) màu xanh ngọc hướng ra ngoài
+                    using (Pen expPen = new Pen(System.Drawing.Color.FromArgb(16, 185, 129), 1.8f * s))
+                    {
+                        expPen.EndCap = LineCap.ArrowAnchor;
+                        g.DrawLine(expPen, 18f * s, 8f * s, 27f * s, 4f * s);
+                    }
+                }
+
+                return ConvertToImageSource(bmp);
+            }
+        }
+
         private static ImageSource ConvertToImageSource(Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())

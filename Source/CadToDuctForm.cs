@@ -448,9 +448,8 @@ namespace HDTool
         {
             if (dgvPreview != null && dgvPreview.IsCurrentCellInEditMode)
             {
-                dgvPreview.CancelEdit();
-                dgvPreview.EndEdit();
-                return true;
+                try { dgvPreview.CancelEdit(); } catch { }
+                try { dgvPreview.EndEdit(); } catch { }
             }
             return false;
         }
