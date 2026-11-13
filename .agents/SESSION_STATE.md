@@ -1,30 +1,34 @@
 # TRẠNG THÁI LÀM VIỆC GẦN NHẤT (SESSION STATE)
 
-- **Thời gian cập nhật**: 2026-11-13 16:50
-- **Phiên bản hiện tại**: **Version 95** (`HDTOOL_Setup_Version_95.exe`)
-- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_94.exe` và `HDTOOL_Setup_Version_95.exe` (0 file trên Desktop)
+- **Thời gian cập nhật**: 2026-11-13 17:08
+- **Phiên bản hiện tại**: **Version 97** (`HDTOOL_Setup_Version_97.exe`)
+- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_96.exe` và `HDTOOL_Setup_Version_97.exe` (0 file trên Desktop)
 
 ## 1. Công việc vừa hoàn thành
-- **Khắc phục triệt để lỗi "Tên Layer và Màu sắc CAD không thay đổi theo thiết lập công cụ, vẫn giữ tên mặc định template Revit"**:
-  1. **Nguyên nhân gốc rễ**:
-     - Trong file DWG do Revit xuất ra: Tên layer ống nước và phụ kiện mang tiền tố dự án/template mặc định (như `DSC_P-PIPE-____-OTLN P_VENT PIPE _TH_-1`, `DSC_P-PIPE-____-CNTR-1`, `DSC_P-PIPE-____-OTLN-1` hoặc `P-PIPE-MED_`). Ký tự dấu ngoặc đơn `(` và `)` trong tên hệ thống `P_VENT PIPE (TH)` bị Revit thay thế thành dấu gạch dưới `_TH_`.
-     - Script AutoLISP trước đó tìm kiếm layer bằng `(wcmatch layUpper "*P_VENT PIPE (TH)*")`, do đó bị trượt (không khớp ký tự dấu ngoặc), dẫn đến bỏ qua hoàn toàn không di chuyển đối tượng nào sang layer đích.
-     - Đồng thời, các nét tim ống (`CNTR`) và viền ống (`OTLN`) không mang tên hệ thống nên bị bỏ sót; và nếu file DWG đang được mở trong AutoCAD bởi người dùng thì thao tác ghi đè file bị từ chối do file lock.
-  2. **Giải pháp khắc phục toàn diện (Dual-Action Strategy)**:
-     - **Tầng 1 (Revit API - `ApplyLayerMappingToCategories`)**:
-       * Duyệt qua toàn bộ `ExportLayerKey` trong `ExportLayerTable`: Mọi category/subcategory có chứa từ khóa `"Pipe"` (hoặc `"Duct"`) đều được định hướng sẵn sang `TargetCadLayerName` và mã màu ACI do người dùng chọn ngay từ khi xuất.
-     - **Tầng 2 (AutoCAD Core Engine hậu kỳ - AutoLISP thông minh)**:
-       * **Xử lý chuyên sâu cho View 1 hệ thống (Single System per Group)**: Khi trong View chỉ có 1 hệ thống Pipes (như `P_VENT PIPE (TH)`), AutoLISP tự động chuyển toàn bộ 100% đối tượng trên mọi layer chứa `*PIPE*` (tim ống, viền ống, phụ kiện, v.v.) sang layer đích `TargetCadLayerName` (ví dụ `P-PIPE-THOATNUOC`).
-       * **Trích xuất System Tokens linh hoạt**: Chuẩn hóa ký tự đặc biệt, chuyển dấu ngoặc `()` thành `_` và tách từ khóa (`VENT`, `TH`, `PIPE`...), đảm bảo so khớp chuẩn xác 100% bất kể cách đặt tên của Revit template.
-       * **Chuyển màu ByLayer**: Đặt màu tất cả đối tượng về ByLayer (`256`), xóa bỏ TrueColor override, và đặt màu của Layer đích thành đúng mã màu ACI (Index 1-255).
-       * **Cơ chế chống khóa file (File Lock Resilience)**: Thử ghi đè an toàn với retry; nếu file đang mở trong AutoCAD thì tự động xuất sang file dự phòng `{Tên_Bản_Vẽ}_REMAP.dwg` và thông báo rõ ràng cho Sếp Hồ.
-  3. **Biên dịch & Đóng gói**:
-     - Biên dịch thành công 0 lỗi -> **HDTOOL Version 95** (`HDTOOL_Setup_Version_95.exe`).
-     - Tự động đồng bộ Hot Reload sang `%APPDATA%\Autodesk\Revit\Addins\2024\HDTOOL`.
-     - Giữ nguyên tắc chỉ lưu 2 version gần nhất (Version 94 và Version 95), 0 file trên Desktop.
+- **Tái tạo 100% toàn bộ Icon trên thanh Ribbon Revit theo đúng chuẩn SVG của Preview Studio Web**:
+  1. **Đồng bộ hóa giao diện đồ họa cao cấp**:
+     - `CreateCropAlignCombinedIcon`: Tái tạo chuẩn SVG `CropAlignCombined` với khung viền crop nền tối nét đứt, trục lưới xanh dương #0284c7 có 2 bong bóng tròn số 1 và 2 viền xanh, đường cao độ đỏ #ef4444 nét đứt kèm mũi tên đỏ và mũi tên cam ở đáy.
+     - `CreateMepQuantityIcon`: Tái tạo chuẩn SVG `MepQuantity` (Thống Kê Ống Nước) với ống ngang, ống đứng rẽ nhánh, viền bích xanh sky #38bdf8, giọt nước xanh cyan #06b6d4 và huy hiệu bảng khối lượng nhỏ màu vàng cam #f59e0b có 2 vạch kẻ trắng.
+     - `CreateFitScaleIcon`: Tái tạo chuẩn SVG `FitScale` (Khớp Tỷ Lệ Bảng Khối Lượng) với khung tối, thanh tiêu đề xanh #0284c7, lưới bảng tính #1e293b và mũi tên co giãn hai bên #38bdf8.
+     - `CreateDuctQuantityIcon`: Tái tạo chuẩn SVG `DuctQuantity` (Khối Lượng Ống Gió) với khối hộp 3D Isometric tôn mạ kẽm (3 mặt chiếu #94a3b8, #cbd5e1, #64748b) và huy hiệu tròn cam #f59e0b viền trắng có chữ **m²** sắc nét.
+     - `CreateCadToDuctIcon`: Tái tạo chuẩn SVG `CadToDuct` (Dựng Ống Gió Từ CAD Link) với thân ống CAD #38bdf8 có chữ **CAD** đậm, đường tim đứt trắng, cút cam rẽ nhánh #f59e0b, ống rẽ xanh lá #10b981 và dấu nhân X xanh sky.
+     - `CreateSheetListIcon`: Tái tạo chuẩn SVG `SheetList` (Xuất Danh Mục Bản Vẽ) với tờ tài liệu gập mép trắng, các dòng kẻ xanh/xám và huy hiệu tròn Excel xanh lá #16a34a viền trắng có chữ **X** đậm.
+     - `CreateUpdateSheetListIcon`: Tái tạo chuẩn SVG `UpdateSheetList` (Cập Nhật Danh Mục) với tờ tài liệu gập mép và cung mũi tên xoay tròn xanh #0284c7.
+     - `CreateExportCadIcon`: Tái tạo chuẩn SVG `ExportCad` (Xuất CAD Quy Đổi Layer) với màn hình CAD nền đen xanh #0f172a, tiêu đề chữ **CAD / DWG** xanh sky #38bdf8, 3 thanh layer màu (Cyan, Hồng, Xanh lá) và nút tam giác cam Play/Export.
+     - `CreateUpdateToolIcon`: Tái tạo chuẩn SVG `UpdateTool` (Cập Nhật Tool) với vòng tròn nét đứt ngoài #38bdf8, cung mũi tên xoay tròn xanh #0284c7 và chấm tâm cam #f59e0b.
+     - `CreateHDToolMenuIcon` / `CreateHDToolIcon`: Tái tạo chuẩn SVG `HDToolMenu` với huy hiệu tròn nền đen xanh viền #0284c7, chữ **HD** xanh sky và chữ **TOOL** vàng cam rực rỡ.
+- **Loại bỏ hoàn toàn tính năng `CHECK VAR PLUMBING` theo lệnh Sếp Hồ**:
+  - Xóa nút `cmdHDToolPickTableHighlight` ("CHECK VAR\nPLUMBING") khỏi Ribbon `Source/App.cs`. Panel `Khối Lượng MEP` hiện tại gồm 4 nút chuẩn: `Thống Kê Ống Nước`, `Khớp Tỷ Lệ Bảng Khối Lượng`, `Khối Lượng Ống Gió`, `Dựng Ống Gió Từ CAD`.
+  - Xóa nút `cmdHDToolPickTableHighlight` khỏi cấu hình `DEFAULT_LAYOUT` trong `PreviewStudio/HDTool_PreviewStudio.html`.
+  - Loại bỏ hoàn toàn các nhắc đến tính năng đã bỏ trong `SKILL.md` và `.agents/skills/hdtool/SKILL.md`.
+- **Biên dịch & Đóng gói**:
+  - Biên dịch thành công 0 lỗi -> **HDTOOL Version 97** (`HDTOOL_Setup_Version_97.exe`).
+  - Tự động nạp Hot Reload sang `%APPDATA%\Autodesk\Revit\Addins\2024\HDTOOL`.
+  - Chỉ lưu 2 bản gần nhất (Version 96 và Version 97), 0 file trên Desktop.
 
 ## 2. File liên quan
-- `Source/CadExportMepService.cs`
-- `Source/ExportCadOptionsForm.cs`
+- `Source/ResourceHelper.cs`
+- `Source/App.cs`
+- `PreviewStudio/HDTool_PreviewStudio.html`
 - `Build.ps1`, `VERSION.txt`
 - `SKILL.md`, `.agents/skills/hdtool/SKILL.md`

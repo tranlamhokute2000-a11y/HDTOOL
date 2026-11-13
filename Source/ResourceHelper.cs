@@ -231,65 +231,32 @@ namespace HDTool
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.Clear(Color.Transparent);
 
-                    float scale = size / 32.0f;
+                    float s = size / 32.0f;
 
-                    // Vẽ badge nền bo tròn màu xanh hải quân đậm hiện đại (#182B49)
-                    using (GraphicsPath path = new GraphicsPath())
+                    // 1. Vong tron nen den xanh (#0f172a, vien #0284c7)
+                    using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(15, 23, 42)))
+                    using (Pen borderPen = new Pen(Color.FromArgb(2, 132, 199), 2.0f * s))
                     {
-                        float rad = 4f * scale;
-                        float w = 30f * scale;
-                        float h = 30f * scale;
-                        float x = 1f * scale;
-                        float y = 1f * scale;
-                        path.AddArc(x, y, rad, rad, 180, 90);
-                        path.AddArc(x + w - rad, y, rad, rad, 270, 90);
-                        path.AddArc(x + w - rad, y + h - rad, rad, rad, 0, 90);
-                        path.AddArc(x, y + h - rad, rad, rad, 90, 90);
-                        path.CloseFigure();
-
-                        using (System.Drawing.Drawing2D.LinearGradientBrush lgb = new System.Drawing.Drawing2D.LinearGradientBrush(
-                            new System.Drawing.PointF(0, 0), new System.Drawing.PointF(0, size),
-                            System.Drawing.Color.FromArgb(24, 43, 73), System.Drawing.Color.FromArgb(15, 30, 54)))
-                        {
-                            g.FillPath(lgb, path);
-                        }
-
-                        using (System.Drawing.Pen borderPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(52, 152, 219), 1.2f * scale))
-                        {
-                            g.DrawPath(borderPen, path);
-                        }
+                        g.FillEllipse(bgBrush, 2f * s, 2f * s, 28f * s, 28f * s);
+                        g.DrawEllipse(borderPen, 2f * s, 2f * s, 28f * s, 28f * s);
                     }
 
-                    // Chữ HD màu trắng nổi bật
-                    using (System.Drawing.Font font = new System.Drawing.Font("Segoe UI", (size >= 32) ? 10.5f : 6.0f, System.Drawing.FontStyle.Bold))
-                    using (System.Drawing.SolidBrush textBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White))
-                    using (System.Drawing.StringFormat sf = new System.Drawing.StringFormat())
+                    // 2. Chu HD mau xanh sky (#38bdf8)
+                    using (Font fontHd = new Font("Segoe UI", (size >= 32) ? 8.0f * s : 6.0f * s, System.Drawing.FontStyle.Bold))
+                    using (SolidBrush hdBrush = new SolidBrush(Color.FromArgb(56, 189, 248)))
+                    using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                     {
-                        sf.Alignment = System.Drawing.StringAlignment.Center;
-                        sf.LineAlignment = System.Drawing.StringAlignment.Center;
-                        if (size >= 32)
-                        {
-                            g.DrawString("HD", font, textBrush, new System.Drawing.RectangleF(0, 2f * scale, size, 16f * scale), sf);
-                        }
-                        else
-                        {
-                            g.DrawString("HD", font, textBrush, new System.Drawing.RectangleF(0, 0, size, size), sf);
-                        }
+                        g.DrawString("HD", fontHd, hdBrush, new RectangleF(2f * s, 3f * s, 28f * s, 14f * s), sf);
                     }
 
-                    if (size >= 32)
+                    // 3. Chu TOOL mau vang cam (#f59e0b)
+                    using (Font fontTool = new Font("Segoe UI", (size >= 32) ? 6.0f * s : 4.5f * s, System.Drawing.FontStyle.Bold))
+                    using (SolidBrush toolBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                    using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                     {
-                        // Nhãn phụ màu cam vàng TOOL
-                        using (System.Drawing.Font fontSmall = new System.Drawing.Font("Segoe UI", 5.5f, System.Drawing.FontStyle.Bold))
-                        using (System.Drawing.SolidBrush goldBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(243, 156, 18)))
-                        using (System.Drawing.StringFormat sf = new System.Drawing.StringFormat())
-                        {
-                            sf.Alignment = System.Drawing.StringAlignment.Center;
-                            sf.LineAlignment = System.Drawing.StringAlignment.Center;
-                            g.DrawString("TOOL", fontSmall, goldBrush, new System.Drawing.RectangleF(0, 17f * scale, size, 12f * scale), sf);
-                        }
+                        g.DrawString("TOOL", fontTool, toolBrush, new RectangleF(2f * s, 15f * s, 28f * s, 12f * s), sf);
                     }
                 }
 
@@ -306,64 +273,67 @@ namespace HDTool
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                    g.Clear(Color.Transparent);
 
-                    float scale = size / 32.0f;
+                    float s = size / 32.0f;
 
-                    // Vẽ tờ giấy / tài liệu trắng có bóng mờ
-                    using (System.Drawing.SolidBrush shadowBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(40, 0, 0, 0)))
+                    // 1. To tai lieu trang
+                    using (GraphicsPath path = new GraphicsPath())
                     {
-                        g.FillRectangle(shadowBrush, 5f * scale + 1.5f, 3f * scale + 1.5f, 22f * scale, 26f * scale);
-                    }
+                        path.AddLine(8f * s, 2f * s, 20f * s, 2f * s);
+                        path.AddLine(20f * s, 2f * s, 26f * s, 8f * s);
+                        path.AddLine(26f * s, 8f * s, 26f * s, 28f * s);
+                        path.AddLine(26f * s, 28f * s, 24f * s, 30f * s);
+                        path.AddLine(24f * s, 30f * s, 8f * s, 30f * s);
+                        path.AddLine(8f * s, 30f * s, 6f * s, 28f * s);
+                        path.AddLine(6f * s, 28f * s, 6f * s, 4f * s);
+                        path.CloseFigure();
 
-                    using (System.Drawing.SolidBrush paperBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White))
-                    using (System.Drawing.Pen paperBorder = new System.Drawing.Pen(System.Drawing.Color.FromArgb(149, 165, 166), 1.2f * scale))
-                    {
-                        g.FillRectangle(paperBrush, 5f * scale, 3f * scale, 22f * scale, 26f * scale);
-                        g.DrawRectangle(paperBorder, 5f * scale, 3f * scale, 22f * scale, 26f * scale);
-                    }
-
-                    // Header bar của tài liệu màu xanh hải quân HDTOOL (#182B49)
-                    using (System.Drawing.SolidBrush headerBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(24, 43, 73)))
-                    {
-                        g.FillRectangle(headerBrush, 5f * scale, 3f * scale, 22f * scale, 7f * scale);
-                    }
-
-                    // Các dòng danh mục bản vẽ (kẻ bảng)
-                    using (System.Drawing.Pen linePen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(189, 195, 199), 1.0f * scale))
-                    using (System.Drawing.Pen highlightPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(41, 128, 185), 1.5f * scale))
-                    {
-                        // Dòng 1: Số hiệu & tên
-                        g.DrawLine(highlightPen, 8f * scale, 13f * scale, 13f * scale, 13f * scale);
-                        g.DrawLine(linePen, 15f * scale, 13f * scale, 24f * scale, 13f * scale);
-
-                        // Dòng 2
-                        g.DrawLine(highlightPen, 8f * scale, 17f * scale, 13f * scale, 17f * scale);
-                        g.DrawLine(linePen, 15f * scale, 17f * scale, 24f * scale, 17f * scale);
-
-                        // Dòng 3
-                        g.DrawLine(highlightPen, 8f * scale, 21f * scale, 13f * scale, 21f * scale);
-                        g.DrawLine(linePen, 15f * scale, 21f * scale, 24f * scale, 21f * scale);
-                    }
-
-                    // Huy hiệu nhỏ màu xanh lá Excel ở góc dưới phải (Biểu tượng xuất Excel)
-                    using (System.Drawing.SolidBrush excelBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(39, 174, 96)))
-                    using (System.Drawing.Pen excelBorder = new System.Drawing.Pen(System.Drawing.Color.White, 1.2f * scale))
-                    {
-                        g.FillRectangle(excelBrush, 17f * scale, 18f * scale, 12f * scale, 11f * scale);
-                        g.DrawRectangle(excelBorder, 17f * scale, 18f * scale, 12f * scale, 11f * scale);
-
-                        if (size >= 32)
+                        using (SolidBrush paperBrush = new SolidBrush(Color.White))
+                        using (Pen borderPen = new Pen(Color.FromArgb(100, 116, 139), 1.5f * s))
                         {
-                            using (System.Drawing.Font fontX = new System.Drawing.Font("Segoe UI", 6.5f, System.Drawing.FontStyle.Bold))
-                            using (System.Drawing.SolidBrush whiteBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White))
-                            using (System.Drawing.StringFormat sf = new System.Drawing.StringFormat())
-                            {
-                                sf.Alignment = System.Drawing.StringAlignment.Center;
-                                sf.LineAlignment = System.Drawing.StringAlignment.Center;
-                                g.DrawString("X", fontX, whiteBrush, new System.Drawing.RectangleF(17f * scale, 18f * scale, 12f * scale, 11f * scale), sf);
-                            }
+                            g.FillPath(paperBrush, path);
+                            g.DrawPath(borderPen, path);
                         }
+                    }
+
+                    // Mep gap (#cbd5e1)
+                    PointF[] fold = new PointF[] {
+                        new PointF(20f * s, 2f * s),
+                        new PointF(26f * s, 8f * s),
+                        new PointF(20f * s, 8f * s)
+                    };
+                    using (SolidBrush foldBrush = new SolidBrush(Color.FromArgb(203, 213, 225)))
+                    using (Pen foldPen = new Pen(Color.FromArgb(100, 116, 139), 1.0f * s))
+                    {
+                        g.FillPolygon(foldBrush, fold);
+                        g.DrawPolygon(foldPen, fold);
+                    }
+
+                    // 2. Cac dong ke van ban
+                    using (SolidBrush blueLine = new SolidBrush(Color.FromArgb(2, 132, 199)))
+                    using (SolidBrush grayLine = new SolidBrush(Color.FromArgb(148, 163, 184)))
+                    {
+                        g.FillRectangle(blueLine, 9f * s, 11f * s, 14f * s, 2f * s);
+                        g.FillRectangle(grayLine, 9f * s, 15f * s, 14f * s, 2f * s);
+                        g.FillRectangle(grayLine, 9f * s, 19f * s, 14f * s, 2f * s);
+                        g.FillRectangle(grayLine, 9f * s, 23f * s, 10f * s, 2f * s);
+                    }
+
+                    // 3. Huy hieu tron Excel xanh la (#16a34a) chu X
+                    using (SolidBrush excelBg = new SolidBrush(Color.FromArgb(22, 163, 74)))
+                    using (Pen whitePen = new Pen(Color.White, 1.2f * s))
+                    {
+                        g.FillEllipse(excelBg, 17f * s, 17f * s, 12f * s, 12f * s);
+                        g.DrawEllipse(whitePen, 17f * s, 17f * s, 12f * s, 12f * s);
+                    }
+
+                    using (Font font = new Font("Segoe UI", (size >= 32) ? 7.0f * s : 5.5f * s, System.Drawing.FontStyle.Bold))
+                    using (SolidBrush textBrush = new SolidBrush(Color.White))
+                    using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                    {
+                        g.DrawString("X", font, textBrush, new RectangleF(17f * s, 17f * s, 12f * s, 12.5f * s), sf);
                     }
                 }
 
@@ -383,77 +353,58 @@ namespace HDTool
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.Clear(Color.Transparent);
 
-                    float scale = size / 32.0f;
+                    float s = size / 32.0f;
 
-                    // Vẽ tờ bản vẽ nền trắng viền xanh
-                    using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
+                    // 1. To tai lieu trang
+                    using (GraphicsPath path = new GraphicsPath())
                     {
-                        path.AddLine(5f * scale, 3f * scale, 21f * scale, 3f * scale);
-                        path.AddLine(21f * scale, 3f * scale, 27f * scale, 9f * scale);
-                        path.AddLine(27f * scale, 9f * scale, 27f * scale, 29f * scale);
-                        path.AddLine(27f * scale, 29f * scale, 5f * scale, 29f * scale);
+                        path.AddLine(8f * s, 2f * s, 20f * s, 2f * s);
+                        path.AddLine(20f * s, 2f * s, 26f * s, 8f * s);
+                        path.AddLine(26f * s, 8f * s, 26f * s, 28f * s);
+                        path.AddLine(26f * s, 28f * s, 24f * s, 30f * s);
+                        path.AddLine(24f * s, 30f * s, 8f * s, 30f * s);
+                        path.AddLine(8f * s, 30f * s, 6f * s, 28f * s);
+                        path.AddLine(6f * s, 28f * s, 6f * s, 4f * s);
                         path.CloseFigure();
 
-                        using (System.Drawing.SolidBrush sheetBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White))
+                        using (SolidBrush paperBrush = new SolidBrush(Color.White))
+                        using (Pen borderPen = new Pen(Color.FromArgb(100, 116, 139), 1.5f * s))
                         {
-                            g.FillPath(sheetBrush, path);
-                        }
-
-                        using (System.Drawing.Pen borderPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(24, 43, 73), 1.6f * scale))
-                        {
+                            g.FillPath(paperBrush, path);
                             g.DrawPath(borderPen, path);
                         }
                     }
 
-                    // Góc gập tờ giấy
-                    using (System.Drawing.Drawing2D.GraphicsPath foldPath = new System.Drawing.Drawing2D.GraphicsPath())
+                    // Mep gap (#cbd5e1)
+                    PointF[] fold = new PointF[] {
+                        new PointF(20f * s, 2f * s),
+                        new PointF(26f * s, 8f * s),
+                        new PointF(20f * s, 8f * s)
+                    };
+                    using (SolidBrush foldBrush = new SolidBrush(Color.FromArgb(203, 213, 225)))
+                    using (Pen foldPen = new Pen(Color.FromArgb(100, 116, 139), 1.0f * s))
                     {
-                        foldPath.AddLine(21f * scale, 3f * scale, 21f * scale, 9f * scale);
-                        foldPath.AddLine(21f * scale, 9f * scale, 27f * scale, 9f * scale);
-                        using (System.Drawing.SolidBrush foldBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(220, 224, 230)))
-                        {
-                            g.FillPath(foldBrush, foldPath);
-                        }
-                        using (System.Drawing.Pen foldPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(24, 43, 73), 1.2f * scale))
-                        {
-                            g.DrawPath(foldPen, foldPath);
-                        }
+                        g.FillPolygon(foldBrush, fold);
+                        g.DrawPolygon(foldPen, fold);
                     }
 
-                    // Các dòng danh mục bản vẽ
-                    using (System.Drawing.Pen linePen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(189, 195, 199), 1.0f * scale))
-                    using (System.Drawing.Pen highlightPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(211, 84, 0), 1.5f * scale))
+                    // 2. Mui ten xoay tron xanh (#0284c7)
+                    using (Pen bluePen = new Pen(Color.FromArgb(2, 132, 199), 2.0f * s))
                     {
-                        g.DrawLine(highlightPen, 8f * scale, 13f * scale, 13f * scale, 13f * scale);
-                        g.DrawLine(linePen, 15f * scale, 13f * scale, 24f * scale, 13f * scale);
-
-                        g.DrawLine(highlightPen, 8f * scale, 17f * scale, 13f * scale, 17f * scale);
-                        g.DrawLine(linePen, 15f * scale, 17f * scale, 24f * scale, 17f * scale);
-
-                        g.DrawLine(highlightPen, 8f * scale, 21f * scale, 13f * scale, 21f * scale);
-                        g.DrawLine(linePen, 15f * scale, 21f * scale, 24f * scale, 21f * scale);
+                        bluePen.StartCap = LineCap.Round;
+                        g.DrawArc(bluePen, 11f * s, 13f * s, 10f * s, 10f * s, 0, 310);
                     }
 
-                    // Huy hiệu hình tròn màu cam biểu tượng làm mới / đồng bộ ở góc dưới phải
-                    using (System.Drawing.SolidBrush badgeBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(211, 84, 0)))
-                    using (System.Drawing.Pen badgeBorder = new System.Drawing.Pen(System.Drawing.Color.White, 1.2f * scale))
+                    PointF[] arrow = new PointF[] {
+                        new PointF(19f * s, 14f * s),
+                        new PointF(23f * s, 17f * s),
+                        new PointF(19f * s, 20f * s)
+                    };
+                    using (SolidBrush blueBrush = new SolidBrush(Color.FromArgb(2, 132, 199)))
                     {
-                        g.FillEllipse(badgeBrush, 16f * scale, 16f * scale, 14f * scale, 14f * scale);
-                        g.DrawEllipse(badgeBorder, 16f * scale, 16f * scale, 14f * scale, 14f * scale);
-
-                        if (size >= 32)
-                        {
-                            using (System.Drawing.Font fontArrow = new System.Drawing.Font("Segoe UI", 7.0f, System.Drawing.FontStyle.Bold))
-                            using (System.Drawing.SolidBrush whiteBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White))
-                            using (System.Drawing.StringFormat sf = new System.Drawing.StringFormat())
-                            {
-                                sf.Alignment = System.Drawing.StringAlignment.Center;
-                                sf.LineAlignment = System.Drawing.StringAlignment.Center;
-                                g.DrawString("⟳", fontArrow, whiteBrush, new System.Drawing.RectangleF(16f * scale, 16f * scale, 14f * scale, 14f * scale), sf);
-                            }
-                        }
+                        g.FillPolygon(blueBrush, arrow);
                     }
                 }
 
@@ -470,49 +421,38 @@ namespace HDTool
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.Clear(Color.Transparent);
 
-                    float scale = size / 32.0f;
+                    float s = size / 32.0f;
 
-                    // Vẽ vòng tròn nền xanh ngọc đậm (Emerald Green / Teal)
-                    using (System.Drawing.SolidBrush bgBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(22, 160, 133)))
+                    // 1. Vong tron net dut ngoai (#38bdf8)
+                    using (Pen dashPen = new Pen(Color.FromArgb(56, 189, 248), 2.0f * s))
                     {
-                        g.FillEllipse(bgBrush, 2f * scale, 2f * scale, 28f * scale, 28f * scale);
+                        dashPen.DashPattern = new float[] { 4f, 2f };
+                        g.DrawEllipse(dashPen, 4f * s, 4f * s, 24f * s, 24f * s);
                     }
 
-                    // Vòng tròn cung tên xoay (Reload Arc)
-                    using (System.Drawing.Pen arcPen = new System.Drawing.Pen(System.Drawing.Color.White, 2.5f * scale))
+                    // 2. Cung mui ten xoay tron (#0284c7)
+                    using (Pen bluePen = new Pen(Color.FromArgb(2, 132, 199), 2.5f * s))
                     {
-                        arcPen.StartCap = LineCap.Round;
-                        arcPen.EndCap = LineCap.Round;
-                        g.DrawArc(arcPen, 6f * scale, 6f * scale, 20f * scale, 20f * scale, 45, 270);
+                        bluePen.StartCap = LineCap.Round;
+                        g.DrawArc(bluePen, 11f * s, 11f * s, 10f * s, 10f * s, 0, 310);
                     }
 
-                    // Mũi tên của vòng xoay
-                    using (System.Drawing.SolidBrush arrowBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White))
+                    PointF[] arrow = new PointF[] {
+                        new PointF(20f * s, 12f * s),
+                        new PointF(25f * s, 16f * s),
+                        new PointF(20f * s, 20f * s)
+                    };
+                    using (SolidBrush blueBrush = new SolidBrush(Color.FromArgb(2, 132, 199)))
                     {
-                        System.Drawing.PointF[] arrowPts = new System.Drawing.PointF[]
-                        {
-                            new System.Drawing.PointF(24f * scale, 12f * scale),
-                            new System.Drawing.PointF(28f * scale, 17f * scale),
-                            new System.Drawing.PointF(20f * scale, 17f * scale)
-                        };
-                        g.FillPolygon(arrowBrush, arrowPts);
+                        g.FillPolygon(blueBrush, arrow);
                     }
 
-                    // Biểu tượng tia chớp màu vàng gold ở trung tâm
-                    using (System.Drawing.SolidBrush boltBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(241, 196, 15)))
+                    // 3. Cham tron tam mau cam (#f59e0b)
+                    using (SolidBrush orangeBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
                     {
-                        System.Drawing.PointF[] boltPts = new System.Drawing.PointF[]
-                        {
-                            new System.Drawing.PointF(17f * scale, 8f * scale),
-                            new System.Drawing.PointF(11f * scale, 17f * scale),
-                            new System.Drawing.PointF(16f * scale, 17f * scale),
-                            new System.Drawing.PointF(14f * scale, 24f * scale),
-                            new System.Drawing.PointF(21f * scale, 15f * scale),
-                            new System.Drawing.PointF(16f * scale, 15f * scale)
-                        };
-                        g.FillPolygon(boltBrush, boltPts);
+                        g.FillEllipse(orangeBrush, 14f * s, 14f * s, 4f * s, 4f * s);
                     }
                 }
 
@@ -530,88 +470,81 @@ namespace HDTool
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.Clear(Color.Transparent);
 
-                    float scale = size / 32.0f;
+                    float s = size / 32.0f;
 
-                    // 1. Khung Crop View hình chữ nhật nét đứt màu xám xanh
-                    using (System.Drawing.Pen cropPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(148, 163, 184), 1.2f * scale))
+                    // 1. Khung Crop View bo goc nen toi vien net dut
+                    using (GraphicsPath cropPath = new GraphicsPath())
                     {
-                        cropPen.DashStyle = DashStyle.Dash;
-                        g.DrawRectangle(cropPen, 8f * scale, 8f * scale, 16f * scale, 16f * scale);
-                    }
+                        float rad = 3f * s;
+                        cropPath.AddArc(4f * s, 4f * s, rad * 2, rad * 2, 180, 90);
+                        cropPath.AddArc(28f * s - rad * 2, 4f * s, rad * 2, rad * 2, 270, 90);
+                        cropPath.AddArc(28f * s - rad * 2, 28f * s - rad * 2, rad * 2, rad * 2, 0, 90);
+                        cropPath.AddArc(4f * s, 28f * s - rad * 2, rad * 2, rad * 2, 90, 90);
+                        cropPath.CloseFigure();
 
-                    // 2. Đường Trục Grid 1 (Trục dọc bên trái)
-                    using (System.Drawing.Pen gridPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(2, 132, 199), 1.6f * scale))
-                    {
-                        g.DrawLine(gridPen, 11f * scale, 3f * scale, 11f * scale, 28f * scale);
-                    }
-
-                    // Bubble Grid Tròn đỉnh trục 1 (chữ "1")
-                    using (System.Drawing.SolidBrush bBg = new System.Drawing.SolidBrush(System.Drawing.Color.White))
-                    using (System.Drawing.Pen bBorder = new System.Drawing.Pen(System.Drawing.Color.FromArgb(2, 132, 199), 1.4f * scale))
-                    {
-                        g.FillEllipse(bBg, 7.5f * scale, 1f * scale, 7f * scale, 7f * scale);
-                        g.DrawEllipse(bBorder, 7.5f * scale, 1f * scale, 7f * scale, 7f * scale);
-                        if (size >= 32)
+                        using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(77, 15, 23, 42)))
                         {
-                            using (System.Drawing.Font font = new System.Drawing.Font("Segoe UI", 4.5f, System.Drawing.FontStyle.Bold))
-                            using (System.Drawing.SolidBrush textBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(2, 132, 199)))
-                            using (System.Drawing.StringFormat sf = new System.Drawing.StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                            {
-                                g.DrawString("1", font, textBrush, new RectangleF(7.5f * scale, 1f * scale, 7f * scale, 7f * scale), sf);
-                            }
+                            g.FillPath(bgBrush, cropPath);
+                        }
+                        using (Pen cropPen = new Pen(Color.FromArgb(148, 163, 184), 1.5f * s))
+                        {
+                            cropPen.DashPattern = new float[] { 3f, 2f };
+                            g.DrawPath(cropPen, cropPath);
                         }
                     }
 
-                    // 3. Đường Trục Grid 2 (Trục dọc bên phải)
-                    using (System.Drawing.Pen gridPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(2, 132, 199), 1.6f * scale))
+                    // 2. Duong cao do do net dut ngang
+                    using (Pen redPen = new Pen(Color.FromArgb(239, 68, 68), 2.0f * s))
                     {
-                        g.DrawLine(gridPen, 21f * scale, 3f * scale, 21f * scale, 28f * scale);
+                        redPen.DashPattern = new float[] { 4f, 2f };
+                        g.DrawLine(redPen, 2f * s, 16f * s, 28f * s, 16f * s);
                     }
-
-                    // Bubble Grid Tròn đỉnh trục 2 (chữ "2")
-                    using (System.Drawing.SolidBrush bBg = new System.Drawing.SolidBrush(System.Drawing.Color.White))
-                    using (System.Drawing.Pen bBorder = new System.Drawing.Pen(System.Drawing.Color.FromArgb(2, 132, 199), 1.4f * scale))
-                    {
-                        g.FillEllipse(bBg, 17.5f * scale, 1f * scale, 7f * scale, 7f * scale);
-                        g.DrawEllipse(bBorder, 17.5f * scale, 1f * scale, 7f * scale, 7f * scale);
-                        if (size >= 32)
-                        {
-                            using (System.Drawing.Font font = new System.Drawing.Font("Segoe UI", 4.5f, System.Drawing.FontStyle.Bold))
-                            using (System.Drawing.SolidBrush textBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(2, 132, 199)))
-                            using (System.Drawing.StringFormat sf = new System.Drawing.StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                            {
-                                g.DrawString("2", font, textBrush, new RectangleF(17.5f * scale, 1f * scale, 7f * scale, 7f * scale), sf);
-                            }
-                        }
-                    }
-
-                    // 4. Đường Cao Độ Level (Ngang)
-                    using (System.Drawing.Pen levelPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(220, 38, 38), 1.8f * scale))
-                    {
-                        levelPen.DashStyle = DashStyle.DashDot;
-                        g.DrawLine(levelPen, 3f * scale, 21f * scale, 29f * scale, 21f * scale);
-                    }
-
-                    // Ký hiệu đầu Level (Tam giác cao độ Level Head chuẩn kiến trúc)
-                    using (System.Drawing.SolidBrush lvlBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(220, 38, 38)))
+                    using (SolidBrush redBrush = new SolidBrush(Color.FromArgb(220, 38, 38)))
                     {
                         PointF[] tri = new PointF[] {
-                            new PointF(2f * scale, 21f * scale),
-                            new PointF(7f * scale, 17.5f * scale),
-                            new PointF(7f * scale, 24.5f * scale)
+                            new PointF(28f * s, 16f * s),
+                            new PointF(23f * s, 12f * s),
+                            new PointF(23f * s, 20f * s)
                         };
-                        g.FillPolygon(lvlBrush, tri);
+                        g.FillPolygon(redBrush, tri);
                     }
 
-                    // 5. Mũi tên đo căn chỉnh 2 chiều màu cam sắc nét
-                    using (System.Drawing.Pen arrowPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(234, 88, 12), 1.4f * scale))
+                    // 3. Hai duong luoi truc xanh dung
+                    using (Pen bluePen = new Pen(Color.FromArgb(2, 132, 199), 2.0f * s))
                     {
-                        // Đo ngang giữa 2 trục Grid
-                        g.DrawLine(arrowPen, 11f * scale, 13f * scale, 21f * scale, 13f * scale);
-                        g.DrawLine(arrowPen, 11f * scale, 11f * scale, 11f * scale, 15f * scale);
-                        g.DrawLine(arrowPen, 21f * scale, 11f * scale, 21f * scale, 15f * scale);
+                        g.DrawLine(bluePen, 10f * s, 2f * s, 10f * s, 30f * s);
+                        g.DrawLine(bluePen, 22f * s, 2f * s, 22f * s, 30f * s);
+                    }
+
+                    // 4. Hai bong bong tron so 1 va 2 o dinh
+                    using (SolidBrush whiteBrush = new SolidBrush(Color.White))
+                    using (Pen blueBorder = new Pen(Color.FromArgb(2, 132, 199), 1.5f * s))
+                    using (SolidBrush blueText = new SolidBrush(Color.FromArgb(2, 132, 199)))
+                    using (Font font = new Font("Segoe UI", (size >= 32) ? 5.5f * s : 4.5f * s, System.Drawing.FontStyle.Bold))
+                    using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                    {
+                        g.FillEllipse(whiteBrush, 6f * s, 1f * s, 8f * s, 8f * s);
+                        g.DrawEllipse(blueBorder, 6f * s, 1f * s, 8f * s, 8f * s);
+                        g.DrawString("1", font, blueText, new RectangleF(6f * s, 1f * s, 8f * s, 8.5f * s), sf);
+
+                        g.FillEllipse(whiteBrush, 18f * s, 1f * s, 8f * s, 8f * s);
+                        g.DrawEllipse(blueBorder, 18f * s, 1f * s, 8f * s, 8f * s);
+                        g.DrawString("2", font, blueText, new RectangleF(18f * s, 1f * s, 8f * s, 8.5f * s), sf);
+                    }
+
+                    // 5. Mui ten cam o day
+                    using (Pen orangePen = new Pen(Color.FromArgb(249, 115, 22), 1.5f * s))
+                    using (SolidBrush orangeBrush = new SolidBrush(Color.FromArgb(249, 115, 22)))
+                    {
+                        g.DrawLine(orangePen, 10f * s, 26f * s, 16f * s, 26f * s);
+                        PointF[] arrow = new PointF[] {
+                            new PointF(19f * s, 26f * s),
+                            new PointF(16f * s, 24.5f * s),
+                            new PointF(16f * s, 27.5f * s)
+                        };
+                        g.FillPolygon(orangeBrush, arrow);
                     }
                 }
 
@@ -631,104 +564,51 @@ namespace HDTool
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.Clear(Color.Transparent);
 
-                    float scale = size / 32.0f;
+                    float s = size / 32.0f;
 
-                    // 1. Vẽ Đoạn Ống Nước Nằm Ngang (Màu Xanh Dương Cấp Thoát Nước #0284c7)
-                    using (LinearGradientBrush pipeHGrad = new LinearGradientBrush(
-                        new PointF(0, 16f * scale), new PointF(0, 26f * scale),
-                        System.Drawing.Color.FromArgb(56, 189, 248), System.Drawing.Color.FromArgb(3, 105, 161)))
+                    // 1. Than ong ngang va ong dung
+                    using (SolidBrush pipeBrush = new SolidBrush(Color.FromArgb(2, 132, 199)))
+                    using (Pen pipeBorder = new Pen(Color.FromArgb(3, 105, 161), 1.2f * s))
                     {
-                        g.FillRectangle(pipeHGrad, 1f * scale, 17f * scale, 18f * scale, 8f * scale);
-                    }
-                    using (System.Drawing.Pen pipeBorder = new System.Drawing.Pen(System.Drawing.Color.FromArgb(7, 89, 133), 1.2f * scale))
-                    {
-                        g.DrawRectangle(pipeBorder, 1f * scale, 17f * scale, 18f * scale, 8f * scale);
-                    }
+                        g.FillRectangle(pipeBrush, 2f * s, 18f * s, 22f * s, 7f * s);
+                        g.DrawRectangle(pipeBorder, 2f * s, 18f * s, 22f * s, 7f * s);
 
-                    // Gờ nối / Bích ống bên trái
-                    using (System.Drawing.SolidBrush flangeBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(2, 132, 199)))
-                    using (System.Drawing.Pen flangeBorder = new System.Drawing.Pen(System.Drawing.Color.FromArgb(7, 89, 133), 1.2f * scale))
-                    {
-                        g.FillRectangle(flangeBrush, 1f * scale, 15.5f * scale, 3.5f * scale, 11f * scale);
-                        g.DrawRectangle(flangeBorder, 1f * scale, 15.5f * scale, 3.5f * scale, 11f * scale);
+                        g.FillRectangle(pipeBrush, 18f * s, 4f * s, 7f * s, 16f * s);
+                        g.DrawRectangle(pipeBorder, 18f * s, 4f * s, 7f * s, 16f * s);
                     }
 
-                    // 2. Vẽ Co Ống 90 Độ (Elbow) chuyển hướng đi lên
-                    using (GraphicsPath elbowPath = new GraphicsPath())
+                    // 2. Vien bich ong sang mau
+                    using (SolidBrush hlBrush = new SolidBrush(Color.FromArgb(56, 189, 248)))
                     {
-                        elbowPath.AddArc(11f * scale, 11f * scale, 14f * scale, 14f * scale, 0, 90);
-                        elbowPath.AddLine(18f * scale, 25f * scale, 18f * scale, 17f * scale);
-                        elbowPath.AddArc(11f * scale, 11f * scale, 6f * scale, 6f * scale, 90, -90);
-                        elbowPath.CloseFigure();
-                        using (LinearGradientBrush elbowGrad = new LinearGradientBrush(
-                            new PointF(11f * scale, 11f * scale), new PointF(25f * scale, 25f * scale),
-                            System.Drawing.Color.FromArgb(56, 189, 248), System.Drawing.Color.FromArgb(3, 105, 161)))
-                        {
-                            g.FillPath(elbowGrad, elbowPath);
-                        }
-                        using (System.Drawing.Pen borderPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(7, 89, 133), 1.2f * scale))
-                        {
-                            g.DrawPath(borderPen, elbowPath);
-                        }
+                        g.FillRectangle(hlBrush, 1f * s, 17f * s, 2.5f * s, 9f * s);
+                        g.FillRectangle(hlBrush, 17f * s, 3f * s, 9f * s, 2.5f * s);
                     }
 
-                    // 3. Đoạn Ống Đứng Đi Lên
-                    using (LinearGradientBrush pipeVGrad = new LinearGradientBrush(
-                        new PointF(17f * scale, 0), new PointF(25f * scale, 0),
-                        System.Drawing.Color.FromArgb(56, 189, 248), System.Drawing.Color.FromArgb(3, 105, 161)))
-                    {
-                        g.FillRectangle(pipeVGrad, 17f * scale, 3f * scale, 8f * scale, 14f * scale);
-                    }
-                    using (System.Drawing.Pen pipeBorder = new System.Drawing.Pen(System.Drawing.Color.FromArgb(7, 89, 133), 1.2f * scale))
-                    {
-                        g.DrawRectangle(pipeBorder, 17f * scale, 3f * scale, 8f * scale, 14f * scale);
-                    }
-
-                    // Gờ nối / Bích ống ở đầu trên
-                    using (System.Drawing.SolidBrush flangeBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(2, 132, 199)))
-                    using (System.Drawing.Pen flangeBorder = new System.Drawing.Pen(System.Drawing.Color.FromArgb(7, 89, 133), 1.2f * scale))
-                    {
-                        g.FillRectangle(flangeBrush, 15.5f * scale, 2f * scale, 11f * scale, 3.5f * scale);
-                        g.DrawRectangle(flangeBorder, 15.5f * scale, 2f * scale, 11f * scale, 3.5f * scale);
-                    }
-
-                    // 4. Giọt Nước Xanh Ngọc Long Lanh (Water Drop) rực rỡ ở trung tâm
+                    // 3. Giot nuoc xanh cyan o phia tren
                     using (GraphicsPath dropPath = new GraphicsPath())
                     {
-                        dropPath.AddLine(8.5f * scale, 3f * scale, 12f * scale, 9f * scale);
-                        dropPath.AddArc(5f * scale, 6.5f * scale, 7f * scale, 7f * scale, 30, 200);
+                        dropPath.AddLine(12f * s, 4f * s, 9f * s, 10f * s);
+                        dropPath.AddArc(9f * s, 7f * s, 6f * s, 6f * s, 150, 240);
                         dropPath.CloseFigure();
 
-                        using (LinearGradientBrush dropGrad = new LinearGradientBrush(
-                            new PointF(5f * scale, 3f * scale), new PointF(12f * scale, 14f * scale),
-                            System.Drawing.Color.FromArgb(56, 189, 248), System.Drawing.Color.FromArgb(14, 165, 233)))
+                        using (SolidBrush dropBrush = new SolidBrush(Color.FromArgb(6, 182, 212)))
+                        using (Pen whitePen = new Pen(Color.White, 1.0f * s))
                         {
-                            g.FillPath(dropGrad, dropPath);
-                        }
-                        using (System.Drawing.Pen dropBorder = new System.Drawing.Pen(System.Drawing.Color.White, 1.0f * scale))
-                        {
-                            g.DrawPath(dropBorder, dropPath);
-                        }
-                        // Điểm sáng phản chiếu trên giọt nước
-                        using (System.Drawing.SolidBrush hlBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(200, 255, 255, 255)))
-                        {
-                            g.FillEllipse(hlBrush, 7f * scale, 7f * scale, 2f * scale, 3.5f * scale);
+                            g.FillPath(dropBrush, dropPath);
+                            g.DrawPath(whitePen, dropPath);
                         }
                     }
 
-                    // 5. Huy Hiệu Bảng Thống Kê Nhỏ (#10b981) ở góc dưới phải thể hiện chức năng thống kê khối lượng
-                    using (System.Drawing.SolidBrush bgBadge = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(16, 185, 129)))
-                    using (System.Drawing.Pen borderBadge = new System.Drawing.Pen(System.Drawing.Color.White, 1.2f * scale))
+                    // 4. Bang khoi luong vang cam o goc duoi phai
+                    using (SolidBrush badgeBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                    using (Pen whitePen = new Pen(Color.White, 1.0f * s))
                     {
-                        g.FillRectangle(bgBadge, 17f * scale, 17f * scale, 14f * scale, 13f * scale);
-                        g.DrawRectangle(borderBadge, 17f * scale, 17f * scale, 14f * scale, 13f * scale);
-                        using (System.Drawing.Pen lineP = new System.Drawing.Pen(System.Drawing.Color.White, 1.0f * scale))
-                        {
-                            g.DrawLine(lineP, 19f * scale, 21f * scale, 29f * scale, 21f * scale);
-                            g.DrawLine(lineP, 19f * scale, 25f * scale, 27f * scale, 25f * scale);
-                        }
+                        g.FillRectangle(badgeBrush, 18f * s, 19f * s, 12f * s, 10f * s);
+                        g.DrawRectangle(whitePen, 18f * s, 19f * s, 12f * s, 10f * s);
+                        g.DrawLine(whitePen, 20f * s, 22f * s, 28f * s, 22f * s);
+                        g.DrawLine(whitePen, 20f * s, 25f * s, 28f * s, 25f * s);
                     }
                 }
 
@@ -832,63 +712,42 @@ namespace HDTool
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.Clear(Color.Transparent);
 
-                    float scale = size / 32.0f;
+                    float s = size / 32.0f;
 
-                    // 1. Khung bảng màu xanh ngọc (Emerald Green)
-                    using (System.Drawing.SolidBrush bgBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(236, 253, 245)))
-                    using (System.Drawing.Pen borderPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(16, 185, 129), 1.5f * scale))
+                    // 1. Khung ngoai
+                    using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(102, 15, 23, 42)))
+                    using (Pen borderPen = new Pen(Color.FromArgb(100, 116, 139), 1.5f * s))
                     {
-                        g.FillRectangle(bgBrush, 2f * scale, 3f * scale, 28f * scale, 26f * scale);
-                        g.DrawRectangle(borderPen, 2f * scale, 3f * scale, 28f * scale, 26f * scale);
+                        g.FillRectangle(bgBrush, 4f * s, 4f * s, 24f * s, 24f * s);
+                        g.DrawRectangle(borderPen, 4f * s, 4f * s, 24f * s, 24f * s);
                     }
 
-                    // 2. Header bảng màu xanh ngọc đậm (#047857)
-                    using (System.Drawing.SolidBrush headBrush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(4, 120, 87)))
+                    // 2. Thanh tieu de
+                    using (SolidBrush titleBrush = new SolidBrush(Color.FromArgb(2, 132, 199)))
                     {
-                        g.FillRectangle(headBrush, 2f * scale, 3f * scale, 28f * scale, 7.5f * scale);
-                        if (size >= 32)
-                        {
-                            using (System.Drawing.Font font = new System.Drawing.Font("Segoe UI", 4.5f, System.Drawing.FontStyle.Bold))
-                            using (System.Drawing.SolidBrush textBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White))
-                            using (System.Drawing.StringFormat sf = new System.Drawing.StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                            {
-                                g.DrawString("TỶ LỆ 1:2", font, textBrush, new RectangleF(2f * scale, 3f * scale, 28f * scale, 7.5f * scale), sf);
-                            }
-                        }
+                        g.FillRectangle(titleBrush, 7f * s, 7f * s, 18f * s, 4f * s);
                     }
 
-                    // 3. Đường phân cách cột và hàng
-                    using (System.Drawing.Pen gridPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(16, 185, 129), 1.0f * scale))
+                    // 3. Khoi luoi o bang tinh
+                    using (SolidBrush gridBg = new SolidBrush(Color.FromArgb(30, 41, 59)))
+                    using (Pen gridPen = new Pen(Color.FromArgb(51, 65, 85), 1.0f * s))
                     {
-                        g.DrawLine(gridPen, 11f * scale, 10.5f * scale, 11f * scale, 29f * scale);
-                        g.DrawLine(gridPen, 21f * scale, 10.5f * scale, 21f * scale, 29f * scale);
-                        g.DrawLine(gridPen, 2f * scale, 19.5f * scale, 30f * scale, 19.5f * scale);
+                        g.FillRectangle(gridBg, 7f * s, 13f * s, 18f * s, 12f * s);
+                        g.DrawRectangle(gridPen, 7f * s, 13f * s, 18f * s, 12f * s);
+                        g.DrawLine(gridPen, 13f * s, 13f * s, 13f * s, 25f * s);
+                        g.DrawLine(gridPen, 19f * s, 13f * s, 19f * s, 25f * s);
+                        g.DrawLine(gridPen, 7f * s, 19f * s, 25f * s, 19f * s);
                     }
 
-                    // 4. Mũi tên 2 chiều màu cam vàng đo căn chỉnh tỉ lệ (Scale Dimension)
-                    using (System.Drawing.Pen arrowPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(245, 158, 11), 1.4f * scale))
+                    // 4. Mui ten co gian hai ben
+                    using (Pen arrowPen = new Pen(Color.FromArgb(56, 189, 248), 1.5f * s))
                     {
-                        g.DrawLine(arrowPen, 4f * scale, 24f * scale, 10f * scale, 24f * scale);
-                    }
-
-                    // 5. Huy hiệu dấu tích xanh biển chứng nhận khớp 100%
-                    using (System.Drawing.SolidBrush badgeBg = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(2, 132, 199)))
-                    using (System.Drawing.Pen badgeRim = new System.Drawing.Pen(System.Drawing.Color.White, 1.0f * scale))
-                    {
-                        g.FillEllipse(badgeBg, 16f * scale, 16f * scale, 11f * scale, 11f * scale);
-                        g.DrawEllipse(badgeRim, 16f * scale, 16f * scale, 11f * scale, 11f * scale);
-                        if (size >= 32)
-                        {
-                            using (System.Drawing.Font font = new System.Drawing.Font("Segoe UI", 6.0f, System.Drawing.FontStyle.Bold))
-                            using (System.Drawing.SolidBrush textBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White))
-                            using (System.Drawing.StringFormat sf = new System.Drawing.StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                            {
-                                g.DrawString("✓", font, textBrush, new RectangleF(16f * scale, 16f * scale, 11f * scale, 11f * scale), sf);
-                            }
-                        }
+                        g.DrawLine(arrowPen, 2f * s, 16f * s, 6f * s, 16f * s);
+                        g.DrawLine(arrowPen, 4f * s, 14f * s, 4f * s, 18f * s);
+                        g.DrawLine(arrowPen, 26f * s, 16f * s, 30f * s, 16f * s);
+                        g.DrawLine(arrowPen, 28f * s, 14f * s, 28f * s, 18f * s);
                     }
                 }
 
@@ -903,30 +762,6 @@ namespace HDTool
         /// </summary>
         public static ImageSource CreateDuctQuantityIcon(int size)
         {
-            try
-            {
-                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("cmdHDToolDuctQuantity_custom.png"))
-                {
-                    if (stream != null)
-                    {
-                        using (Bitmap origBmp = new Bitmap(stream))
-                        using (Bitmap resizedBmp = new Bitmap(size, size))
-                        {
-                            using (Graphics g = Graphics.FromImage(resizedBmp))
-                            {
-                                g.SmoothingMode = SmoothingMode.AntiAlias;
-                                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                                g.Clear(System.Drawing.Color.Transparent);
-                                g.DrawImage(origBmp, 0, 0, size, size);
-                            }
-                            return ConvertToImageSource(resizedBmp);
-                        }
-                    }
-                }
-            }
-            catch { }
-
             using (Bitmap bmp = new Bitmap(size, size))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
@@ -934,97 +769,66 @@ namespace HDTool
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                    g.Clear(Color.Transparent);
 
-                    float scale = size / 32.0f;
+                    float s = size / 32.0f;
 
-                    // 1. Mặt trên ống gió (Top Face tôn mạ kẽm sáng)
-                    PointF[] topFace = new PointF[]
-                    {
-                        new PointF(4f * scale, 10f * scale),
-                        new PointF(22f * scale, 6f * scale),
-                        new PointF(29f * scale, 12f * scale),
-                        new PointF(11f * scale, 16f * scale)
+                    // 1. Mat tren ong gio
+                    PointF[] topFace = new PointF[] {
+                        new PointF(5f * s, 9f * s),
+                        new PointF(21f * s, 5f * s),
+                        new PointF(27f * s, 9f * s),
+                        new PointF(11f * s, 13f * s)
                     };
-                    using (SolidBrush topBrush = new SolidBrush(System.Drawing.Color.FromArgb(148, 163, 184)))
-                    using (Pen borderPen = new Pen(System.Drawing.Color.FromArgb(51, 65, 85), 1.2f * scale))
+                    using (SolidBrush topBrush = new SolidBrush(Color.FromArgb(148, 163, 184)))
+                    using (Pen borderPen = new Pen(Color.FromArgb(71, 85, 105), 1.0f * s))
                     {
                         g.FillPolygon(topBrush, topFace);
                         g.DrawPolygon(borderPen, topFace);
                     }
 
-                    // 2. Mặt bên trái (Left Face tôn mạ kẽm tối)
-                    PointF[] leftFace = new PointF[]
-                    {
-                        new PointF(4f * scale, 10f * scale),
-                        new PointF(11f * scale, 16f * scale),
-                        new PointF(11f * scale, 26f * scale),
-                        new PointF(4f * scale, 20f * scale)
+                    // 2. Mat trai
+                    PointF[] leftFace = new PointF[] {
+                        new PointF(5f * s, 9f * s),
+                        new PointF(11f * s, 13f * s),
+                        new PointF(11f * s, 25f * s),
+                        new PointF(5f * s, 21f * s)
                     };
-                    using (SolidBrush leftBrush = new SolidBrush(System.Drawing.Color.FromArgb(100, 116, 139)))
-                    using (Pen borderPen = new Pen(System.Drawing.Color.FromArgb(51, 65, 85), 1.2f * scale))
+                    using (SolidBrush leftBrush = new SolidBrush(Color.FromArgb(203, 213, 225)))
+                    using (Pen borderPen = new Pen(Color.FromArgb(71, 85, 105), 1.0f * s))
                     {
                         g.FillPolygon(leftBrush, leftFace);
                         g.DrawPolygon(borderPen, leftFace);
                     }
 
-                    // 3. Mặt bên phải (Right Face tôn mạ kẽm vừa)
-                    PointF[] rightFace = new PointF[]
-                    {
-                        new PointF(11f * scale, 16f * scale),
-                        new PointF(29f * scale, 12f * scale),
-                        new PointF(29f * scale, 22f * scale),
-                        new PointF(11f * scale, 26f * scale)
+                    // 3. Mat phai
+                    PointF[] rightFace = new PointF[] {
+                        new PointF(11f * s, 13f * s),
+                        new PointF(27f * s, 9f * s),
+                        new PointF(27f * s, 21f * s),
+                        new PointF(11f * s, 25f * s)
                     };
-                    using (SolidBrush rightBrush = new SolidBrush(System.Drawing.Color.FromArgb(203, 213, 225)))
-                    using (Pen borderPen = new Pen(System.Drawing.Color.FromArgb(51, 65, 85), 1.2f * scale))
+                    using (SolidBrush rightBrush = new SolidBrush(Color.FromArgb(100, 116, 139)))
+                    using (Pen borderPen = new Pen(Color.FromArgb(71, 85, 105), 1.0f * s))
                     {
                         g.FillPolygon(rightBrush, rightFace);
                         g.DrawPolygon(borderPen, rightFace);
                     }
 
-                    // 4. Viền bích TDC nẹp C mặt trước màu xanh cyan sáng
-                    using (Pen flangePen = new Pen(System.Drawing.Color.FromArgb(56, 189, 248), 2.0f * scale))
+                    // 4. Huy hieu tron cam o giua
+                    using (SolidBrush badgeBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                    using (Pen whitePen = new Pen(Color.White, 1.0f * s))
                     {
-                        g.DrawLine(flangePen, 4f * scale, 10f * scale, 11f * scale, 16f * scale);
-                        g.DrawLine(flangePen, 11f * scale, 16f * scale, 11f * scale, 26f * scale);
-                        g.DrawLine(flangePen, 11f * scale, 26f * scale, 4f * scale, 20f * scale);
-                        g.DrawLine(flangePen, 4f * scale, 20f * scale, 4f * scale, 10f * scale);
+                        g.FillEllipse(badgeBrush, 14.5f * s, 12.5f * s, 9f * s, 9f * s);
+                        g.DrawEllipse(whitePen, 14.5f * s, 12.5f * s, 9f * s, 9f * s);
                     }
 
-                    // 5. Gân tăng cứng chéo (Cross-breaking)
-                    using (Pen crossPen = new Pen(System.Drawing.Color.FromArgb(148, 163, 184), 0.8f * scale))
+                    using (Font font = new Font("Segoe UI", (size >= 32) ? 5.5f * s : 4.5f * s, System.Drawing.FontStyle.Bold))
+                    using (SolidBrush textBrush = new SolidBrush(Color.White))
+                    using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                     {
-                        crossPen.DashStyle = DashStyle.Dash;
-                        g.DrawLine(crossPen, 11f * scale, 16f * scale, 29f * scale, 22f * scale);
-                        g.DrawLine(crossPen, 11f * scale, 26f * scale, 29f * scale, 12f * scale);
-                    }
-
-                    // 6. Luồng gió khí động học màu xanh ngọc (Airflow breeze curves)
-                    using (Pen windPen1 = new Pen(System.Drawing.Color.FromArgb(16, 185, 129), 1.6f * scale))
-                    using (Pen windPen2 = new Pen(System.Drawing.Color.FromArgb(52, 211, 153), 1.2f * scale))
-                    {
-                        windPen1.StartCap = LineCap.Round; windPen1.EndCap = LineCap.Round;
-                        windPen2.StartCap = LineCap.Round; windPen2.EndCap = LineCap.Round;
-                        g.DrawBezier(windPen1, 1f * scale, 6f * scale, 5f * scale, 4f * scale, 8f * scale, 8f * scale, 13f * scale, 6f * scale);
-                        g.DrawBezier(windPen2, 2f * scale, 8f * scale, 6f * scale, 6f * scale, 9f * scale, 10f * scale, 15f * scale, 8f * scale);
-                    }
-
-                    // 7. Huy hiệu m² diện tích tôn ở góc dưới phải (#f59e0b)
-                    using (SolidBrush badgeBg = new SolidBrush(System.Drawing.Color.FromArgb(245, 158, 11)))
-                    using (Pen badgeBorder = new Pen(System.Drawing.Color.White, 1.0f * scale))
-                    {
-                        g.FillRectangle(badgeBg, 18f * scale, 19f * scale, 13f * scale, 10f * scale);
-                        g.DrawRectangle(badgeBorder, 18f * scale, 19f * scale, 13f * scale, 10f * scale);
-                        if (size >= 32)
-                        {
-                            using (Font font = new Font("Segoe UI", 5.5f, FontStyle.Bold))
-                            using (SolidBrush textBrush = new SolidBrush(System.Drawing.Color.White))
-                            using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                            {
-                                g.DrawString("m²", font, textBrush, new RectangleF(18f * scale, 19f * scale, 13f * scale, 10f * scale), sf);
-                            }
-                        }
+                        g.DrawString("m²", font, textBrush, new RectangleF(14.5f * s, 12.5f * s, 9f * s, 9.5f * s), sf);
                     }
                 }
 
@@ -1632,65 +1436,63 @@ namespace HDTool
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.Clear(Color.Transparent);
 
                     float s = size / 32.0f;
 
-                    // 1. Thân ống gió chữ nhật 3D (Xanh Cyan)
-                    using (SolidBrush ductBrush = new SolidBrush(System.Drawing.Color.FromArgb(14, 165, 233)))
-                    using (Pen ductPen = new Pen(System.Drawing.Color.FromArgb(3, 105, 161), 1.2f * s))
+                    // 1. Than ong CAD (#38bdf8, vien #0284c7)
+                    using (SolidBrush ductBrush = new SolidBrush(Color.FromArgb(56, 189, 248)))
+                    using (Pen ductBorder = new Pen(Color.FromArgb(2, 132, 199), 1.5f * s))
                     {
-                        g.FillRectangle(ductBrush, 3f * s, 10f * s, 17f * s, 13f * s);
-                        g.DrawRectangle(ductPen, 3f * s, 10f * s, 17f * s, 13f * s);
+                        g.FillRectangle(ductBrush, 3f * s, 10f * s, 16f * s, 12f * s);
+                        g.DrawRectangle(ductBorder, 3f * s, 10f * s, 16f * s, 12f * s);
                     }
 
-                    // Đường tim ống nét đứt màu trắng
-                    using (Pen centerPen = new Pen(System.Drawing.Color.White, 1.0f * s))
+                    // Duong tim net dut trang
+                    using (Pen centerPen = new Pen(Color.White, 1.0f * s))
                     {
-                        centerPen.DashStyle = DashStyle.Dash;
-                        g.DrawLine(centerPen, 3f * s, 16.5f * s, 20f * s, 16.5f * s);
+                        centerPen.DashPattern = new float[] { 2f, 2f };
+                        g.DrawLine(centerPen, 3f * s, 16f * s, 19f * s, 16f * s);
                     }
 
-                    // 2. Chân rẽ Tap (màu cam Amber) đâm ra
-                    using (SolidBrush tapBrush = new SolidBrush(System.Drawing.Color.FromArgb(245, 158, 11)))
-                    using (Pen tapPen = new Pen(System.Drawing.Color.FromArgb(217, 119, 6), 1.0f * s))
+                    // Chu CAD mau den toi (#0f172a)
+                    using (Font font = new Font("Segoe UI", (size >= 32) ? 5.0f * s : 4.0f * s, System.Drawing.FontStyle.Bold))
+                    using (SolidBrush textBrush = new SolidBrush(Color.FromArgb(15, 23, 42)))
+                    using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                     {
-                        PointF[] tapPts = new PointF[] {
-                            new PointF(20f * s, 13f * s),
-                            new PointF(27f * s, 7f * s),
-                            new PointF(30f * s, 7f * s),
-                            new PointF(30f * s, 12f * s),
-                            new PointF(20f * s, 19f * s)
-                        };
+                        g.DrawString("CAD", font, textBrush, new RectangleF(3f * s, 10f * s, 16f * s, 12f * s), sf);
+                    }
+
+                    // 2. Cut cam re nhanh (#f59e0b, vien #d97706)
+                    PointF[] tapPts = new PointF[] {
+                        new PointF(19f * s, 13f * s),
+                        new PointF(25f * s, 7f * s),
+                        new PointF(29f * s, 7f * s),
+                        new PointF(29f * s, 11f * s),
+                        new PointF(23f * s, 17f * s)
+                    };
+                    using (SolidBrush tapBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                    using (Pen tapBorder = new Pen(Color.FromArgb(217, 119, 6), 1.0f * s))
+                    {
                         g.FillPolygon(tapBrush, tapPts);
-                        g.DrawPolygon(tapPen, tapPts);
+                        g.DrawPolygon(tapBorder, tapPts);
                     }
 
-                    // 3. Nhánh rẽ đâm xuống (Màu xanh ngọc Emerald)
-                    using (SolidBrush brBrush = new SolidBrush(System.Drawing.Color.FromArgb(16, 185, 129)))
-                    using (Pen brPen = new Pen(System.Drawing.Color.FromArgb(5, 150, 105), 1.0f * s))
+                    // 3. Ong re nhanh xanh la (#10b981, vien #059669)
+                    using (SolidBrush brBrush = new SolidBrush(Color.FromArgb(16, 185, 129)))
+                    using (Pen brBorder = new Pen(Color.FromArgb(5, 150, 105), 1.0f * s))
                     {
-                        g.FillRectangle(brBrush, 10f * s, 23f * s, 7f * s, 8f * s);
-                        g.DrawRectangle(brPen, 10f * s, 23f * s, 7f * s, 8f * s);
+                        g.FillRectangle(brBrush, 11f * s, 22f * s, 6f * s, 7f * s);
+                        g.DrawRectangle(brBorder, 11f * s, 22f * s, 6f * s, 7f * s);
                     }
 
-                    // 4. Khung nhãn CAD nhỏ màu xanh Navy ở góc trái
-                    using (SolidBrush cadBg = new SolidBrush(System.Drawing.Color.FromArgb(15, 23, 42)))
-                    using (Pen cadBorder = new Pen(System.Drawing.Color.FromArgb(56, 189, 248), 1.0f * s))
-                    using (Font font = new Font("Segoe UI", 5.5f * s, FontStyle.Bold))
-                    using (SolidBrush textBrush = new SolidBrush(System.Drawing.Color.White))
+                    // 4. Dau nhan X mau xanh sky (#38bdf8)
+                    using (Pen xPen = new Pen(Color.FromArgb(56, 189, 248), 1.5f * s))
                     {
-                        g.FillRectangle(cadBg, 3.5f * s, 12.5f * s, 15f * s, 8f * s);
-                        g.DrawRectangle(cadBorder, 3.5f * s, 12.5f * s, 15f * s, 8f * s);
-                        g.DrawString("CAD", font, textBrush, 3.5f * s, 12f * s);
-                    }
-
-                    // 5. Mũi tên 3D đỏ chuyển đổi sang Revit
-                    using (Pen arrowPen = new Pen(System.Drawing.Color.FromArgb(239, 68, 68), 1.5f * s))
-                    {
-                        g.DrawLine(arrowPen, 22f * s, 24f * s, 28f * s, 24f * s);
-                        g.DrawLine(arrowPen, 28f * s, 24f * s, 25f * s, 21f * s);
-                        g.DrawLine(arrowPen, 28f * s, 24f * s, 25f * s, 27f * s);
+                        xPen.StartCap = LineCap.Round;
+                        xPen.EndCap = LineCap.Round;
+                        g.DrawLine(xPen, 23f * s, 23f * s, 29f * s, 27f * s);
+                        g.DrawLine(xPen, 29f * s, 23f * s, 23f * s, 27f * s);
                     }
                 }
 
@@ -1711,82 +1513,68 @@ namespace HDTool
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-                    g.Clear(System.Drawing.Color.Transparent);
+                    g.Clear(Color.Transparent);
 
                     float s = size / 32.0f;
 
-                    // 1. Tờ bản vẽ kỹ thuật nền trắng viền xám xanh
-                    using (GraphicsPath path = new GraphicsPath())
+                    // 1. Man hinh CAD nen den xanh (#0f172a, vien #0284c7)
+                    using (GraphicsPath screenPath = new GraphicsPath())
                     {
-                        path.AddLine(4f * s, 3f * s, 20f * s, 3f * s);
-                        path.AddLine(20f * s, 3f * s, 26f * s, 9f * s);
-                        path.AddLine(26f * s, 9f * s, 26f * s, 29f * s);
-                        path.AddLine(26f * s, 29f * s, 4f * s, 29f * s);
-                        path.CloseFigure();
+                        float rad = 3f * s;
+                        screenPath.AddArc(3f * s, 3f * s, rad * 2, rad * 2, 180, 90);
+                        screenPath.AddArc(29f * s - rad * 2, 3f * s, rad * 2, rad * 2, 270, 90);
+                        screenPath.AddArc(29f * s - rad * 2, 29f * s - rad * 2, rad * 2, rad * 2, 0, 90);
+                        screenPath.AddArc(3f * s, 29f * s - rad * 2, rad * 2, rad * 2, 90, 90);
+                        screenPath.CloseFigure();
 
-                        using (SolidBrush sheetBrush = new SolidBrush(System.Drawing.Color.White))
+                        using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(15, 23, 42)))
+                        using (Pen borderPen = new Pen(Color.FromArgb(2, 132, 199), 1.5f * s))
                         {
-                            g.FillPath(sheetBrush, path);
-                        }
-                        using (Pen borderPen = new Pen(System.Drawing.Color.FromArgb(51, 65, 85), 1.4f * s))
-                        {
-                            g.DrawPath(borderPen, path);
-                        }
-                    }
-
-                    // Góc gấp trang bản vẽ
-                    using (GraphicsPath foldPath = new GraphicsPath())
-                    {
-                        foldPath.AddLine(20f * s, 3f * s, 20f * s, 9f * s);
-                        foldPath.AddLine(20f * s, 9f * s, 26f * s, 9f * s);
-                        using (SolidBrush foldBrush = new SolidBrush(System.Drawing.Color.FromArgb(203, 213, 225)))
-                        {
-                            g.FillPath(foldBrush, foldPath);
-                        }
-                        using (Pen foldPen = new Pen(System.Drawing.Color.FromArgb(71, 85, 105), 1.0f * s))
-                        {
-                            g.DrawPath(foldPen, foldPath);
+                            g.FillPath(bgBrush, screenPath);
+                            g.DrawPath(borderPen, screenPath);
                         }
                     }
 
-                    // 2. Các tầng layer màu sắc MEP trên bản vẽ (Cyan, Magenta, Blue)
-                    using (SolidBrush cyanBrush = new SolidBrush(System.Drawing.Color.FromArgb(6, 182, 212)))
-                    using (SolidBrush magBrush = new SolidBrush(System.Drawing.Color.FromArgb(217, 70, 239)))
-                    using (SolidBrush blueBrush = new SolidBrush(System.Drawing.Color.FromArgb(59, 130, 246)))
+                    // 2. Duong ngan cach tieu de
+                    using (Pen linePen = new Pen(Color.FromArgb(2, 132, 199), 1.0f * s))
                     {
-                        // Layer 1: Cấp gió (Cyan)
-                        g.FillRectangle(cyanBrush, 7f * s, 9f * s, 11f * s, 2.5f * s);
-                        // Layer 2: Hồi gió (Magenta)
-                        g.FillRectangle(magBrush, 7f * s, 13.5f * s, 14f * s, 2.5f * s);
-                        // Layer 3: Cấp thoát nước (Blue)
-                        g.FillRectangle(blueBrush, 7f * s, 18f * s, 9f * s, 2.5f * s);
+                        g.DrawLine(linePen, 3f * s, 10f * s, 29f * s, 10f * s);
                     }
 
-                    // 3. Huy hiệu CAD / DWG màu đỏ gạch AutoCAD ở góc dưới
-                    using (SolidBrush cadBg = new SolidBrush(System.Drawing.Color.FromArgb(220, 38, 38)))
-                    using (Pen cadBorder = new Pen(System.Drawing.Color.White, 1.2f * s))
+                    // Chu CAD / DWG (#38bdf8)
+                    using (Font font = new Font("Segoe UI", (size >= 32) ? 4.8f * s : 3.8f * s, System.Drawing.FontStyle.Bold))
+                    using (SolidBrush textBrush = new SolidBrush(Color.FromArgb(56, 189, 248)))
+                    using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                     {
-                        g.FillRectangle(cadBg, 14f * s, 18f * s, 15f * s, 11f * s);
-                        g.DrawRectangle(cadBorder, 14f * s, 18f * s, 15f * s, 11f * s);
-
-                        if (size >= 32)
-                        {
-                            using (Font f = new Font("Segoe UI", 5.5f * s, FontStyle.Bold))
-                            using (SolidBrush textBrush = new SolidBrush(System.Drawing.Color.White))
-                            using (StringFormat sf = new StringFormat())
-                            {
-                                sf.Alignment = StringAlignment.Center;
-                                sf.LineAlignment = StringAlignment.Center;
-                                g.DrawString("CAD", f, textBrush, new RectangleF(14f * s, 18f * s, 15f * s, 11f * s), sf);
-                            }
-                        }
+                        g.DrawString("CAD / DWG", font, textBrush, new RectangleF(3f * s, 3f * s, 26f * s, 7.5f * s), sf);
                     }
 
-                    // 4. Mũi tên xuất (Export) màu xanh ngọc hướng ra ngoài
-                    using (Pen expPen = new Pen(System.Drawing.Color.FromArgb(16, 185, 129), 1.8f * s))
+                    // 3. Ba vach Layer mau
+                    using (SolidBrush cyanBrush = new SolidBrush(Color.FromArgb(6, 182, 212)))
+                    using (SolidBrush pinkBrush = new SolidBrush(Color.FromArgb(244, 63, 94)))
+                    using (SolidBrush greenBrush = new SolidBrush(Color.FromArgb(16, 185, 129)))
                     {
-                        expPen.EndCap = LineCap.ArrowAnchor;
-                        g.DrawLine(expPen, 18f * s, 8f * s, 27f * s, 4f * s);
+                        g.FillRectangle(cyanBrush, 6f * s, 13.5f * s, 8f * s, 2.2f * s);
+                        g.FillRectangle(pinkBrush, 6f * s, 17.5f * s, 8f * s, 2.2f * s);
+                        g.FillRectangle(greenBrush, 6f * s, 21.5f * s, 8f * s, 2.2f * s);
+                    }
+
+                    // 4. Nut tam giac cam va cham tron xanh
+                    PointF[] playPts = new PointF[] {
+                        new PointF(18f * s, 16f * s),
+                        new PointF(25f * s, 20f * s),
+                        new PointF(18f * s, 24f * s)
+                    };
+                    using (SolidBrush playBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                    using (Pen playBorder = new Pen(Color.FromArgb(217, 119, 6), 0.8f * s))
+                    {
+                        g.FillPolygon(playBrush, playPts);
+                        g.DrawPolygon(playBorder, playPts);
+                    }
+
+                    using (SolidBrush dotBrush = new SolidBrush(Color.FromArgb(56, 189, 248)))
+                    {
+                        g.FillEllipse(dotBrush, 23.5f * s, 18.5f * s, 3f * s, 3f * s);
                     }
                 }
 

@@ -87,13 +87,6 @@ namespace HDTool
                 cmdHDToolMepQuantity_Data.Image = ResourceHelper.CreateMepQuantityIcon(16);
                 panel_2.AddItem(cmdHDToolMepQuantity_Data);
 
-                // PushButton: Soi Sáng Bảng Sheet
-                PushButtonData cmdHDToolPickTableHighlight_Data = new PushButtonData("cmdHDToolPickTableHighlight", "CHECK VAR\nPLUMBING", assemblyPath, "HDTool.PickTableHighlightCommand");
-                cmdHDToolPickTableHighlight_Data.ToolTip = "[HDTOOL] CHECK VAR PLUMBING: Đối soát, soi sáng khối lượng ống nước & phụ kiện trực tiếp với mô hình 3D trên Sheet.";
-                cmdHDToolPickTableHighlight_Data.LargeImage = ResourceHelper.CreatePickTableHighlightIcon(32);
-                cmdHDToolPickTableHighlight_Data.Image = ResourceHelper.CreatePickTableHighlightIcon(16);
-                panel_2.AddItem(cmdHDToolPickTableHighlight_Data);
-
                 // PushButton: Khớp Tỷ Lệ Bảng Khối Lượng
                 PushButtonData cmdHDToolFitTableScale_Data = new PushButtonData("cmdHDToolFitTableScale", "Khớp Tỷ Lệ\nBảng Khối Lượng", assemblyPath, "HDTool.FitTableScaleCommand");
                 cmdHDToolFitTableScale_Data.ToolTip = "[HDTOOL] Tự động đồng bộ và căn khớp kích thước ô kẻ với cỡ chữ theo mọi tỷ lệ (1:1, 1:2, 1:5, 1:10...).";

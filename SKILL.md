@@ -1,10 +1,10 @@
 ﻿---
 name: hdtool
 description: >-
-  HDTOOL (Revit 2024–2027): Auto Crop (Vertex-Exact + Liang-Barsky), căn Grids/Level; CAD-to-Duct BIM (trích DWG accoreconsole, lọc giả 4 tầng, tách tuyến giao chéo, ống chính + Transition + Tap ưu tiên Family sẵn, chuẩn WxH); Khối lượng Ống gió TCVN/SMACNA & Ống nước (Live Tracking, CHECK VAR PLUMBING, FitTableScale); Quản lý Sheet & Xuất CAD Quy Đổi Layer MEP (View đang vẽ / Sheet / View dự án; tự động chuyển đổi đối tượng sang đúng Layer & Màu sắc ACI qua AutoLISP entmake/entmod; tự động lưu và nạp cấu hình mặc định); 100% Modeless, ESC thoát lệnh & Hot Reload.
+  HDTOOL (Revit 2024–2027): Auto Crop (Vertex-Exact + Liang-Barsky), căn Grids/Level; CAD-to-Duct BIM (trích DWG accoreconsole, lọc giả 4 tầng, tách tuyến giao chéo, ống chính + Transition + Tap ưu tiên Family sẵn, chuẩn WxH); Khối lượng Ống gió TCVN/SMACNA & Ống nước (Live Tracking, FitTableScale); Quản lý Sheet & Xuất CAD Quy Đổi Layer MEP (View đang vẽ / Sheet / View dự án; tự động chuyển đổi đối tượng sang đúng Layer & Màu sắc ACI qua AutoLISP entmake/entmod; tự động lưu và nạp cấu hình mặc định); 100% Modeless, ESC thoát lệnh & Hot Reload.
 ---
 
-# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 95)
+# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 97)
 
 ## 1. Kiến Trúc & Quy Chuẩn Bắt Buộc
 - **Build & Đóng gói**: Biên dịch thuần bằng `csc.exe` (C# 5, `.NET Framework 4.8`) qua `Build.ps1` -> `Build/HDTOOL.dll` và bộ cài độc lập `HDTOOL_Setup_Version_{N}.exe` (không dùng MSBuild/`.csproj`).
@@ -35,7 +35,7 @@ description: >-
    - **Kích thước (`W` trước `H` sau) & Ưu tiên Leader**: `RunLeaderArrowMatchTier` (Pass 1-L1/L2) ưu tiên khớp mũi tên `QLEADER`/`MULTILEADER` thẳng vào ống trước khi chạy Pass 1A–3B (`EI60` + BFS theo tuyến gần nhất); luôn giữ chuẩn **`W` trước, `H` sau**; ô Cao độ tim & chiều cao `H` khởi tạo trống (tự nhập).
 2. **Khối Lượng Ống Gió HVAC (`DuctQuantity`)**:
    - Modeless 60 FPS + Live Tracking (`DocumentChanged`), tính $m^2$ tôn chuẩn **TCVN 5687:2010 / SMACNA**, tách Cút theo góc thực tế & `R150`, Côn thu theo tham số dài `L`, Lượn Z `(L, H)` và phụ kiện/van/miệng gió.
-3. **Khối Lượng Ống Nước (`MepQuantity`), `CHECK VAR PLUMBING` & `FitTableScale`**:
+3. **Khối Lượng Ống Nước (`MepQuantity`), `` & `FitTableScale`**:
    - Quét Pipe/Fitting theo View, Box hoặc Viewport; gộp đa tham số tên phụ kiện (`ExtractFittingName`), chuẩn hóa tên ống (`FormatCleanPipeName`), xuất Excel/`ViewSchedule`/`ViewDrafting`, soi sáng 2 chiều (`MepHighlightManager`).
 
 ---
@@ -67,8 +67,8 @@ description: >-
 
 ## 3. Bản Đồ Mã Nguồn & Vị Trí File
 - Thư mục gốc: `c:\Users\Nguye\Desktop\ADDIN REVIT`
-- **File cài đặt chính thức**: `HDTOOL_Setup_Version_95.exe`
-- **Bộ cài & Lưu trữ**: Chỉ lưu 2 bản mới nhất (`HDTOOL_Setup_Version_94.exe`, `HDTOOL_Setup_Version_95.exe`).
+- **File cài đặt chính thức**: `HDTOOL_Setup_Version_97.exe`
+- **Bộ cài & Lưu trữ**: Chỉ lưu 2 bản mới nhất (`HDTOOL_Setup_Version_94.exe`, `HDTOOL_Setup_Version_97.exe`).
 - **Core Files Xuất CAD & Layer**: `Source/ExportCadCommand.cs`, `Source/ExportCadOptionsForm.cs`, `Source/CadExportMepService.cs`, `Source/CadLayerMappingModels.cs`.
 
 
