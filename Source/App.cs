@@ -87,13 +87,6 @@ namespace HDTool
                 cmdHDToolMepQuantity_Data.Image = ResourceHelper.CreateMepQuantityIcon(16);
                 panel_2.AddItem(cmdHDToolMepQuantity_Data);
 
-                // PushButton: Khớp Tỷ Lệ Bảng Khối Lượng
-                PushButtonData cmdHDToolFitTableScale_Data = new PushButtonData("cmdHDToolFitTableScale", "Khớp Tỷ Lệ\nBảng Khối Lượng", assemblyPath, "HDTool.FitTableScaleCommand");
-                cmdHDToolFitTableScale_Data.ToolTip = "[HDTOOL] Tự động đồng bộ và căn khớp kích thước ô kẻ với cỡ chữ theo mọi tỷ lệ (1:1, 1:2, 1:5, 1:10...).";
-                cmdHDToolFitTableScale_Data.LargeImage = ResourceHelper.CreateFitScaleIcon(32);
-                cmdHDToolFitTableScale_Data.Image = ResourceHelper.CreateFitScaleIcon(16);
-                panel_2.AddItem(cmdHDToolFitTableScale_Data);
-
                 // PushButton: Khối Lượng Ống Gió
                 PushButtonData cmdHDToolDuctQuantity_Data = new PushButtonData("cmdHDToolDuctQuantity", "Khối Lượng\nỐng Gió", assemblyPath, "HDTool.DuctQuantityCommand");
                 cmdHDToolDuctQuantity_Data.ToolTip = "[HDTOOL] Thống kê khối lượng ống gió HVAC: Tính diện tích tôn m², phân loại cút, côn, lượn, van gió VCD và miệng gió.";
@@ -133,6 +126,23 @@ namespace HDTool
                 cmdHDToolExportCad_Data.LargeImage = ResourceHelper.CreateExportCadIcon(32);
                 cmdHDToolExportCad_Data.Image = ResourceHelper.CreateExportCadIcon(16);
                 panel_3.AddItem(cmdHDToolExportCad_Data);
+
+                // ==================================================================
+                // PANEL: THƯ VIỆN & FAMILY (MỚI THEO LỆNH SẾP HỒ)
+                // ==================================================================
+                RibbonPanel panel_family = GetOrCreateRibbonPanel(application, tabName, "Thư Viện & Family");
+
+                // PushButton: Tổng Hợp Family 3D
+                PushButtonData cmdHDToolFamilyPalette_Data = new PushButtonData(
+                    "cmdHDToolFamilyPalette",
+                    "Tổng Hợp\nFamily 3D",
+                    assemblyPath,
+                    "HDTool.FamilyPaletteCommand"
+                );
+                cmdHDToolFamilyPalette_Data.ToolTip = "[HDTOOL] Palette trực quan tổng hợp toàn bộ Family trong dự án: Xem trước ảnh 3D Isometric, tìm kiếm nhanh và kéo/đặt trực tiếp vào bản vẽ Revit đang vẽ.";
+                cmdHDToolFamilyPalette_Data.LargeImage = ResourceHelper.CreateFamilyPaletteIcon(32);
+                cmdHDToolFamilyPalette_Data.Image = ResourceHelper.CreateFamilyPaletteIcon(16);
+                panel_family.AddItem(cmdHDToolFamilyPalette_Data);
 
                 // ==================================================================
                 // PANEL 4 : HỆ THỐNG & MENU
@@ -259,6 +269,7 @@ namespace HDTool
                 }
                 EnsureCadToDuctButtonDynamic(uiapp, panels);
                 EnsureExportCadButtonDynamic(uiapp, panels);
+                EnsureFamilyPaletteButtonDynamic(uiapp, panels);
             }
             catch { }
         }
@@ -369,6 +380,102 @@ namespace HDTool
                             p.AddItem(btnData);
                         }
                         break;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Bơm nút Tổng Hợp Family 3D vào Panel Thư Viện & Family (hoặc Panel kế cận) khi Hot Reload (Revit đang mở)
+        /// </summary>
+        public static void EnsureFamilyPaletteButtonDynamic(UIApplication uiapp, List<RibbonPanel> panels = null)
+        {
+            try
+            {
+                if (uiapp == null) return;
+                string tabName = "HDTOOL";
+                if (panels == null) panels = uiapp.GetRibbonPanels(tabName);
+                if (panels == null) return;
+
+                RibbonPanel targetPanel = null;
+                // 1. Thử tìm hoặc tạo Panel "Thư Viện & Family"
+                foreach (RibbonPanel p in panels)
+                {
+                    if (p.Name.Equals("Thư Viện & Family", StringComparison.OrdinalIgnoreCase))
+                    {
+                        targetPanel = p;
+                        break;
+                    }
+                }
+
+                if (targetPanel == null)
+                {
+                    try
+                    {
+                        targetPanel = uiapp.CreateRibbonPanel(tabName, "Thư Viện & Family");
+                    }
+                    catch { }
+                }
+
+                // 2. Dự phòng an toàn: nếu Revit không cho tạo Panel mới lúc đang chạy, gắn vào Panel Quản Lý Bản Vẽ & Sheet
+                if (targetPanel == null)
+                {
+                    foreach (RibbonPanel p in panels)
+                    {
+                        if (p.Name.Equals("Quản Lý Bản Vẽ & Sheet", StringComparison.OrdinalIgnoreCase))
+                        {
+                            targetPanel = p;
+                            break;
+                        }
+                    }
+                }
+
+                if (targetPanel != null)
+                {
+                    bool hasBtn = false;
+                    foreach (RibbonItem it in targetPanel.GetItems())
+                    {
+                        if (it != null && (it.Name.Equals("cmdHDToolFamilyPalette", StringComparison.OrdinalIgnoreCase) ||
+                            it.ItemText.Contains("Family 3D") || it.ItemText.Contains("Tổng Hợp")))
+                        {
+                            hasBtn = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasBtn)
+                    {
+                        string assemblyPath = Assembly.GetExecutingAssembly().Location;
+                        foreach (RibbonPanel rp in panels)
+                        {
+                            foreach (RibbonItem ri in rp.GetItems())
+                            {
+                                PushButton pb = ri as PushButton;
+                                if (pb != null && !string.IsNullOrEmpty(pb.AssemblyName) && System.IO.File.Exists(pb.AssemblyName))
+                                {
+                                    assemblyPath = pb.AssemblyName;
+                                    break;
+                                }
+                            }
+                            if (!string.IsNullOrEmpty(assemblyPath) && System.IO.File.Exists(assemblyPath)) break;
+                        }
+
+                        if (string.IsNullOrEmpty(assemblyPath) || !System.IO.File.Exists(assemblyPath))
+                        {
+                            assemblyPath = @"c:\Users\Nguye\Desktop\ADDIN REVIT\Build\HDTOOL.dll";
+                        }
+
+                        PushButtonData btnData = new PushButtonData(
+                            "cmdHDToolFamilyPalette",
+                            "Tổng Hợp\nFamily 3D",
+                            assemblyPath,
+                            "HDTool.FamilyPaletteCommand"
+                        );
+                        btnData.ToolTip = "[HDTOOL] Palette trực quan tổng hợp toàn bộ Family trong dự án: Xem trước ảnh 3D Isometric, tìm kiếm nhanh và kéo/đặt trực tiếp vào bản vẽ Revit đang vẽ.";
+                        btnData.LargeImage = ResourceHelper.CreateFamilyPaletteIcon(32);
+                        btnData.Image = ResourceHelper.CreateFamilyPaletteIcon(16);
+                        targetPanel.AddItem(btnData);
                     }
                 }
             }

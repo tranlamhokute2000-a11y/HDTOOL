@@ -31,8 +31,14 @@ Tài liệu này kích hoạt chế độ ghi nhớ trạng thái làm việc li
    - **Lịch nhắc nhở 16h15 hàng ngày**: Cứ đúng 16h15 mỗi ngày, Antigravity chủ động nhắc Sếp Hồ: *"Sếp Hồ ơi, đã 16h15 rồi, Sếp có muốn em cập nhật (push) toàn bộ code, tài liệu và tri thức mới nhất hôm nay lên GitHub không ạ?"*
    - CHỈ ĐẨY LÊN GITHUB KHI CÓ LỆNH RÕ RÀNG HOẶC ĐƯỢC SẾP ĐỒNG Ý. Tuyệt đối không tự tiện chạy `git push`.
 
-7. **Quy tắc hiển thị giao diện rõ ràng, không che khuất (Lệnh Sếp Hồ)**:
-   - Khi thêm tính năng mới, mọi thông tin, nhãn chữ, nút bấm trên thanh công cụ Ribbon và Form **PHẢI đầy đủ, rõ ràng 100%, tuyệt đối không bị che khuất, đè nhau hay cắt xén chữ** (sử dụng ClientSize, tắt AutoSize ở TrackBar, kiểm tra kỹ trên Preview Studio).
+7. **Quy tắc thiết kế giao diện UX/UI rõ ràng, rành mạch, không che khuất, không nửa vời (Lệnh Sếp Hồ)**:
+   - Khi thêm hoặc sửa đổi tính năng, toàn bộ nhãn chữ, nút bấm, thông số trên Ribbon và Form **PHẢI hiển thị đầy đủ, rõ ràng 100%, tuyệt đối không bị che khuất, đè nhau, tràn mép hay bị cắt xén chữ** ở mọi độ phân giải và tỷ lệ DPI Windows.
+   - **5 nguyên tắc vàng bắt buộc**:
+     1. Tuyệt đối KHÔNG dùng emoji đa byte trên WinForms (tránh lỗi ô vuông font chữ `[]`). Dùng tiếng Việt chuẩn mực hoặc bullet `●`.
+     2. Bố cục phân tầng độc lập (`TableLayoutPanel` cố định hàng cho Header/Toolbar/Bottom, Content Fill 100% -> triệt tiêu lỗi che khuất hàng 1).
+     3. Tự động co giãn theo chiều rộng (`AdjustLayout` / `w = ClientSize.Width - 32` / `Anchor = Left | Right`) chống tràn mép hoặc cắt cụt nút bấm lớn.
+     4. Nút lọc danh mục dùng `AutoSize = true` + `Padding(12, 2, 12, 2)`; cột DataGridView giá trị đặt `AutoSizeMode = Fill`.
+     5. Thông điệp và hướng dẫn sử dụng phải trực quan, rành mạch, ghi rõ Modeless 100% và phím ESC để người dùng nhìn vào là hiểu ngay cách dùng.
 
 
 8. **Quy tắc mọi tính năng đều phải thao tác được trên bản vẽ (Modeless Dialog 100% - Lệnh Sếp Hồ)**:

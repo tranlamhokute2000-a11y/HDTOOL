@@ -118,26 +118,6 @@
     <VendorDescription>HDTOOL BIM Development</VendorDescription>
   </AddIn>
 
-  <!-- 13. Lệnh CHECK VAR PLUMBING -->
-  <AddIn Type="Command">
-    <Name>HDTOOL - CHECK VAR PLUMBING</Name>
-    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
-    <FullClassName>HDTool.PickTableHighlightCommand</FullClassName>
-    <ClientId>5D2E8F1A-7C4B-4E36-B8D2-6F7A8B9C0D1E</ClientId>
-    <VendorId>HDTOOL</VendorId>
-    <VendorDescription>HDTOOL BIM Development</VendorDescription>
-  </AddIn>
-
-  <!-- 14. Lệnh Khớp Tỷ Lệ Bảng Khối Lượng -->
-  <AddIn Type="Command">
-    <Name>HDTOOL - Khớp Tỷ Lệ Bảng Khối Lượng</Name>
-    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
-    <FullClassName>HDTool.FitTableScaleCommand</FullClassName>
-    <ClientId>7F3A9B2C-1D6E-4F58-C9E3-7A8B9C0D1E2F</ClientId>
-    <VendorId>HDTOOL</VendorId>
-    <VendorDescription>HDTOOL BIM Development</VendorDescription>
-  </AddIn>
-
   <!-- 15. Lệnh Cập Nhật Tool / Hot Reload -->
   <AddIn Type="Command">
     <Name>HDTOOL - Cập Nhật Tool</Name>
@@ -148,12 +128,22 @@
     <VendorDescription>HDTOOL BIM Development</VendorDescription>
   </AddIn>
 
-  <!-- 16. Lệnh Xuất Bản Vẽ Sang CAD Quy Đổi Layer MEP (MỚI THEO LỆNH SẾP HỒ) -->
+  <!-- 16. Lệnh Xuất Bản Vẽ Sang CAD Quy Đổi Layer MEP -->
   <AddIn Type="Command">
     <Name>HDTOOL - Xuất CAD Quy Đổi Layer</Name>
     <Assembly>HDTOOL\HDTOOL.dll</Assembly>
     <FullClassName>HDTool.ExportCadCommand</FullClassName>
     <ClientId>A7B2C3D4-E5F6-4A1B-8C2D-3E4F5A6B7C8D</ClientId>
+    <VendorId>HDTOOL</VendorId>
+    <VendorDescription>HDTOOL BIM Development</VendorDescription>
+  </AddIn>
+
+  <!-- 17. Lệnh Tổng Hợp Family Có Trong Dự Án (Palette 3D Preview & Kéo Thả) -->
+  <AddIn Type="Command">
+    <Name>HDTOOL - Tổng Hợp Family 3D</Name>
+    <Assembly>HDTOOL\HDTOOL.dll</Assembly>
+    <FullClassName>HDTool.FamilyPaletteCommand</FullClassName>
+    <ClientId>F1E2D3C4-B5A6-4789-8012-3456789ABCDE</ClientId>
     <VendorId>HDTOOL</VendorId>
     <VendorDescription>HDTOOL BIM Development</VendorDescription>
   </AddIn>

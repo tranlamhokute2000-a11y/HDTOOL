@@ -61,22 +61,6 @@
                                            "tooltip":  "[HDTOOL] Thống kê khối lượng ống nước \u0026 phụ kiện: Gộp parameter, soi sáng mô hình và đưa vào Sheet."
                                        },
                                        {
-                                           "id":  "cmdHDToolPickTableHighlight",
-                                           "name":  "CHECK VAR\\nPLUMBING",
-                                           "type":  "large",
-                                           "commandClass":  "HDTool.PickTableHighlightCommand",
-                                           "icon":  "PickTableHighlight",
-                                           "tooltip":  "[HDTOOL] CHECK VAR PLUMBING: Đối soát, soi sáng khối lượng ống nước \u0026 phụ kiện trực tiếp với mô hình 3D trên Sheet."
-                                       },
-                                       {
-                                           "id":  "cmdHDToolFitTableScale",
-                                           "name":  "Khớp Tỷ Lệ\nBảng Khối Lượng",
-                                           "type":  "large",
-                                           "commandClass":  "HDTool.FitTableScaleCommand",
-                                           "icon":  "FitScale",
-                                           "tooltip":  "[HDTOOL] Tự động đồng bộ và căn khớp kích thước ô kẻ với cỡ chữ theo mọi tỷ lệ (1:1, 1:2, 1:5, 1:10...)."
-                                       },
-                                       {
                                            "id":  "cmdHDToolDuctQuantity",
                                            "name":  "Khối Lượng\nỐng Gió",
                                            "type":  "large",
@@ -122,6 +106,20 @@
                                            "commandClass":  "HDTool.ExportCadCommand",
                                            "icon":  "ExportCad",
                                            "tooltip":  "[HDTOOL] Xuất bản vẽ sang AutoCAD \u0026 tự động quy đổi Layer/Màu/Nét chuẩn hệ thống MEP (Ducts, Pipes, Equipment)."
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  "panel_family",
+                       "name":  "Thư Viện \u0026 Family",
+                       "buttons":  [
+                                       {
+                                           "id":  "cmdHDToolFamilyPalette",
+                                           "name":  "Tổng Hợp\nFamily 3D",
+                                           "type":  "large",
+                                           "commandClass":  "HDTool.FamilyPaletteCommand",
+                                           "icon":  "FamilyPalette",
+                                           "tooltip":  "[HDTOOL] Palette trực quan tổng hợp toàn bộ Family trong dự án: Xem trước ảnh 3D Isometric, tìm kiếm nhanh và kéo/đặt trực tiếp vào bản vẽ Revit đang vẽ."
                                        }
                                    ]
                    },

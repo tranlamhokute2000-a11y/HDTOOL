@@ -33,6 +33,7 @@ namespace HDTool
         private Button btnReloadTool;
         private Button btnSmart;
         private Button btnExportCad;
+        private Button btnFamilyPalette;
         private Button btnClose;
 
         public HDToolMainForm(UIDocument uidoc)
@@ -279,10 +280,26 @@ namespace HDTool
             btnExportCad.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnExportCad.Click += BtnExportCad_Click;
 
-            // 10. Button Close
+            // Button 10: Tổng Hợp Family 3D (Palette) (MỚI THEO LỆNH SẾP HỒ)
+            btnFamilyPalette = new Button();
+            btnFamilyPalette.Location = new Point(16, 740);
+            btnFamilyPalette.Size = new Size(492, 54);
+            btnFamilyPalette.BackColor = Color.FromArgb(14, 116, 144); // Cyan 700 Accent
+            btnFamilyPalette.ForeColor = Color.White;
+            btnFamilyPalette.FlatStyle = FlatStyle.Flat;
+            btnFamilyPalette.FlatAppearance.BorderSize = 0;
+            btnFamilyPalette.Cursor = Cursors.Hand;
+            btnFamilyPalette.TextAlign = ContentAlignment.MiddleLeft;
+            btnFamilyPalette.Padding = new Padding(15, 0, 0, 0);
+            btnFamilyPalette.Text = "📦  10. TỔNG HỢP FAMILY CÓ TRONG DỰ ÁN (PALETTE 3D & KÉO THẢ)\r\n" +
+                                    "      Danh sách Family kèm ảnh 3D Isometric Preview, tìm kiếm & kéo đặt trực tiếp vào bản vẽ";
+            btnFamilyPalette.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+            btnFamilyPalette.Click += BtnFamilyPalette_Click;
+
+            // 11. Button Close
             btnClose = new Button();
             btnClose.Text = "Đóng (ESC)";
-            btnClose.Location = new Point(16, 742);
+            btnClose.Location = new Point(16, 802);
             btnClose.Size = new Size(492, 38);
             btnClose.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             btnClose.Click += (s, e) => this.Close();
@@ -300,10 +317,25 @@ namespace HDTool
             this.Controls.Add(btnSmart);
             this.Controls.Add(btnCadToDuct);
             this.Controls.Add(btnExportCad);
+            this.Controls.Add(btnFamilyPalette);
             this.Controls.Add(btnClose);
 
-            this.ClientSize = new Size(524, 795);
+            this.ClientSize = new Size(524, 855);
             this.ResumeLayout(false);
+        }
+
+        private void BtnFamilyPalette_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                HDToolModelessHost.EnsureInitialized();
+                FamilyPaletteForm form = new FamilyPaletteForm(_uidoc);
+                OpenChildModeless(form);
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("HDTOOL PALETTE FAMILY", "Lỗi mở Palette Family 3D: " + ex.Message);
+            }
         }
 
         private void BtnExportCad_Click(object sender, EventArgs e)

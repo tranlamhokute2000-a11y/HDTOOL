@@ -31,6 +31,7 @@ namespace HDTool
             {
                 // Tự động kiểm tra và bơm các nút mới lên thanh Ribbon nếu Revit đang chạy từ trước
                 App.EnsureAutoCropButtonDynamic(commandData.Application);
+                App.EnsureFamilyPaletteButtonDynamic(commandData.Application);
                 HDToolModelessHost.EnsureInitialized();
 
                 if (_instance != null && !_instance.IsDisposed)

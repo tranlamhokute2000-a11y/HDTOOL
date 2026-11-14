@@ -330,6 +330,7 @@ namespace HDTool
             if (success && _uiapp != null)
             {
                 App.EnsureAutoCropButtonDynamic(_uiapp);
+                App.EnsureFamilyPaletteButtonDynamic(_uiapp);
             }
 
             if (success)

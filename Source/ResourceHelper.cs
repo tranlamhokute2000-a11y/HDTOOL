@@ -1582,6 +1582,85 @@ namespace HDTool
             }
         }
 
+        /// <summary>
+        /// Tạo icon Ribbon cho lệnh Tổng Hợp Family 3D (cmdHDToolFamilyPalette)
+        /// </summary>
+        public static ImageSource CreateFamilyPaletteIcon(int size)
+        {
+            using (Bitmap bmp = new Bitmap(size, size))
+            {
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                    g.Clear(System.Drawing.Color.Transparent);
+
+                    float s = size / 32.0f;
+
+                    // 1. Khối hộp 3D Isometric đại diện cho Family
+                    PointF c = new PointF(16f * s, 14f * s);
+                    float r = 11f * s;
+
+                    PointF top = new PointF(c.X, c.Y - r * 0.866f);
+                    PointF topR = new PointF(c.X + r, c.Y - r * 0.433f);
+                    PointF botR = new PointF(c.X + r, c.Y + r * 0.5f);
+                    PointF bot = new PointF(c.X, c.Y + r * 0.933f);
+                    PointF botL = new PointF(c.X - r, c.Y + r * 0.5f);
+                    PointF topL = new PointF(c.X - r, c.Y - r * 0.433f);
+
+                    // Mặt trên (Top Face) - Xanh Cyan sáng
+                    PointF[] faceTop = new PointF[] { c, topR, top, topL };
+                    using (SolidBrush bTop = new SolidBrush(System.Drawing.Color.FromArgb(56, 189, 248)))
+                    {
+                        g.FillPolygon(bTop, faceTop);
+                    }
+
+                    // Mặt phải (Right Face) - Xanh Navy đậm
+                    PointF[] faceRight = new PointF[] { c, topR, botR, bot };
+                    using (SolidBrush bRight = new SolidBrush(System.Drawing.Color.FromArgb(2, 132, 199)))
+                    {
+                        g.FillPolygon(bRight, faceRight);
+                    }
+
+                    // Mặt trái (Left Face) - Xanh Emerald / Teal
+                    PointF[] faceLeft = new PointF[] { c, topL, botL, bot };
+                    using (SolidBrush bLeft = new SolidBrush(System.Drawing.Color.FromArgb(14, 165, 233)))
+                    {
+                        g.FillPolygon(bLeft, faceLeft);
+                    }
+
+                    // Viền sắc nét khối 3D
+                    using (Pen pBox = new Pen(System.Drawing.Color.FromArgb(241, 245, 249), 1.0f * s))
+                    {
+                        g.DrawPolygon(pBox, faceTop);
+                        g.DrawPolygon(pBox, faceRight);
+                        g.DrawPolygon(pBox, faceLeft);
+                    }
+
+                    // 2. Huy hiệu Palette / Thư viện hình tròn màu cam Amber ở góc dưới phải
+                    using (SolidBrush bBadge = new SolidBrush(System.Drawing.Color.FromArgb(245, 158, 11)))
+                    using (Pen pBadge = new Pen(System.Drawing.Color.White, 1.2f * s))
+                    {
+                        g.FillEllipse(bBadge, 17f * s, 17f * s, 13f * s, 13f * s);
+                        g.DrawEllipse(pBadge, 17f * s, 17f * s, 13f * s, 13f * s);
+
+                        // Dấu cộng "+" trắng ở trung tâm biểu tượng thêm/chọn family
+                        using (Pen pPlus = new Pen(System.Drawing.Color.White, 1.8f * s))
+                        {
+                            pPlus.StartCap = LineCap.Round;
+                            pPlus.EndCap = LineCap.Round;
+                            g.DrawLine(pPlus, 23.5f * s, 20f * s, 23.5f * s, 27f * s);
+                            g.DrawLine(pPlus, 20f * s, 23.5f * s, 27f * s, 23.5f * s);
+                        }
+                    }
+                }
+
+                return ConvertToImageSource(bmp);
+            }
+        }
+
         private static ImageSource ConvertToImageSource(Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())

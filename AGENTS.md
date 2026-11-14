@@ -90,11 +90,27 @@ Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong
 
 ---
 
-## 6. QUY TẮC HIỂN THỊ GIAO DIỆN RÕ RÀNG, KHÔNG CHE KHUẤT (BẮT BUỘC THEO LỆNH SẾP HỒ)
+## 6. QUY TẮC THIẾT KẾ GIAO DIỆN UX/UI RÕ RÀNG, RÀNH MẠCH, KHÔNG CHE KHUẤT, KHÔNG NỬA VỜI (BẮT BUỘC THEO LỆNH SẾP HỒ)
 
 - **Mọi thông tin trên thanh công cụ và Form phải đầy đủ, rõ ràng 100%**:
-  - Khi thêm hoặc sửa đổi bất kỳ tính năng nào: Toàn bộ văn bản, nhãn chữ, nút bấm, giá trị, thông báo trên thanh Ribbon và hộp thoại Form **PHẢI hiển thị đầy đủ, rõ ràng, không bao giờ bị che khuất, đè lên nhau hay bị cắt xén chữ** ở mọi độ phân giải và tỷ lệ DPI Windows.
-  - Bắt buộc dùng `this.ClientSize` thay cho `this.Size` khi định kích thước WinForms; tắt AutoSize = false với TrackBar trước khi đặt chiều cao; tạo khoảng đệm thoáng rộng giữa các control và kiểm tra kỹ trên Preview Studio trước khi chốt.
+  - Khi thêm hoặc sửa đổi bất kỳ tính năng nào: Toàn bộ văn bản, nhãn chữ, nút bấm, giá trị, thông báo trên thanh Ribbon và hộp thoại Form **PHẢI hiển thị đầy đủ, rõ ràng, rành mạch, không bao giờ bị che khuất, đè lên nhau, tràn mép hay bị cắt xén chữ** ở mọi độ phân giải (Full HD, 2K, 4K) và mọi tỷ lệ DPI Windows (100%, 125%, 150%). Người dùng nhìn vào phải hiểu được ngay cách dùng, không phải suy đoán.
+  
+- **5 NGUYÊN TẮC VÀNG VỀ THIẾT KẾ FORM CỦA HDTOOL (KHẮC SÂU TUÂN THỦ)**:
+  1. **Tuyệt đối KHÔNG sử dụng ký tự Emoji đa byte trên WinForms**:
+     - WinForms/GDI+ không hỗ trợ font emoji đầy đủ và sẽ biến emoji thành ô vuông lỗi font (`[]`).
+     - Luôn dùng chữ tiếng Việt có dấu chuẩn mực, rõ nghĩa (`Làm Mới`, `Đặt Vào Bản Vẽ`, `Đóng (ESC)`), hoặc ký tự bullet hình học chuẩn (`●`, `■`, `▲`, `►`, `[OK]`).
+  2. **Bố cục phân tầng độc lập, chống đè lớp 100% (TableLayoutPanel)**:
+     - Với Form có nhiều khu vực (Header, Toolbar, Content, Status), bắt buộc dùng kiến trúc phân tầng độc lập cố định (như `TableLayoutPanel` chia hàng cố định: Header 58px, Toolbar 46px, Content 100% Fill, Status 52px).
+     - Tuyệt đối cấm dùng các Panel Dock tự do xếp chồng khiến khung nội dung trôi ngược lên và bị che khuất hàng đầu tiên.
+  3. **Tự động co giãn theo chiều rộng khung chứa (Dynamic Responsive Layout)**:
+     - Các nút bấm hành động, khung ảnh xem trước, ComboBox, bảng thông số kỹ thuật bên trong các panel (như Inspector) không được dùng tọa độ tĩnh cứng nhắc.
+     - Phải tự động co giãn theo chiều rộng thực tế (`w = pnl.ClientSize.Width - 32px` trong sự kiện `Resize`). Đảm bảo nút bấm lớn (như `ĐẶT VÀO BẢN VẼ REVIT (CLICK ĐỂ ĐẶT)`) luôn hiển thị trọn vẹn 100% chữ, căn giữa, không bao giờ bị tràn mép hay cắt cụt chữ.
+  4. **Các nút lọc Category và Danh mục phải thoáng đạt**:
+     - Các nút lọc Category/Tabs bắt buộc dùng `AutoSize = true`, `AutoSizeMode = GrowAndShrink` kết hợp `Padding` rộng rãi (tối thiểu 10–14px hai bên).
+     - Tuyệt đối không dùng công thức ước lượng độ dài chữ thủ công (`text.Length * N`) làm dính chữ, gãy chữ hay cắt xén dấu tiếng Việt.
+     - Bảng `DataGridView`: Cột giá trị phải đặt `AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill` để tận dụng hết chiều rộng, không để trống khoảng hở thừa thãi bên phải.
+  5. **Thông điệp & Hướng dẫn sử dụng trực quan, rành mạch**:
+     - Mọi cửa sổ mở lên phải có tiêu đề rõ ràng, mô tả chức năng súc tích, hiển thị trạng thái Modeless 100% và hướng dẫn phím tắt `ESC` để người dùng nhìn vào là hiểu ngay cách thao tác.
 
 ---
 
