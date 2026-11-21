@@ -20,6 +20,14 @@
 7. **Kiểm tra**: build 0 lỗi 0 cảnh báo; chụp thử ngoài Revit 5 Form + Menu dựng bằng control mới + bảng icon (nền sáng & tối).
    Form cần RevitAPIUI (Menu thật, Ống gió, Cập nhật tool...) không chụp được ngoài Revit -> **cần Sếp mở Revit kiểm tra**.
 
+## 1b. Quy trình phối hợp Antigravity (thực thi) + Claude (kiểm soát) — 2026-11-21
+- `.agents/CHI_DAO.md` (Claude giao NV + tiêu chí + kết luận ĐẠT/CẦN SỬA), `.agents/BAO_CAO.md` (Antigravity báo cáo),
+  `.agents/LENH_SEP.md` (hộp thư lệnh của Sếp), `.agents/tools/KiemTra.ps1` (biên dịch thử + quét quy tắc cấm, không tăng Version).
+- **Điều Phối Studio**: `MoDieuPhoiStudio.bat` -> `node .agents/studio/server.mjs` -> http://localhost:4870 (chỉ nghe 127.0.0.1).
+  Hiển thị hoạt động thật của Antigravity (`~/.gemini/antigravity/brain/*/.system_generated/logs/transcript.jsonl`) và Claude
+  (`~/.claude/projects/<dự án>/*.jsonl`), bảng NV, quy trình 6 bước, dòng hoạt động, git; nút: chép lệnh, gửi lệnh, chạy KiemTra, gộp main, push.
+- Nhiệm vụ đang giao: **NV-01** (sửa tràn mép phải BatchEditSheetNumberForm).
+
 ## 2. Việc còn tồn
 - Chưa thử trong Revit thật: Menu (đặc biệt mục HDT-04 Ống gió qua PostCommand), các Form lớn ở DPI 125/150%.
 - Phần mẫu chưa làm: ô chỉ số KPI trên bảng Ống gió, sơ đồ kích thước tương tác ở Căn Chỉnh Grids (cần control `HDToolDimensionPreview`).
