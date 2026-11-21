@@ -29,12 +29,6 @@
                                                                   "name":  "Căn Chỉnh Level",
                                                                   "commandClass":  "HDTool.LevelCropCommand",
                                                                   "icon":  "LevelCrop"
-                                                              },
-                                                              {
-                                                                  "id":  "cmdAutoCrop_SubItem",
-                                                                  "name":  "Tự Động Crop View",
-                                                                  "commandClass":  "HDTool.AutoCropCommand",
-                                                                  "icon":  "AutoCrop"
                                                               }
                                                           ]
                                        },

@@ -2039,7 +2039,7 @@ namespace HDTool
         }
     }
     /// <summary>
-    /// Há»™p thoáº¡i chá»n Trang in (Sheet) vÃ  tá»± Ä‘á»™ng Ä‘áº·t Báº£ng Thá»‘ng KÃª Khá»‘i LÆ°á»£ng á»ng GiÃ³ Chuáº©n HadoMEE
+    /// Hộp thoại chọn Trang in (Sheet) và tự động đặt Bảng Thống Kê Khối Lượng Ống Gió Chuẩn HadoMEE
     /// </summary>
     public class DuctPlaceSheetForm : HDToolBaseForm
     {
@@ -2099,7 +2099,7 @@ namespace HDTool
         {
             this.SuspendLayout();
 
-            this.Text = "HDTOOL â€” Äáº¶T Báº¢NG KHá»I LÆ¯á»¢NG á»NG GIÃ“ VÃ€O SHEET Báº¢N Váº¼";
+            this.Text = "HDTOOL — ĐẶT BẢNG KHỐI LƯỢNG ỐNG GIÓ VÀO SHEET BẢN VẼ";
             this.Size = new Size(580, 560);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -2115,14 +2115,14 @@ namespace HDTool
             pnlHeader.BackColor = Color.FromArgb(24, 43, 73);
 
             lblHeaderTitle = new Label();
-            lblHeaderTitle.Text = "ðŸš€ Äáº¶T Báº¢NG KHá»I LÆ¯á»¢NG á»NG GIÃ“ LÃŠN SHEET";
+            lblHeaderTitle.Text = "ĐẶT BẢNG KHỐI LƯỢNG ỐNG GIÓ LÊN SHEET";
             lblHeaderTitle.ForeColor = Color.White;
             lblHeaderTitle.Font = new Font("Segoe UI", 11.0f, FontStyle.Bold);
             lblHeaderTitle.Location = new Point(16, 12);
             lblHeaderTitle.AutoSize = true;
 
             lblHeaderDesc = new Label();
-            lblHeaderDesc.Text = "Tá»± Ä‘á»™ng táº¡o Legend View vÃ  Äáº·t Viewport báº£ng khá»‘i lÆ°á»£ng chuáº©n TCVN 5687:2010";
+            lblHeaderDesc.Text = "Tự động tạo Legend View và Đặt Viewport bảng khối lượng chuẩn TCVN 5687:2010";
             lblHeaderDesc.ForeColor = Color.FromArgb(203, 213, 225);
             lblHeaderDesc.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
             lblHeaderDesc.Location = new Point(16, 36);
@@ -2131,9 +2131,9 @@ namespace HDTool
             pnlHeader.Controls.Add(lblHeaderTitle);
             pnlHeader.Controls.Add(lblHeaderDesc);
 
-            // TÃªn Báº£ng
+            // Tên Bảng
             Label lblName = new Label();
-            lblName.Text = "TÃªn Báº£ng Khá»‘i LÆ°á»£ng (Hiá»ƒn thá»‹ tiÃªu Ä‘á» vÃ  tÃªn Legend View):";
+            lblName.Text = "Tên Bảng Khối Lượng (Hiển thị tiêu đề và tên Legend View):";
             lblName.Location = new Point(16, 75);
             lblName.Size = new Size(400, 18);
             lblName.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
@@ -2142,12 +2142,12 @@ namespace HDTool
             txtTableName = new TextBox();
             txtTableName.Location = new Point(16, 96);
             txtTableName.Size = new Size(530, 24);
-            txtTableName.Text = "Báº¢NG THá»NG KÃŠ KHá»I LÆ¯á»¢NG á»NG GIÃ“ & PHá»¤ KIá»†N HVAC";
+            txtTableName.Text = "BẢNG THỐNG KÊ KHỐI LƯỢNG ỐNG GIÓ & PHỤ KIỆN HVAC";
             txtTableName.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
 
-            // TÃ¬m kiáº¿m Sheet
+            // Tìm kiếm Sheet
             Label lblSearch = new Label();
-            lblSearch.Text = "ðŸ” Chá»n Trang In (Sheet) Cáº§n Äáº·t Báº£ng:";
+            lblSearch.Text = "Chọn Trang In (Sheet) Cần Đặt Bảng:";
             lblSearch.Location = new Point(16, 130);
             lblSearch.Size = new Size(300, 18);
             lblSearch.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
@@ -2166,15 +2166,15 @@ namespace HDTool
 
             FilterSheetsList();
 
-            // NhÃ³m TÃ¹y Chá»n Äáº·t Vá»‹ TrÃ­
+            // Nhóm Tùy Chọn Đặt Vị Trí
             GroupBox grpOption = new GroupBox();
-            grpOption.Text = "Vá»‹ TrÃ­ Äáº·t Báº£ng TrÃªn Báº£n Váº½ (Sheet)";
+            grpOption.Text = "Vị Trí Đặt Bảng Trên Bản Vẽ (Sheet)";
             grpOption.Location = new Point(16, 365);
             grpOption.Size = new Size(530, 78);
             grpOption.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
 
             radAutoCorner = new RadioButton();
-            radAutoCorner.Text = "Tá»± Ä‘á»™ng cÄƒn gÃ³c trÃªn bÃªn pháº£i khung tÃªn báº£n váº½ (TitleBlock) â€” Äáº¹p & Chuáº©n";
+            radAutoCorner.Text = "Tự động căn góc trên bên phải khung tên bản vẽ (TitleBlock) — Đẹp & Chuẩn";
             radAutoCorner.Checked = true;
             radAutoCorner.Location = new Point(15, 22);
             radAutoCorner.Size = new Size(500, 22);
@@ -2182,7 +2182,7 @@ namespace HDTool
             radAutoCorner.Cursor = Cursors.Hand;
 
             radPickPoint = new RadioButton();
-            radPickPoint.Text = "Táº¡m áº©n cá»­a sá»• Ä‘á»ƒ Click chuá»™t chá»n Ä‘iá»ƒm Ä‘áº·t trÃªn Sheet";
+            radPickPoint.Text = "Tạm ẩn cửa sổ để Click chuột chọn điểm đặt trên Sheet";
             radPickPoint.Location = new Point(15, 48);
             radPickPoint.Size = new Size(500, 22);
             radPickPoint.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
@@ -2192,15 +2192,15 @@ namespace HDTool
             grpOption.Controls.Add(radPickPoint);
 
             chkActivateSheet = new CheckBox();
-            chkActivateSheet.Text = "Tá»± Ä‘á»™ng chuyá»ƒn sang xem Sheet ngay sau khi Ä‘áº·t thÃ nh cÃ´ng";
+            chkActivateSheet.Text = "Tự động chuyển sang xem Sheet ngay sau khi đặt thành công";
             chkActivateSheet.Checked = true;
             chkActivateSheet.Location = new Point(16, 452);
             chkActivateSheet.Size = new Size(450, 22);
             chkActivateSheet.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
 
-            // NÃºt báº¥m
+            // Nút bấm
             btnPlaceNow = new Button();
-            btnPlaceNow.Text = "ðŸš€ Äáº¶T VÃ€O SHEET NGAY";
+            btnPlaceNow.Text = "ĐẶT VÀO SHEET NGAY";
             btnPlaceNow.Location = new Point(230, 480);
             btnPlaceNow.Size = new Size(200, 36);
             btnPlaceNow.BackColor = Color.FromArgb(16, 185, 129);
@@ -2212,7 +2212,7 @@ namespace HDTool
             btnPlaceNow.Click += (s, e) => ExecutePlaceTable();
 
             btnCancel = new Button();
-            btnCancel.Text = "Há»§y Bá»";
+            btnCancel.Text = "Hủy Bỏ";
             btnCancel.Location = new Point(440, 480);
             btnCancel.Size = new Size(106, 36);
             btnCancel.BackColor = Color.White;

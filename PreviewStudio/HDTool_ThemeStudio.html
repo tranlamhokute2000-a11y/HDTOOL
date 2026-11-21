@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HDTOOL Theme Studio</title>
+<style>
+/* =====================================================================
+   HDTOOL THEME STUDIO — PHONG CÁCH KỸ THUẬT (ENGINEERING)
+   Chỉ dùng font hệ thống có sẵn trên Windows (Segoe UI, Consolas)
+   để xem trước chính xác 100% như WinForms sẽ hiển thị.
+   1pt WinForms = 1.333px @ 96 DPI  ->  9pt = 12px, 8.5pt = 11.33px, 12pt = 16px
+   ===================================================================== */
+
+/* ---------- TOKEN: BLUEPRINT TỐI ---------- */
+:root, [data-theme="blueprint"] {
+  --Bg:#0D1520; --Surface:#121C29; --Surface2:#172433; --Header:#0A111A; --HeaderText:#E8F1FA;
+  --Line:#22344A; --LineStrong:#2F4862; --Text:#E3EBF3; --Text2:#9DB0C4; --Text3:#66798F;
+  --Accent:#2BB8E8; --AccentHover:#52C8F0; --AccentInk:#04202C; --AccentSoft:#133A52;
+  --Ok:#3DD68C; --Warn:#F2B33D; --Err:#F2665E;
+  --GridMinor:rgba(43,184,232,.05); --GridMajor:rgba(43,184,232,.10);
+  --RowAlt:#152132; --Input:#0F1823;
+  /* Revit ribbon (giao diện tối Revit 2024) */
+  --rvTabBar:#2B2F36; --rvRibbon:#3B4049; --rvPanelLabel:#33373F; --rvText:#E6E8EB; --rvText2:#A9AFB8; --rvHover:rgba(255,255,255,.10);
+  --icInk:#D7E3EF; --icAccent:#2BB8E8;
+}
+/* ---------- TOKEN: BẢN VẼ SÁNG ---------- */
+[data-theme="drafting"] {
+  --Bg:#EDF1F5; --Surface:#FFFFFF; --Surface2:#F5F7FA; --Header:#10233A; --HeaderText:#F2F6FA;
+  --Line:#D3DBE4; --LineStrong:#B7C3D0; --Text:#0E1C2B; --Text2:#46586B; --Text3:#7A8999;
+  --Accent:#0B78A6; --AccentHover:#0A8DC2; --AccentInk:#FFFFFF; --AccentSoft:#D9EEF7;
+  --Ok:#1E9E62; --Warn:#B7791F; --Err:#C8423B;
+  --GridMinor:rgba(11,120,166,.06); --GridMajor:rgba(11,120,166,.11);
+  --RowAlt:#F6F9FC; --Input:#FFFFFF;
+  --rvTabBar:#E3E6EA; --rvRibbon:#F5F6F7; --rvPanelLabel:#E8EAED; --rvText:#1F2328; --rvText2:#5B636D; --rvHover:rgba(0,0,0,.07);
+  --icInk:#1E3550; --icAccent:#0B78A6;
+}
+
+* { box-sizing: border-box; }
+html, body { margin:0; height:100%; }
+body {
+  font-family: "Segoe UI", system-ui, sans-serif; font-size:12px;
+  background:#0B0E12; color:#D5DCE3;
+}
+.mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+/* ================= STUDIO CHROME (cố định, không phụ thuộc theme) ================= */
+.studio-bar {
+  position: sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  padding:10px 20px; background:#11161C; border-bottom:1px solid #222A33;
+}
+.studio-brand { display:flex; flex-direction:column; margin-right:auto; }
+.studio-brand b { font-size:14px; letter-spacing:.08em; color:#F1F5F9; }
+.studio-brand span { font-size:11px; color:#8A97A6; }
+.seg { display:inline-flex; border:1px solid #2C3540; }
+.seg button {
+  background:transparent; color:#A9B4C0; border:0; padding:6px 12px; font:inherit; cursor:pointer;
+  border-right:1px solid #2C3540;
+}
+.seg button:last-child { border-right:0; }
+.seg button.on { background:#1F6F93; color:#fff; }
+.seg-label { font-size:11px; color:#7F8B98; margin-right:6px; letter-spacing:.06em; }
+.btn-export {
+  background:#F2B33D; color:#1B1204; border:0; padding:8px 14px; font:600 12px "Segoe UI"; letter-spacing:.04em; cursor:pointer;
+}
+.btn-export:hover { background:#F7C566; }
+.studio-tabs { display:flex; gap:0; padding:0 20px; background:#0E1217; border-bottom:1px solid #222A33; overflow-x:auto; }
+.studio-tabs button {
+  background:transparent; border:0; color:#8A97A6; padding:10px 14px; font:inherit; cursor:pointer; white-space:nowrap;
+  border-bottom:2px solid transparent;
+}
+.studio-tabs button .n { font-family:Consolas,monospace; color:#5A6776; margin-right:6px; }
+.studio-tabs button.on { color:#F1F5F9; border-bottom-color:#2BB8E8; }
+.stage { padding:24px 20px 40px; overflow-x:auto; }
+.view { display:none; }
+.view.on { display:block; }
+.note {
+  max-width:1120px; margin:14px 0 0; padding:10px 14px; border-left:3px solid #2BB8E8;
+  background:#121921; color:#AEB9C5; font-size:12px; line-height:1.6;
+}
+.note b { color:#E6EDF4; }
+.note code { font-family:Consolas,monospace; color:#7FD3F2; }
+
+/* ================= KHUNG CỬA SỔ WINDOWS (Form) ================= */
+.win {
+  display:inline-block; vertical-align:top; background:var(--Bg); color:var(--Text);
+  border:1px solid #3A4552; box-shadow:0 18px 48px rgba(0,0,0,.45);
+}
+.win-title {
+  height:32px; display:flex; align-items:center; padding-left:12px; gap:8px;
+  background:var(--Header); color:var(--Text2); font-size:12px; border-bottom:1px solid var(--Line);
+}
+.win-title .ttl { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.win-title .wb { width:46px; height:32px; display:grid; place-items:center; color:var(--Text2); }
+.win-title .wb.x:hover { background:#C42B1C; color:#fff; }
+
+/* Bố cục 4 tầng: Header 58 / Toolbar 46 / Content Fill / Status 52 */
+.form { display:grid; grid-template-rows:58px 46px 1fr 52px; }
+.form.no-toolbar { grid-template-rows:58px 1fr 52px; }
+
+/* ---- Tầng 1: Header ---- */
+.hd {
+  position:relative; display:flex; align-items:center; gap:14px; padding:0 16px 0 20px;
+  background:var(--Header); color:var(--HeaderText); border-bottom:1px solid var(--Line);
+}
+.hd::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--Accent); }
+.hd .code {
+  font-family:Consolas,monospace; font-size:11px; letter-spacing:.06em; color:var(--Accent);
+  border:1px solid var(--Accent); padding:3px 6px; white-space:nowrap;
+}
+.hd .tt { display:flex; flex-direction:column; min-width:0; flex:1; }
+.hd .tt b { font-size:16px; letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hd .tt span { font-size:11.33px; color:#9DB0C4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tblock { display:grid; grid-auto-flow:column; border:1px solid #2F4862; font-size:10.5px; }
+.tblock div { padding:3px 8px; border-right:1px solid #2F4862; display:flex; flex-direction:column; line-height:1.25; }
+.tblock div:last-child { border-right:0; }
+.tblock i { font-style:normal; color:#6F8499; letter-spacing:.08em; font-size:9.5px; }
+.tblock em { font-style:normal; font-family:Consolas,monospace; color:#E8F1FA; }
+.esc { font-family:Consolas,monospace; font-size:10.5px; color:#9DB0C4; border:1px solid #2F4862; padding:3px 6px; white-space:nowrap; }
+
+/* ---- Tầng 2: Toolbar ---- */
+.tb {
+  display:flex; align-items:center; gap:6px; padding:0 12px; background:var(--Surface2);
+  border-bottom:1px solid var(--Line); overflow:hidden;
+}
+.tb .sep { width:1px; height:24px; background:var(--Line); margin:0 6px; }
+.tb .grow { flex:1; }
+
+/* ---- Tầng 3: Content (lưới blueprint) ---- */
+.ct {
+  position:relative; overflow:hidden; background-color:var(--Bg);
+  background-image:
+    linear-gradient(var(--GridMajor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--GridMajor) 1px, transparent 1px),
+    linear-gradient(var(--GridMinor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--GridMinor) 1px, transparent 1px);
+  background-size:50px 50px, 50px 50px, 10px 10px, 10px 10px;
+}
+
+/* ---- Tầng 4: Status ---- */
+.st {
+  display:flex; align-items:center; gap:10px; padding:0 12px 0 14px; background:var(--Surface2);
+  border-top:1px solid var(--Line); font-size:11.33px; color:var(--Text2);
+}
+.st .cmd { font-family:Consolas,monospace; color:var(--Text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+.st .cmd b { color:var(--Accent); font-weight:normal; }
+.dot { width:8px; height:8px; background:var(--Ok); display:inline-block; margin-right:8px; }
+
+/* ================= THÀNH PHẦN ================= */
+.btn {
+  height:30px; display:inline-flex; align-items:center; gap:8px; padding:0 12px; cursor:pointer; white-space:nowrap;
+  font:400 12px "Segoe UI"; background:var(--Surface); color:var(--Text); border:1px solid var(--LineStrong);
+}
+.btn:hover { border-color:var(--Accent); color:var(--Text); }
+.btn svg { width:16px; height:16px; flex:none; }
+.btn.pri { background:var(--Accent); color:var(--AccentInk); border-color:var(--Accent); font-weight:600; }
+.btn.pri:hover { background:var(--AccentHover); border-color:var(--AccentHover); }
+.btn.ghost { background:transparent; border-color:transparent; color:var(--Text2); }
+.btn.ghost:hover { background:var(--AccentSoft); color:var(--Text); }
+.btn.dan { background:transparent; color:var(--Err); border-color:var(--Err); }
+.btn.lg { height:38px; padding:0 18px; font-size:12px; letter-spacing:.04em; }
+.input {
+  height:28px; display:inline-flex; align-items:center; gap:6px; padding:0 8px; min-width:0;
+  background:var(--Input); border:1px solid var(--LineStrong); color:var(--Text);
+}
+.input.focus { border-color:var(--Accent); box-shadow:inset 0 -2px 0 var(--Accent); }
+.input input { all:unset; font:12px "Segoe UI"; color:var(--Text); width:100%; min-width:0; }
+.input input::placeholder { color:var(--Text3); }
+.input .unit { font-family:Consolas,monospace; color:var(--Text3); font-size:11px; }
+.chk { display:inline-flex; align-items:center; gap:8px; color:var(--Text); cursor:pointer; white-space:nowrap; }
+.chk i { width:14px; height:14px; border:1px solid var(--LineStrong); background:var(--Input); display:grid; place-items:center; }
+.chk.on i { background:var(--Accent); border-color:var(--Accent); }
+.chk.on i::after { content:""; width:7px; height:4px; border:solid var(--AccentInk); border-width:0 0 2px 2px; transform:rotate(-45deg) translate(1px,-1px); }
+.radio-seg { display:inline-flex; border:1px solid var(--LineStrong); }
+.radio-seg span { padding:5px 12px; cursor:pointer; color:var(--Text2); border-right:1px solid var(--LineStrong); white-space:nowrap; }
+.radio-seg span:last-child { border-right:0; }
+.radio-seg span.on { background:var(--AccentSoft); color:var(--Text); box-shadow:inset 0 -2px 0 var(--Accent); }
+
+/* Nhãn mục kỹ thuật: 01 — TIÊU ĐỀ ———|———|——— */
+.sec {
+  display:flex; align-items:center; gap:10px; margin:0 0 10px;
+  font-size:11px; letter-spacing:.1em; color:var(--Text2); text-transform:uppercase; white-space:nowrap;
+}
+.sec .no { font-family:Consolas,monospace; color:var(--Accent); letter-spacing:0; }
+.sec::after {
+  content:""; flex:1; height:7px; border-bottom:1px solid var(--Line);
+  background:repeating-linear-gradient(90deg, var(--LineStrong) 0 1px, transparent 1px 25px) bottom / 100% 5px no-repeat;
+}
+
+/* Khung có góc ngắm (corner tick) */
+.panel { position:relative; background:var(--Surface); border:1px solid var(--Line); }
+.panel.ticks::before, .panel.ticks::after {
+  content:""; position:absolute; width:10px; height:10px; border:2px solid var(--Accent);
+}
+.panel.ticks::before { left:-1px; top:-1px; border-right:0; border-bottom:0; }
+.panel.ticks::after { right:-1px; bottom:-1px; border-left:0; border-top:0; }
+
+/* Chỉ số đo (KPI readout) */
+.kpis { display:grid; grid-template-columns:repeat(4, 1fr); gap:0; }
+.kpi { padding:10px 14px; border-right:1px solid var(--Line); min-width:0; }
+.kpi:last-child { border-right:0; }
+.kpi i { display:block; font-style:normal; font-size:10.5px; letter-spacing:.1em; color:var(--Text3); text-transform:uppercase; white-space:nowrap; }
+.kpi b { font-family:Consolas,monospace; font-size:22px; font-weight:normal; color:var(--Text); }
+.kpi small { font-family:Consolas,monospace; color:var(--Accent); margin-left:4px; font-size:12px; }
+
+/* Bảng dữ liệu (DataGridView) */
+.dgv { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
+.dgv th {
+  position:sticky; top:0; height:30px; text-align:left; padding:0 8px; font-weight:600;
+  font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  background:var(--Surface2); color:var(--Text2); border-bottom:2px solid var(--Accent); border-right:1px solid var(--Line);
+}
+.dgv td { height:26px; padding:0 8px; border-bottom:1px solid var(--Line); border-right:1px solid var(--Line); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dgv tbody tr:nth-child(even) td { background:var(--RowAlt); }
+.dgv tbody tr:hover td { background:var(--AccentSoft); }
+.dgv tbody tr.sel td { background:var(--AccentSoft); box-shadow:inset 0 1px 0 var(--Accent), inset 0 -1px 0 var(--Accent); }
+.dgv tbody tr.sel td:first-child { box-shadow:inset 3px 0 0 var(--Accent), inset 0 1px 0 var(--Accent), inset 0 -1px 0 var(--Accent); }
+.dgv tr.grp td {
+  background:var(--Surface2) !important; color:var(--Accent); font-size:10.5px; letter-spacing:.1em; font-weight:600; height:24px;
+}
+.dgv .num { text-align:right; font-family:Consolas,monospace; }
+.dgv .c { text-align:center; }
+.dgv .mut { color:var(--Text3); }
+.sys { font-family:Consolas,monospace; font-size:10.5px; padding:1px 6px; border:1px solid currentColor; }
+.sys.SA { color:#2BB8E8; } .sys.RA { color:#3DD68C; } .sys.EA { color:#F2B33D; } .sys.OA { color:#B48CF2; }
+[data-theme="drafting"] .sys.SA { color:#0B78A6; } [data-theme="drafting"] .sys.RA { color:#1E9E62; }
+[data-theme="drafting"] .sys.EA { color:#B7791F; } [data-theme="drafting"] .sys.OA { color:#7A4FC9; }
+
+/* Tab kỹ thuật */
+.ttabs { display:flex; border-bottom:1px solid var(--Line); background:var(--Surface2); padding:0 12px; }
+.ttabs span { padding:10px 14px; color:var(--Text2); cursor:pointer; white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-1px; }
+.ttabs span .no { font-family:Consolas,monospace; color:var(--Text3); margin-right:6px; }
+.ttabs span.on { color:var(--Text); border-bottom-color:var(--Accent); }
+.ttabs span.on .no { color:var(--Accent); }
+
+/* Chip trạng thái */
+.chip { font-family:Consolas,monospace; font-size:10.5px; padding:2px 7px; border:1px solid currentColor; white-space:nowrap; }
+.chip.ok { color:var(--Ok); } .chip.warn { color:var(--Warn); } .chip.err { color:var(--Err); } .chip.inf { color:var(--Accent); }
+.prog { display:flex; gap:2px; width:160px; }
+.prog i { flex:1; height:8px; background:var(--Line); }
+.prog i.f { background:var(--Accent); }
+
+/* ================= RIBBON REVIT ================= */
+.rv { display:inline-block; min-width:1120px; font-size:12px; color:var(--rvText); box-shadow:0 18px 48px rgba(0,0,0,.45); }
+.rv-tabs { display:flex; gap:0; background:var(--rvTabBar); padding:0 6px; }
+.rv-tabs span { padding:6px 12px; color:var(--rvText2); white-space:nowrap; }
+.rv-tabs span.file { background:#1F5FA8; color:#fff; }
+.rv-tabs span.on { background:var(--rvRibbon); color:var(--rvText); font-weight:600; box-shadow:inset 0 2px 0 var(--icAccent); }
+.rv-body { display:flex; background:var(--rvRibbon); border-bottom:1px solid rgba(0,0,0,.25); }
+.rv-panel { display:flex; flex-direction:column; border-right:1px solid rgba(127,127,127,.25); }
+.rv-items { display:flex; align-items:flex-start; gap:2px; padding:4px 4px 2px; height:96px; }
+.rv-lbl { text-align:center; font-size:11px; color:var(--rvText2); background:var(--rvPanelLabel); padding:3px 10px; white-space:nowrap; }
+.rv-big {
+  min-width:64px; height:90px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:4px 6px 0; cursor:default;
+  text-align:center; line-height:1.2; font-size:11.5px; position:relative; white-space:nowrap;
+}
+.rv-big:hover { background:var(--rvHover); outline:1px solid rgba(127,127,127,.35); }
+.rv-big svg { width:32px; height:32px; flex:none; }
+.rv-big .dd { font-size:8px; color:var(--rvText2); }
+.rv-tip {
+  position:absolute; top:94px; left:0; z-index:5; width:300px; display:none; text-align:left;
+  background:var(--Surface); color:var(--Text); border:1px solid var(--LineStrong); padding:10px 12px; line-height:1.5;
+  box-shadow:0 10px 24px rgba(0,0,0,.35);
+}
+.rv-tip b { display:block; margin-bottom:4px; }
+.rv-tip .mono { color:var(--Text3); font-size:11px; display:block; margin-top:6px; }
+.rv-big:hover .rv-tip { display:block; }
+.rv-split { display:flex; flex-direction:column; }
+.rv-menu {
+  margin:6px 0 0 4px; width:260px; background:var(--Surface); border:1px solid var(--LineStrong); color:var(--Text);
+}
+.rv-menu div { display:flex; align-items:center; gap:10px; padding:6px 10px; }
+.rv-menu div:hover, .rv-menu div.on { background:var(--AccentSoft); }
+.rv-menu svg { width:16px; height:16px; }
+
+/* Icon 2 tông: nét mực + 1 điểm nhấn */
+.ic { color:var(--icInk); }
+.ic .a { stroke:var(--icAccent); }
+.ic .af { fill:var(--icAccent); stroke:none; }
+
+/* ================= MENU HDTOOL ================= */
+.tool-row {
+  display:grid; grid-template-columns:28px 74px 1fr 14px; align-items:center; gap:10px;
+  height:46px; padding:0 12px; border-bottom:1px solid var(--Line); cursor:pointer; position:relative; background:var(--Surface);
+}
+.tool-row:hover { background:var(--AccentSoft); }
+.tool-row:hover::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--Accent); }
+.tool-row svg { width:24px; height:24px; }
+.tool-row .id { font-family:Consolas,monospace; font-size:11px; color:var(--Accent); }
+.tool-row .nm { min-width:0; }
+.tool-row .nm b { display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tool-row .nm span { display:block; font-size:11.33px; color:var(--Text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tool-row .go { color:var(--Text3); }
+
+/* ================= BẢNG MÀU ================= */
+.sw-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px; max-width:1120px; }
+.sw { border:1px solid #2A333D; background:#121820; }
+.sw .chip-c { height:52px; border-bottom:1px solid #2A333D; }
+.sw .meta { padding:8px 10px; font-size:11px; line-height:1.5; color:#AEB9C5; }
+.sw .meta b { color:#F1F5F9; font-family:Consolas,monospace; font-weight:normal; }
+.type-row { display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:baseline; padding:10px 0; border-bottom:1px solid #222A33; max-width:1120px; }
+.type-row .k { font-family:Consolas,monospace; color:#7FD3F2; font-size:11px; }
+
+/* ================= MODAL XUẤT ================= */
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; place-items:center; z-index:50; padding:16px; }
+.modal.on { display:grid; }
+.modal-box { width:min(880px, 100%); max-height:88vh; display:flex; flex-direction:column; background:#11161C; border:1px solid #2C3540; }
+.modal-hd { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid #2C3540; }
+.modal-hd b { flex:1; color:#F1F5F9; letter-spacing:.05em; }
+.modal pre { margin:0; padding:14px 16px; overflow:auto; font:12px/1.5 Consolas,monospace; color:#CFE6F2; background:#0B0F13; flex:1; }
+.modal-ft { display:flex; gap:8px; justify-content:flex-end; padding:10px 16px; border-top:1px solid #2C3540; }
+.sbtn { background:#1A222B; color:#D5DCE3; border:1px solid #2C3540; padding:7px 12px; font:inherit; cursor:pointer; }
+.sbtn.y { background:#F2B33D; border-color:#F2B33D; color:#1B1204; font-weight:600; }
+.toast { position:fixed; right:20px; bottom:20px; background:#1F6F93; color:#fff; padding:10px 14px; display:none; z-index:60; }
+
+/* DPI giả lập */
+.dpi-wrap { transform-origin:top left; }
+
+@media (max-width: 720px) {
+  .studio-bar { padding:10px 16px; }
+  .stage { padding:16px; }
+}
+</style>
+</head>
+<body data-theme="blueprint">
+
+<!-- ======================= ICON (vẽ nét 1.6px, dễ chuyển sang GDI+ trong ResourceHelper) ======================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Căn chỉnh Grids / Level -->
+    <symbol id="i-align" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="9" cy="6" r="3.2"/><circle cx="21" cy="6" r="3.2"/>
+        <path d="M9 9.2V27M21 9.2V27"/>
+        <path d="M3 19H29" stroke-dasharray="3 2"/>
+      </g>
+      <path class="af" d="M27 15.5l3 3.5h-6z"/>
+      <path class="a" d="M5 23h22M5 21.5v3M27 21.5v3" fill="none" stroke-width="1.4"/>
+    </symbol>
+    <!-- Tự động Crop View -->
+    <symbol id="i-crop" viewBox="0 0 32 32">
+      <rect x="11" y="11" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <g fill="none" class="a" stroke-width="2">
+        <path d="M4 10V4h6M22 4h6v6M28 22v6h-6M10 28H4v-6"/>
+      </g>
+      <rect x="7" y="7" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/>
+    </symbol>
+    <!-- Thống kê ống nước -->
+    <symbol id="i-pipe" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M3 9h12a6 6 0 0 1 6 6v14"/>
+        <path d="M3 15h12M15 15v14"/>
+        <path d="M3 7v10M13 29h10"/>
+      </g>
+      <path class="a" d="M30 4h-7l3.5 4-3.5 4h7" fill="none" stroke-width="1.8"/>
+    </symbol>
+    <!-- Khối lượng ống gió -->
+    <symbol id="i-duct" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M3 12l9-5h17l-9 5z"/><path d="M3 12v12h17V12M20 24l9-5V7"/>
+        <path d="M8 12v12M14 12v12" stroke-width="1"/>
+      </g>
+      <text x="16" y="31" font-family="Consolas" font-size="7" class="af" text-anchor="middle">m²</text>
+    </symbol>
+    <!-- Dựng ống gió từ CAD -->
+    <symbol id="i-cad2duct" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2.5 1.8">
+        <path d="M3 7h11M3 13h11"/>
+      </g>
+      <path class="a" d="M8 16v5h6M12 19l2 2-2 2" fill="none" stroke-width="1.6"/>
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M16 20l5-3h9l-5 3z"/><path d="M16 20v8h9v-8M25 28l5-3v-8"/>
+      </g>
+      <path d="M17 3h11v8H17z" fill="none" class="a" stroke-width="1.4"/>
+      <text x="22.5" y="9.3" font-family="Consolas" font-size="5.2" class="af" text-anchor="middle">DWG</text>
+    </symbol>
+    <!-- Xuất danh mục bản vẽ -->
+    <symbol id="i-sheetlist" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M4 3h16v26H4z"/><path d="M4 23h16M12 23v6" stroke-width="1.2"/>
+        <path d="M8 8h8M8 12h8M8 16h5" stroke-width="1.2"/>
+      </g>
+      <path class="a" d="M20 15h9M25 11l4 4-4 4" fill="none" stroke-width="1.8"/>
+    </symbol>
+    <!-- Cập nhật danh mục -->
+    <symbol id="i-sheetsync" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M4 3h16v26H4z"/><path d="M4 23h16M12 23v6" stroke-width="1.2"/>
+        <path d="M8 8h8M8 12h8" stroke-width="1.2"/>
+      </g>
+      <g fill="none" class="a" stroke-width="1.7">
+        <path d="M30 18a6 6 0 0 1-10.5 4"/><path d="M18 20a6 6 0 0 1 10.5-4"/>
+        <path d="M28.5 12.5v3.8h-3.8M19.5 25.5v-3.8h3.8"/>
+      </g>
+    </symbol>
+    <!-- Xuất CAD quy đổi layer -->
+    <symbol id="i-layers" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M16 4l13 6-13 6-13-6z"/><path d="M3 16l13 6 13-6"/>
+      </g>
+      <path class="a" d="M3 22l13 6 13-6" fill="none" stroke-width="1.8"/>
+    </symbol>
+    <!-- Tổng hợp Family 3D -->
+    <symbol id="i-family" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M16 3l12 7v12l-12 7-12-7V10z"/><path d="M4 10l12 7 12-7M16 17v12"/>
+      </g>
+      <path class="af" d="M16 17l12-7v12l-12 7z" opacity=".35"/>
+      <path class="a" d="M16 17l12-7" fill="none" stroke-width="1.8"/>
+    </symbol>
+    <!-- Cập nhật tool -->
+    <symbol id="i-update" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M27 16a11 11 0 1 1-3.2-7.8"/><path d="M24 3v5.5h-5.5"/>
+      </g>
+      <path class="a" d="M16 10v10M11.5 16l4.5 4.5 4.5-4.5" fill="none" stroke-width="1.9"/>
+    </symbol>
+    <!-- Menu HDTOOL -->
+    <symbol id="i-menu" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="4" y="4" width="10" height="10"/><rect x="18" y="18" width="10" height="10"/><rect x="4" y="18" width="10" height="10"/>
+      </g>
+      <rect x="18" y="4" width="10" height="10" class="af"/>
+    </symbol>
+    <!-- 16px tiện ích -->
+    <symbol id="i-pick" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="5"/><path d="M8 1v4M8 11v4M1 8h4M11 8h4"/></g></symbol>
+    <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-light" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5.5 11h5M6 13.5h4"/><path d="M8 2a4 4 0 0 0-2.5 7.1V11h5V9.1A4 4 0 0 0 8 2z"/></g></symbol>
+    <symbol id="i-off" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5.5 11h5M6 13.5h4"/><path d="M8 2a4 4 0 0 0-2.5 7.1V11h5V9.1A4 4 0 0 0 8 2z"/><path d="M2 2l12 12"/></g></symbol>
+    <symbol id="i-zoom" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14M5 7h4M7 5v4"/></g></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></g></symbol>
+    <symbol id="i-col" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="12" height="10"/><path d="M6 3v10M10 3v10"/></g></symbol>
+    <symbol id="i-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5" y="5" width="8.5" height="9"/><path d="M3 11V2.5h7.5"/></g></symbol>
+    <symbol id="i-xls" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 1.5h7l3 3V14.5H3z"/><path d="M6 8l4 4M10 8l-4 4"/></g></symbol>
+    <symbol id="i-sheet" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="3" width="13" height="10"/><path d="M10 9.5h4.5M10 9.5V13"/></g></symbol>
+    <symbol id="i-refresh" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13.5 8A5.5 5.5 0 1 1 11.8 4"/><path d="M12.5 1.5V4.5H9.5"/></g></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  </defs>
+</svg>
+
+<!-- ======================= THANH STUDIO ======================= -->
+<header class="studio-bar">
+  <div class="studio-brand">
+    <b>HDTOOL · THEME STUDIO</b>
+    <span>Phong cách kỹ thuật cho toàn bộ Ribbon &amp; Form · xem trước trước khi áp dụng vào C#</span>
+  </div>
+  <div><span class="seg-label">CHẾ ĐỘ</span>
+    <span class="seg" id="segTheme">
+      <button data-v="blueprint" class="on">Blueprint Tối</button>
+      <button data-v="drafting">Bản Vẽ Sáng</button>
+    </span>
+  </div>
+  <div><span class="seg-label">DPI WINDOWS</span>
+    <span class="seg" id="segDpi">
+      <button data-v="1" class="on">100%</button>
+      <button data-v="1.25">125%</button>
+      <button data-v="1.5">150%</button>
+    </span>
+  </div>
+  <a class="sbtn" href="HDTool_PreviewStudio.html" style="text-decoration:none">Ribbon Studio (sắp xếp nút)</a>
+  <button class="btn-export" id="btnExport">CHỐT &amp; XUẤT CẤU HÌNH C#</button>
+</header>
+
+<nav class="studio-tabs" id="tabs">
+  <button data-v="ribbon" class="on"><span class="n">01</span>Ribbon HDTOOL</button>
+  <button data-v="menu"><span class="n">02</span>Menu HDTOOL</button>
+  <button data-v="duct"><span class="n">03</span>Khối Lượng Ống Gió</button>
+  <button data-v="grid"><span class="n">04</span>Căn Chỉnh Grids / Level</button>
+  <button data-v="comp"><span class="n">05</span>Bộ Thành Phần</button>
+  <button data-v="tokens"><span class="n">06</span>Bảng Màu &amp; Font</button>
+</nav>
+
+<main class="stage">
+
+<!-- ======================= 01 RIBBON ======================= -->
+<section class="view on" id="v-ribbon">
+  <div class="dpi-wrap">
+  <div class="rv">
+    <div class="rv-tabs">
+      <span class="file">File</span><span>Architecture</span><span>Structure</span><span>Systems</span><span>Insert</span>
+      <span>Annotate</span><span>Analyze</span><span>Collaborate</span><span>View</span><span>Manage</span><span>Add-Ins</span>
+      <span class="on">HDTOOL</span><span>Modify</span>
+    </div>
+    <div class="rv-body">
+      <div class="rv-panel">
+        <div class="rv-items">
+          <div class="rv-split">
+            <div class="rv-big"><svg class="ic"><use href="#i-align"/></svg><span>Căn Chỉnh<br>Grids / Level</span><span class="dd">▼</span>
+              <div class="rv-tip"><b>Căn Chỉnh Grids / Level</b>Căn đầu trục và cao độ theo khoảng cách mm tới mép Crop View, trên Plan / Section / Elevation / Sheet.<span class="mono">HDT-01 · HDTool.CropAlignCommand</span></div>
+            </div>
+          </div>
+          <div class="rv-big"><svg class="ic"><use href="#i-crop"/></svg><span>Tự Động<br>Crop View</span>
+            <div class="rv-tip"><b>Tự Động Crop View</b>Tạo Crop View ôm khít toàn bộ đối tượng trong View (3D, Mặt bằng, Mặt cắt, Viewport trên Sheet).<span class="mono">HDT-02 · HDTool.AutoCropCommand</span></div>
+          </div>
+        </div>
+        <div class="rv-lbl">Căn Chỉnh Đối Tượng</div>
+      </div>
+      <div class="rv-panel">
+        <div class="rv-items">
+          <div class="rv-big"><svg class="ic"><use href="#i-pipe"/></svg><span>Thống Kê<br>Ống Nước</span>
+            <div class="rv-tip"><b>Thống Kê Ống Nước</b>Thống kê ống &amp; phụ kiện, soi sáng mô hình và đưa bảng vào Sheet.<span class="mono">HDT-03 · HDTool.MepQuantityCommand</span></div>
+          </div>
+          <div class="rv-big"><svg class="ic"><use href="#i-duct"/></svg><span>Khối Lượng<br>Ống Gió</span>
+            <div class="rv-tip"><b>Khối Lượng Ống Gió</b>Diện tích tôn m² theo TCVN 5687:2010 / SMACNA; phân loại cút, côn, lượn, van VCD và miệng gió.<span class="mono">HDT-04 · HDTool.DuctQuantityCommand</span></div>
+          </div>
+          <div class="rv-big"><svg class="ic"><use href="#i-cad2duct"/></svg><span>Dựng Ống Gió<br>Từ CAD</span>
+            <div class="rv-tip"><b>Dựng Ống Gió Từ CAD</b>Nhận diện tuyến ống, size WxH, cút, côn, chân rẽ Tap và dựng mô hình 3D từ CAD Link.<span class="mono">HDT-05 · HDTool.CadToDuctCommand</span></div>
+          </div>
+        </div>
+        <div class="rv-lbl">Khối Lượng MEP</div>
+      </div>
+      <div class="rv-panel">
+        <div class="rv-items">
+          <div class="rv-big"><svg class="ic"><use href="#i-sheetlist"/></svg><span>Xuất Danh Mục<br>Bản Vẽ</span>
+            <div class="rv-tip"><b>Xuất Danh Mục Bản Vẽ</b>Xuất danh mục Sheet ra Excel (.xls, .csv) hoặc Clipboard; sửa số hiệu và tên trực tiếp.<span class="mono">HDT-06 · HDTool.ExportSheetListCommand</span></div>
+          </div>
+          <div class="rv-big"><svg class="ic"><use href="#i-sheetsync"/></svg><span>Cập Nhật<br>Danh Mục</span>
+            <div class="rv-tip"><b>Cập Nhật Danh Mục</b>Đối chiếu và cập nhật ngược tên / thông tin Sheet từ file Excel.<span class="mono">HDT-07 · HDTool.UpdateSheetListCommand</span></div>
+          </div>
+          <div class="rv-big"><svg class="ic"><use href="#i-layers"/></svg><span>Xuất CAD<br>Quy Đổi Layer</span>
+            <div class="rv-tip"><b>Xuất CAD Quy Đổi Layer</b>Xuất DWG và tự động quy đổi Layer / màu ACI theo hệ thống MEP.<span class="mono">HDT-08 · HDTool.ExportCadCommand</span></div>
+          </div>
+        </div>
+        <div class="rv-lbl">Quản Lý Bản Vẽ &amp; Sheet</div>
+      </div>
+      <div class="rv-panel">
+        <div class="rv-items">
+          <div class="rv-big"><svg class="ic"><use href="#i-family"/></svg><span>Tổng Hợp<br>Family 3D</span>
+            <div class="rv-tip"><b>Tổng Hợp Family 3D</b>Palette toàn bộ Family trong dự án: xem trước 3D, tìm nhanh, đặt vào bản vẽ.<span class="mono">HDT-09 · HDTool.FamilyPaletteCommand</span></div>
+          </div>
+        </div>
+        <div class="rv-lbl">Thư Viện &amp; Family</div>
+      </div>
+      <div class="rv-panel">
+        <div class="rv-items">
+          <div class="rv-big"><svg class="ic"><use href="#i-update"/></svg><span>Cập Nhật<br>Tool</span>
+            <div class="rv-tip"><b>Cập Nhật Tool</b>Nạp lại phiên bản mới (Hot Reload) không cần tắt Revit.<span class="mono">HDT-10 · HDTool.UpdateToolCommand</span></div>
+          </div>
+          <div class="rv-big"><svg class="ic"><use href="#i-menu"/></svg><span>Menu<br>HDTOOL</span>
+            <div class="rv-tip"><b>Menu HDTOOL</b>Trung tâm điều khiển: mở nhanh mọi công cụ.<span class="mono">HDT-00 · HDTool.HDToolMainCommand</span></div>
+          </div>
+        </div>
+        <div class="rv-lbl">Hệ Thống &amp; Menu</div>
+      </div>
+    </div>
+    <div class="rv-menu" style="margin-left:6px">
+      <div class="on"><svg class="ic"><use href="#i-align"/></svg>Căn Chỉnh Grids / Level (bảng tích hợp)</div>
+      <div><svg class="ic"><use href="#i-align"/></svg>Căn Chỉnh Grids</div>
+      <div><svg class="ic"><use href="#i-align"/></svg>Căn Chỉnh Level</div>
+    </div>
+  </div>
+  </div>
+  <p class="note">
+    <b>Thay đổi đề xuất:</b> 11 icon vẽ lại cùng một hệ nét (nét mực 1.6px + đúng 1 điểm nhấn màu Accent), tự đổi màu theo giao diện Sáng / Tối của Revit.
+    Bỏ mục <b>Tự Động Crop View</b> bị trùng trong SplitButton (giữ nút lớn riêng). Tooltip có mã công cụ <code>HDT-xx</code> và tên lớp lệnh. Rê chuột lên nút để xem.<br>
+    <b>Triển khai:</b> icon vẽ bằng GDI+ trong <code>ResourceHelper</code> ở 16 / 32 / 48 / 64px theo DPI màn hình, không dùng ảnh bitmap phóng to (hết mờ ở 150%).
+  </p>
+</section>
+
+<!-- ======================= 02 MENU HDTOOL ======================= -->
+<section class="view" id="v-menu">
+  <div class="dpi-wrap">
+  <div class="win" style="width:560px">
+    <div class="win-title"><span class="ttl">HDTOOL — Trung Tâm Điều Khiển</span><span class="wb">—</span><span class="wb x">✕</span></div>
+    <div class="form no-toolbar" style="height:720px">
+      <div class="hd">
+        <span class="code">HDT-00</span>
+        <div class="tt"><b>TRUNG TÂM ĐIỀU KHIỂN</b><span>Chọn công cụ cần dùng · mọi cửa sổ đều Modeless</span></div>
+        <span class="esc">ESC · ĐÓNG</span>
+      </div>
+      <div class="ct" style="padding:14px 16px; overflow:auto">
+        <div class="panel ticks" style="padding:10px 14px; margin-bottom:16px; display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:12px">
+          <span style="color:var(--Text3); letter-spacing:.08em; font-size:10.5px">VIEW</span><span class="mono">Level 3 - Mechanical</span>
+          <span style="color:var(--Text3); letter-spacing:.08em; font-size:10.5px">LOẠI</span><span class="mono">FloorPlan</span>
+          <span style="color:var(--Text3); letter-spacing:.08em; font-size:10.5px">TỶ LỆ</span><span class="mono">1 : 100</span>
+        </div>
+        <div class="sec"><span class="no">01</span>Căn chỉnh đối tượng</div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="tool-row"><svg class="ic"><use href="#i-align"/></svg><span class="id">HDT-01</span><span class="nm"><b>Căn Chỉnh Grids / Level</b><span>Căn đầu trục &amp; cao độ theo Crop View (mm)</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+          <div class="tool-row" style="border-bottom:0"><svg class="ic"><use href="#i-crop"/></svg><span class="id">HDT-02</span><span class="nm"><b>Tự Động Crop View</b><span>Crop ôm khít đối tượng · Plan / Section / 3D / Sheet</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+        </div>
+        <div class="sec"><span class="no">02</span>Khối lượng MEP</div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="tool-row"><svg class="ic"><use href="#i-pipe"/></svg><span class="id">HDT-03</span><span class="nm"><b>Thống Kê Ống Nước</b><span>Ống &amp; phụ kiện · soi sáng · đưa vào Sheet</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+          <div class="tool-row"><svg class="ic"><use href="#i-duct"/></svg><span class="id">HDT-04</span><span class="nm"><b>Khối Lượng Ống Gió</b><span>m² tôn theo TCVN 5687:2010 / SMACNA</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+          <div class="tool-row" style="border-bottom:0"><svg class="ic"><use href="#i-cad2duct"/></svg><span class="id">HDT-05</span><span class="nm"><b>Dựng Ống Gió Từ CAD</b><span>Nhận diện tuyến, size WxH · dựng mô hình 3D</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+        </div>
+        <div class="sec"><span class="no">03</span>Bản vẽ &amp; Sheet</div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="tool-row"><svg class="ic"><use href="#i-sheetlist"/></svg><span class="id">HDT-06</span><span class="nm"><b>Xuất Danh Mục Bản Vẽ</b><span>Excel / CSV / Clipboard</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+          <div class="tool-row"><svg class="ic"><use href="#i-sheetsync"/></svg><span class="id">HDT-07</span><span class="nm"><b>Cập Nhật Danh Mục</b><span>Excel → Revit</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+          <div class="tool-row" style="border-bottom:0"><svg class="ic"><use href="#i-layers"/></svg><span class="id">HDT-08</span><span class="nm"><b>Xuất CAD Quy Đổi Layer</b><span>DWG · Layer &amp; màu ACI theo hệ MEP</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+        </div>
+        <div class="sec"><span class="no">04</span>Thư viện &amp; hệ thống</div>
+        <div class="panel">
+          <div class="tool-row"><svg class="ic"><use href="#i-family"/></svg><span class="id">HDT-09</span><span class="nm"><b>Tổng Hợp Family 3D</b><span>Xem trước 3D · đặt vào bản vẽ</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+          <div class="tool-row" style="border-bottom:0"><svg class="ic"><use href="#i-update"/></svg><span class="id">HDT-10</span><span class="nm"><b>Cập Nhật Tool</b><span>Hot Reload không tắt Revit</span></span><svg class="go" width="14" height="14"><use href="#i-chev"/></svg></div>
+        </div>
+      </div>
+      <div class="st"><span class="dot"></span><span class="cmd"><b>▶</b> SẴN SÀNG · 10 công cụ · Revit 2024 · HDTOOL v108</span><span class="btn" style="height:28px">Đóng (ESC)</span></div>
+    </div>
+  </div>
+  </div>
+  <p class="note">
+    <b>Thay đổi:</b> bỏ các nút to nhiều màu, thay bằng danh sách công cụ đánh mã <code>HDT-xx</code>, nhóm theo đúng Panel trên Ribbon. Rê chuột có vạch nhấn bên trái.
+    Ô thông tin View đang mở dùng font Consolas như bảng thông số.<br>
+    <b>Triển khai:</b> mỗi dòng là một <code>Panel</code> tự vẽ (OnPaint), cao 46px, rộng theo <code>Dock.Top</code>; tiêu đề nhóm là control <code>HDToolSectionLabel</code> dùng chung.
+  </p>
+</section>
+
+<!-- ======================= 03 KHỐI LƯỢNG ỐNG GIÓ ======================= -->
+<section class="view" id="v-duct">
+  <div class="dpi-wrap">
+  <div class="win" style="width:1180px">
+    <div class="win-title"><span class="ttl">HDTOOL — Khối Lượng Ống Gió &amp; Phụ Kiện HVAC</span><span class="wb">—</span><span class="wb">▢</span><span class="wb x">✕</span></div>
+    <div class="form" style="height:700px">
+      <div class="hd">
+        <span class="code">HDT-04</span>
+        <div class="tt"><b>KHỐI LƯỢNG ỐNG GIÓ &amp; PHỤ KIỆN HVAC</b><span>Diện tích tôn m² · phân loại cút, côn, lượn, van VCD, miệng gió</span></div>
+        <div class="tblock">
+          <div><i>TIÊU CHUẨN</i><em>TCVN 5687:2010</em></div>
+          <div><i>PHẠM VI</i><em>View hiện tại</em></div>
+          <div><i>VIEW</i><em>Level 3 - HVAC</em></div>
+        </div>
+        <span class="esc">ESC · ĐÓNG</span>
+      </div>
+      <div class="tb">
+        <span class="btn pri"><svg><use href="#i-pick"/></svg>Quét Vùng Mới</span>
+        <span class="btn"><svg><use href="#i-plus"/></svg>Bóc Thêm (Cộng Dồn)</span>
+        <span class="btn"><svg><use href="#i-refresh"/></svg>Quét Lại</span>
+        <span class="sep"></span>
+        <span class="btn ghost"><svg><use href="#i-light"/></svg>Sáng Đã Bóc</span>
+        <span class="btn ghost"><svg><use href="#i-off"/></svg>Tắt Sáng</span>
+        <span class="btn ghost"><svg><use href="#i-zoom"/></svg>Zoom Gần</span>
+        <span class="sep"></span>
+        <span class="input" style="width:230px"><svg width="14" height="14" style="color:var(--Text3)"><use href="#i-search"/></svg><input placeholder="Tìm tên, size, hệ thống..."></span>
+        <span class="grow"></span>
+        <span class="btn"><svg><use href="#i-col"/></svg>Thêm Cột Parameter</span>
+      </div>
+      <div class="ct" style="display:grid; grid-template-rows:auto auto 1fr; gap:12px; padding:12px 14px">
+        <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap">
+          <span style="font-size:10.5px; letter-spacing:.1em; color:var(--Text3)">PHẠM VI</span>
+          <span class="radio-seg"><span class="on">View hiện tại</span><span>Vùng đã quét</span><span>Toàn bộ dự án</span></span>
+          <span class="chk on"><i></i>Tự động Highlight khi click dòng</span>
+          <span class="chk"><i></i>Tự bóc khi chọn trên Revit</span>
+        </div>
+        <div class="panel ticks kpis">
+          <div class="kpi"><i>Tổng diện tích tôn</i><b>653.54</b><small>m²</small></div>
+          <div class="kpi"><i>Chiều dài ống thẳng</i><b>345.15</b><small>m</small></div>
+          <div class="kpi"><i>Số đoạn ống</i><b>118</b><small>đoạn</small></div>
+          <div class="kpi"><i>Phụ kiện, van, miệng gió</i><b>112</b><small>cái</small></div>
+        </div>
+        <div class="panel" style="overflow:auto; min-height:0">
+          <table class="dgv">
+            <colgroup><col style="width:52px"><col><col style="width:150px"><col style="width:110px"><col style="width:80px"><col style="width:120px"><col style="width:90px"><col style="width:100px"><col style="width:80px"></colgroup>
+            <thead><tr><th class="c">STT</th><th>Tên cấu kiện / phụ kiện</th><th>Quy cách (WxH / Ø)</th><th class="num">Dài (m)</th><th class="num">SL</th><th class="num">Diện tích (m²)</th><th class="c">Hệ</th><th class="num">Độ dày tôn</th><th class="c">Tầng</th></tr></thead>
+            <tbody>
+              <tr class="grp"><td colspan="9">■ ỐNG GIÓ THẲNG</td></tr>
+              <tr><td class="c mono">1</td><td>Ống gió chữ nhật</td><td class="mono">1000 x 500</td><td class="num">48.60</td><td class="num">16</td><td class="num">145.80</td><td class="c"><span class="sys SA">SA</span></td><td class="num">0.95 mm</td><td class="c mono">T3</td></tr>
+              <tr class="sel"><td class="c mono">2</td><td>Ống gió chữ nhật</td><td class="mono">800 x 400</td><td class="num">62.25</td><td class="num">21</td><td class="num">149.40</td><td class="c"><span class="sys SA">SA</span></td><td class="num">0.75 mm</td><td class="c mono">T3</td></tr>
+              <tr><td class="c mono">3</td><td>Ống gió chữ nhật</td><td class="mono">600 x 300</td><td class="num">85.10</td><td class="num">29</td><td class="num">153.18</td><td class="c"><span class="sys RA">RA</span></td><td class="num">0.75 mm</td><td class="c mono">T3</td></tr>
+              <tr><td class="c mono">4</td><td>Ống gió chữ nhật</td><td class="mono">400 x 250</td><td class="num">112.40</td><td class="num">38</td><td class="num">146.12</td><td class="c"><span class="sys EA">EA</span></td><td class="num">0.58 mm</td><td class="c mono">T3</td></tr>
+              <tr><td class="c mono">5</td><td>Ống gió tròn</td><td class="mono">Ø250</td><td class="num">36.80</td><td class="num">14</td><td class="num">28.90</td><td class="c"><span class="sys OA">OA</span></td><td class="num">0.58 mm</td><td class="c mono">T3</td></tr>
+              <tr class="grp"><td colspan="9">■ CÚT, CÔN THU &amp; LƯỢN</td></tr>
+              <tr><td class="c mono">6</td><td>Cút 90° R150</td><td class="mono">800 x 400</td><td class="num mut">—</td><td class="num">12</td><td class="num">18.62</td><td class="c"><span class="sys SA">SA</span></td><td class="num">0.75 mm</td><td class="c mono">T3</td></tr>
+              <tr><td class="c mono">7</td><td>Côn thu L=400</td><td class="mono">1000x500 → 800x400</td><td class="num mut">—</td><td class="num">6</td><td class="num">6.48</td><td class="c"><span class="sys SA">SA</span></td><td class="num">0.95 mm</td><td class="c mono">T3</td></tr>
+              <tr><td class="c mono">8</td><td>Lượn Z (L=600, H=200)</td><td class="mono">600 x 300</td><td class="num mut">—</td><td class="num">4</td><td class="num">5.04</td><td class="c"><span class="sys RA">RA</span></td><td class="num">0.75 mm</td><td class="c mono">T3</td></tr>
+              <tr class="grp"><td colspan="9">■ VAN &amp; MIỆNG GIÓ</td></tr>
+              <tr><td class="c mono">9</td><td>Van gió điều chỉnh VCD</td><td class="mono">600 x 300</td><td class="num mut">—</td><td class="num">18</td><td class="num mut">—</td><td class="c"><span class="sys SA">SA</span></td><td class="num mut">—</td><td class="c mono">T3</td></tr>
+              <tr><td class="c mono">10</td><td>Miệng gió khuếch tán 4 hướng</td><td class="mono">600 x 600</td><td class="num mut">—</td><td class="num">64</td><td class="num mut">—</td><td class="c"><span class="sys SA">SA</span></td><td class="num mut">—</td><td class="c mono">T3</td></tr>
+              <tr><td class="c mono">11</td><td>Van chặn lửa MFD</td><td class="mono">400 x 250</td><td class="num mut">—</td><td class="num">8</td><td class="num mut">—</td><td class="c"><span class="sys EA">EA</span></td><td class="num mut">—</td><td class="c mono">T3</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="st">
+        <span class="dot"></span><span class="cmd"><b>▶</b> ĐÃ BÓC 230 ĐỐI TƯỢNG · 0.84 s · đang chọn dòng 2 · 21 đối tượng được soi sáng</span>
+        <span class="btn"><svg><use href="#i-copy"/></svg>Copy Bảng</span>
+        <span class="btn"><svg><use href="#i-xls"/></svg>Xuất Excel</span>
+        <span class="btn pri"><svg><use href="#i-sheet"/></svg>Đặt / Cập Nhật Vào Sheet</span>
+        <span class="btn ghost">Đóng (ESC)</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <p class="note">
+    <b>Điểm kỹ thuật:</b> 4 chỉ số tổng hợp đặt ngay trên bảng; số liệu font Consolas căn phải; nhóm dòng (Ống thẳng / Cút côn / Van &amp; miệng gió);
+    mã hệ thống SA / RA / EA / OA gắn chip màu cố định; dòng đang chọn có viền nhấn. Thanh trạng thái hiển thị như dòng lệnh CAD.<br>
+    <b>Triển khai:</b> <code>HDToolTheme.StyleGrid(dgv)</code> áp toàn bộ kiểu bảng một lần; dòng nhóm và chip hệ thống vẽ trong <code>CellPainting</code>.
+  </p>
+</section>
+
+<!-- ======================= 04 CĂN CHỈNH GRIDS / LEVEL ======================= -->
+<section class="view" id="v-grid">
+  <div class="dpi-wrap">
+  <div class="win" style="width:900px">
+    <div class="win-title"><span class="ttl">HDTOOL — Căn Chỉnh Grids / Level</span><span class="wb">—</span><span class="wb x">✕</span></div>
+    <div class="form no-toolbar" style="height:600px">
+      <div class="hd">
+        <span class="code">HDT-01</span>
+        <div class="tt"><b>CĂN CHỈNH GRIDS / LEVEL THEO CROP VIEW</b><span>Đặt khoảng cách đầu trục tới mép Crop · áp dụng cho View hoặc Viewport trên Sheet</span></div>
+        <span class="esc">ESC · ĐÓNG</span>
+      </div>
+      <div class="ct" style="display:grid; grid-template-rows:auto 1fr; padding:0">
+        <div class="ttabs"><span class="on"><span class="no">A</span>Lưới trục (Grids)</span><span><span class="no">B</span>Cao độ (Level)</span><span><span class="no">C</span>Tự động Crop View</span></div>
+        <div style="display:grid; grid-template-columns:330px 1fr; gap:16px; padding:16px; min-height:0">
+          <div>
+            <div class="sec"><span class="no">01</span>Khoảng cách tới mép Crop</div>
+            <div style="display:grid; grid-template-columns:1fr 120px; gap:8px 10px; align-items:center; margin-bottom:18px">
+              <span>Đầu trục (bubble)</span>
+              <span class="input focus"><input id="offIn" class="mono" value="600" inputmode="numeric"><span class="unit">mm</span></span>
+              <span>Đuôi trục</span>
+              <span class="input"><input class="mono" value="300"><span class="unit">mm</span></span>
+            </div>
+            <div class="sec"><span class="no">02</span>Hướng áp dụng</div>
+            <div class="radio-seg" id="dirSeg" style="margin-bottom:18px">
+              <span class="on" data-d="T">Trên</span><span class="on" data-d="B">Dưới</span><span class="on" data-d="L">Trái</span><span class="on" data-d="R">Phải</span>
+            </div>
+            <div class="sec"><span class="no">03</span>Hiển thị đầu trục</div>
+            <div style="display:grid; gap:8px">
+              <span class="chk on"><i></i>Hiện bubble ở cả hai đầu</span>
+              <span class="chk on"><i></i>Chuyển sang 2D (ViewSpecific) trước khi căn</span>
+              <span class="chk"><i></i>Áp dụng cho tất cả View trên Sheet</span>
+            </div>
+          </div>
+          <div class="panel ticks" style="position:relative; min-height:0; display:flex; flex-direction:column">
+            <div style="display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid var(--Line); font-size:10.5px; letter-spacing:.1em; color:var(--Text3)">
+              <span>SƠ ĐỒ XEM TRƯỚC</span><span class="mono" id="diagInfo">OFFSET 600 mm · 4 HƯỚNG</span>
+            </div>
+            <svg id="diag" viewBox="0 0 500 330" style="flex:1; width:100%; min-height:0"></svg>
+          </div>
+        </div>
+      </div>
+      <div class="st">
+        <span class="dot"></span><span class="cmd"><b>▶</b> VIEW: Level 3 - Mechanical · CROP 42.0 x 27.5 m · 14 GRIDS</span>
+        <span class="btn"><svg><use href="#i-pick"/></svg>Chọn Grids Trên Màn Hình</span>
+        <span class="btn pri">Tự Động Căn Tất Cả Theo Crop View</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <p class="note">
+    <b>Điểm kỹ thuật:</b> sơ đồ xem trước vẽ đúng kiểu bản vẽ (khung Crop nét đứt, trục, bubble, đường kích thước có mũi tên và trị số).
+    Gõ số vào ô <b>Đầu trục</b> hoặc bấm các hướng để xem sơ đồ cập nhật ngay.<br>
+    <b>Triển khai:</b> control <code>HDToolDimensionPreview</code> vẽ bằng GDI+ (<code>OnPaint</code>), tự co giãn theo khung chứa.
+  </p>
+</section>
+
+<!-- ======================= 05 BỘ THÀNH PHẦN ======================= -->
+<section class="view" id="v-comp">
+  <div class="dpi-wrap">
+  <div class="win" style="width:900px">
+    <div class="form no-toolbar" style="height:auto; grid-template-rows:58px auto 52px">
+      <div class="hd"><span class="code">UI-KIT</span><div class="tt"><b>BỘ THÀNH PHẦN GIAO DIỆN DÙNG CHUNG</b><span>Mọi Form HDTOOL dùng lại đúng các thành phần này</span></div></div>
+      <div class="ct" style="padding:18px 20px; display:grid; gap:22px">
+        <div>
+          <div class="sec"><span class="no">01</span>Nút bấm</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+            <span class="btn pri">Chính (Primary)</span>
+            <span class="btn">Phụ (Secondary)</span>
+            <span class="btn ghost">Phẳng (Ghost)</span>
+            <span class="btn dan">Xóa Dòng Đã Chọn</span>
+            <span class="btn pri lg">ĐẶT VÀO BẢN VẼ REVIT</span>
+            <span class="btn"><svg><use href="#i-pick"/></svg>Kèm icon 16px</span>
+          </div>
+        </div>
+        <div>
+          <div class="sec"><span class="no">02</span>Ô nhập &amp; lựa chọn</div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center">
+            <span class="input" style="width:200px"><input placeholder="Ô nhập thường"></span>
+            <span class="input focus" style="width:140px"><input class="mono" value="1250"><span class="unit">mm</span></span>
+            <span class="input" style="width:180px"><input value="Supply Air (SA)"><span style="color:var(--Text3)">▼</span></span>
+            <span class="chk on"><i></i>Đã chọn</span>
+            <span class="chk"><i></i>Chưa chọn</span>
+            <span class="radio-seg"><span class="on">Plan</span><span>Section</span><span>3D</span></span>
+          </div>
+        </div>
+        <div>
+          <div class="sec"><span class="no">03</span>Trạng thái &amp; tiến trình</div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center">
+            <span class="chip ok">OK · 230</span><span class="chip warn">CẢNH BÁO · 3</span><span class="chip err">LỖI · 1</span><span class="chip inf">ĐANG XỬ LÝ</span>
+            <span class="prog"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span>
+            <span class="mono" style="color:var(--Text2)">60%</span>
+          </div>
+        </div>
+        <div>
+          <div class="sec"><span class="no">04</span>Khung &amp; chỉ số</div>
+          <div class="panel ticks kpis" style="grid-template-columns:repeat(3,1fr)">
+            <div class="kpi"><i>Chiều dài</i><b>1,284.50</b><small>m</small></div>
+            <div class="kpi"><i>Diện tích</i><b>653.54</b><small>m²</small></div>
+            <div class="kpi"><i>Đối tượng</i><b>230</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="st"><span class="dot"></span><span class="cmd"><b>▶</b> Thanh trạng thái kiểu dòng lệnh CAD · font Consolas</span></div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ======================= 06 TOKEN ======================= -->
+<section class="view" id="v-tokens">
+  <div class="sw-grid" id="swGrid"></div>
+  <h3 style="color:#F1F5F9; letter-spacing:.06em; font-size:13px; margin:28px 0 6px">CỠ CHỮ (theo pt của WinForms)</h3>
+  <div class="type-row"><span class="k">Title · Segoe UI 12pt Bold</span><span style="font-size:16px; font-weight:700; color:#F1F5F9">KHỐI LƯỢNG ỐNG GIÓ &amp; PHỤ KIỆN HVAC</span></div>
+  <div class="type-row"><span class="k">Body · Segoe UI 9pt</span><span style="font-size:12px">Tự động tính diện tích tôn theo chu vi tiết diện và chiều dài đoạn ống.</span></div>
+  <div class="type-row"><span class="k">Caption · Segoe UI 8.5pt</span><span style="font-size:11.33px; color:#9DB0C4">Phạm vi: View hiện tại · 230 đối tượng</span></div>
+  <div class="type-row"><span class="k">Label · Segoe UI 8pt CAPS</span><span style="font-size:10.67px; letter-spacing:.1em; color:#9DB0C4">TỔNG DIỆN TÍCH TÔN</span></div>
+  <div class="type-row"><span class="k">Mono · Consolas 9pt</span><span class="mono" style="font-size:12px">1000 x 500 · 145.80 m² · HDT-04</span></div>
+  <div class="type-row"><span class="k">Readout · Consolas 16pt</span><span class="mono" style="font-size:21.33px">653.54 m²</span></div>
+  <p class="note"><b>Nguyên tắc:</b> chỉ 2 font (Segoe UI cho chữ, Consolas cho số / mã / kích thước), 6 cỡ chữ, 1 màu nhấn duy nhất. Không emoji, góc vuông, viền 1px.</p>
+</section>
+
+</main>
+
+<!-- ======================= MODAL XUẤT C# ======================= -->
+<div class="modal" id="modal">
+  <div class="modal-box" role="dialog" aria-label="Cấu hình C#">
+    <div class="modal-hd"><b>CẤU HÌNH ĐÃ CHỐT · Source/HDToolTheme.cs</b><span class="mono" id="mInfo" style="color:#8A97A6"></span></div>
+    <pre id="code"></pre>
+    <div class="modal-ft"><button class="sbtn" id="btnClose">Đóng</button><button class="sbtn y" id="btnCopy">Sao Chép Mã C#</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var TOKENS = {
+    blueprint: {
+      Bg:"#0D1520", Surface:"#121C29", Surface2:"#172433", Header:"#0A111A", HeaderText:"#E8F1FA",
+      Line:"#22344A", LineStrong:"#2F4862", Text:"#E3EBF3", Text2:"#9DB0C4", Text3:"#66798F",
+      Accent:"#2BB8E8", AccentHover:"#52C8F0", AccentInk:"#04202C", AccentSoft:"#133A52",
+      Ok:"#3DD68C", Warn:"#F2B33D", Err:"#F2665E", RowAlt:"#152132", Input:"#0F1823",
+      GridMinor:[13,43,184,232], GridMajor:[26,43,184,232]
+    },
+    drafting: {
+      Bg:"#EDF1F5", Surface:"#FFFFFF", Surface2:"#F5F7FA", Header:"#10233A", HeaderText:"#F2F6FA",
+      Line:"#D3DBE4", LineStrong:"#B7C3D0", Text:"#0E1C2B", Text2:"#46586B", Text3:"#7A8999",
+      Accent:"#0B78A6", AccentHover:"#0A8DC2", AccentInk:"#FFFFFF", AccentSoft:"#D9EEF7",
+      Ok:"#1E9E62", Warn:"#B7791F", Err:"#C8423B", RowAlt:"#F6F9FC", Input:"#FFFFFF",
+      GridMinor:[15,11,120,166], GridMajor:[28,11,120,166]
+    }
+  };
+  var ROLES = {
+    Bg:"Nền Form", Surface:"Nền khung / bảng", Surface2:"Toolbar, thanh trạng thái, tiêu đề cột", Header:"Dải tiêu đề 58px",
+    HeaderText:"Chữ trên dải tiêu đề", Line:"Viền 1px, đường kẻ bảng", LineStrong:"Viền ô nhập, nút phụ", Text:"Chữ chính",
+    Text2:"Chữ phụ", Text3:"Chú thích, placeholder", Accent:"Màu nhấn duy nhất: nút chính, focus, vạch chọn",
+    AccentHover:"Rê chuột nút chính", AccentInk:"Chữ trên nền Accent", AccentSoft:"Dòng đang chọn, hover",
+    Ok:"Thành công", Warn:"Cảnh báo", Err:"Lỗi, nút xóa", RowAlt:"Dòng chẵn trong bảng", Input:"Nền ô nhập",
+    GridMinor:"Lưới blueprint 10px", GridMajor:"Lưới blueprint 50px"
+  };
+
+  var state = { theme:"blueprint", dpi:1, view:"ribbon", dirs:{T:true,B:true,L:true,R:true}, offset:600 };
+  try {
+    var saved = JSON.parse(localStorage.getItem("hdtool-theme-studio") || "null");
+    if (saved && TOKENS[saved.theme]) { state.theme = saved.theme; }
+    if (saved && saved.view) { state.view = saved.view; }
+  } catch (e) {}
+
+  function save() {
+    try { localStorage.setItem("hdtool-theme-studio", JSON.stringify({ theme:state.theme, view:state.view })); } catch (e) {}
+  }
+  function $(id) { return document.getElementById(id); }
+  function setOn(container, attr, val) {
+    Array.prototype.forEach.call(container.querySelectorAll("[" + attr + "]"), function (b) {
+      b.classList.toggle("on", b.getAttribute(attr) === String(val));
+    });
+  }
+
+  function applyTheme() {
+    document.body.setAttribute("data-theme", state.theme);
+    setOn($("segTheme"), "data-v", state.theme);
+    renderSwatches();
+    drawDiagram();
+  }
+  function applyDpi() {
+    setOn($("segDpi"), "data-v", state.dpi);
+    Array.prototype.forEach.call(document.querySelectorAll(".dpi-wrap"), function (w) {
+      w.style.zoom = state.dpi;
+    });
+  }
+  function applyView() {
+    setOn($("tabs"), "data-v", state.view);
+    Array.prototype.forEach.call(document.querySelectorAll(".view"), function (v) {
+      v.classList.toggle("on", v.id === "v-" + state.view);
+    });
+  }
+
+  function rgbaStr(a) { return "rgba(" + a[1] + "," + a[2] + "," + a[3] + "," + (a[0] / 255).toFixed(2) + ")"; }
+  function renderSwatches() {
+    var t = TOKENS[state.theme], html = "";
+    Object.keys(t).forEach(function (k) {
+      var v = t[k], css = Array.isArray(v) ? rgbaStr(v) : v;
+      var label = Array.isArray(v) ? "A" + v[0] + " " + rgbaStr(v) : v;
+      var bg = Array.isArray(v) ? "linear-gradient(" + css + "," + css + ")," + t.Bg : css;
+      html += '<div class="sw"><div class="chip-c" style="background:' + bg + '"></div><div class="meta"><b>HDToolTheme.' + k +
+        '</b><br>' + label + '<br>' + ROLES[k] + '</div></div>';
+    });
+    $("swGrid").innerHTML = html;
+  }
+
+  /* ---------- Sơ đồ kích thước Grids ---------- */
+  function drawDiagram() {
+    var svg = $("diag"); if (!svg) return;
+    var cs = getComputedStyle(document.body);
+    var ink = cs.getPropertyValue("--Text2").trim(), acc = cs.getPropertyValue("--Accent").trim(),
+        dim = cs.getPropertyValue("--Warn").trim(), mut = cs.getPropertyValue("--Text3").trim();
+    var crop = { x:110, y:70, w:280, h:190 };
+    var pxPerMm = 48 / 1000; /* 1000 mm = 48 px trên sơ đồ */
+    var off = Math.max(0, Math.min(1600, state.offset)) * pxPerMm;
+    var gx = [150, 230, 310, 350], gy = [110, 180, 230];
+    var s = "";
+    s += '<defs><marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1L9 5L0 9z" fill="' + dim + '"/></marker></defs>';
+    s += '<rect x="' + crop.x + '" y="' + crop.y + '" width="' + crop.w + '" height="' + crop.h + '" fill="none" stroke="' + acc + '" stroke-width="1.4" stroke-dasharray="7 4"/>';
+    s += '<text x="' + (crop.x + 6) + '" y="' + (crop.y + crop.h - 6) + '" font-family="Consolas" font-size="10" fill="' + acc + '">CROP VIEW</text>';
+    function bubble(cx, cy, label) {
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="10" fill="none" stroke="' + ink + '" stroke-width="1.3"/>' +
+             '<text x="' + cx + '" y="' + (cy + 3.5) + '" font-family="Consolas" font-size="10" fill="' + ink + '" text-anchor="middle">' + label + '</text>';
+    }
+    var letters = ["1","2","3","4"], nums = ["A","B","C"];
+    gx.forEach(function (x, i) {
+      var y1 = state.dirs.T ? crop.y - off : crop.y - 30, y2 = state.dirs.B ? crop.y + crop.h + off : crop.y + crop.h + 30;
+      s += '<line x1="' + x + '" y1="' + (y1 + 10) + '" x2="' + x + '" y2="' + (y2 - 10) + '" stroke="' + ink + '" stroke-width="1" stroke-dasharray="14 3 2 3"/>';
+      s += bubble(x, y1, letters[i]) + bubble(x, y2, letters[i]);
+    });
+    gy.forEach(function (y, i) {
+      var x1 = state.dirs.L ? crop.x - off : crop.x - 30, x2 = state.dirs.R ? crop.x + crop.w + off : crop.x + crop.w + 30;
+      s += '<line x1="' + (x1 + 10) + '" y1="' + y + '" x2="' + (x2 - 10) + '" y2="' + y + '" stroke="' + ink + '" stroke-width="1" stroke-dasharray="14 3 2 3"/>';
+      s += bubble(x1, y, nums[i]) + bubble(x2, y, nums[i]);
+    });
+    /* Đường kích thước: mép Crop trên -> tâm bubble trục 4 */
+    if (state.dirs.T && off > 4) {
+      var dx = 420, yA = crop.y - off, yB = crop.y;
+      s += '<line x1="' + (crop.x + crop.w) + '" y1="' + yB + '" x2="' + (dx + 8) + '" y2="' + yB + '" stroke="' + mut + '" stroke-width=".8"/>';
+      s += '<line x1="' + (gx[3] + 12) + '" y1="' + yA + '" x2="' + (dx + 8) + '" y2="' + yA + '" stroke="' + mut + '" stroke-width=".8"/>';
+      s += '<line x1="' + dx + '" y1="' + yA + '" x2="' + dx + '" y2="' + yB + '" stroke="' + dim + '" stroke-width="1.2" marker-start="url(#arw)" marker-end="url(#arw)"/>';
+      s += '<text x="' + (dx + 8) + '" y="' + ((yA + yB) / 2 + 4) + '" font-family="Consolas" font-size="12" fill="' + dim + '">' + state.offset + '</text>';
+    }
+    if (state.dirs.L && off > 4) {
+      var dy = 296, xA = crop.x - off, xB = crop.x;
+      s += '<line x1="' + xB + '" y1="' + (crop.y + crop.h) + '" x2="' + xB + '" y2="' + (dy + 8) + '" stroke="' + mut + '" stroke-width=".8"/>';
+      s += '<line x1="' + xA + '" y1="' + (gy[2] + 12) + '" x2="' + xA + '" y2="' + (dy + 8) + '" stroke="' + mut + '" stroke-width=".8"/>';
+      s += '<line x1="' + xA + '" y1="' + dy + '" x2="' + xB + '" y2="' + dy + '" stroke="' + dim + '" stroke-width="1.2" marker-start="url(#arw)" marker-end="url(#arw)"/>';
+      s += '<text x="' + ((xA + xB) / 2) + '" y="' + (dy - 6) + '" font-family="Consolas" font-size="12" fill="' + dim + '" text-anchor="middle">' + state.offset + '</text>';
+    }
+    svg.innerHTML = s;
+    var n = Object.keys(state.dirs).filter(function (k) { return state.dirs[k]; }).length;
+    $("diagInfo").textContent = "OFFSET " + state.offset + " mm · " + n + " HƯỚNG";
+  }
+
+  /* ---------- Xuất mã C# 5 (không dùng cú pháp C# 6 trở lên) ---------- */
+  function hexToRgb(h) { h = h.replace("#", ""); return [parseInt(h.substr(0,2),16), parseInt(h.substr(2,2),16), parseInt(h.substr(4,2),16)]; }
+  function csColor(v) {
+    if (Array.isArray(v)) return "Color.FromArgb(" + v.join(", ") + ")";
+    var c = hexToRgb(v); return "Color.FromArgb(" + c.join(", ") + ")";
+  }
+  function buildCode() {
+    var b = TOKENS.blueprint, d = TOKENS.drafting, keys = Object.keys(b);
+    var L = [];
+    L.push("// HDToolTheme.cs — Sinh tự động từ HDTool_ThemeStudio.html (" + new Date().toISOString().slice(0,10) + ")");
+    L.push("// Chế độ đã chốt: " + (state.theme === "blueprint" ? "Blueprint Tối" : "Bản Vẽ Sáng"));
+    L.push("using System.Drawing;");
+    L.push("");
+    L.push("namespace HDTool");
+    L.push("{");
+    L.push("    public enum HDToolThemeMode { Blueprint, Drafting }");
+    L.push("");
+    L.push("    /// <summary>Bộ màu và font dùng chung cho toàn bộ Form HDTOOL (phong cách kỹ thuật).</summary>");
+    L.push("    public static class HDToolTheme");
+    L.push("    {");
+    L.push("        public static HDToolThemeMode Mode = HDToolThemeMode." + (state.theme === "blueprint" ? "Blueprint" : "Drafting") + ";");
+    L.push("        private static bool Dark { get { return Mode == HDToolThemeMode.Blueprint; } }");
+    L.push("");
+    keys.forEach(function (k) {
+      var pad = new Array(Math.max(2, 13 - k.length)).join(" ");
+      L.push("        public static Color " + k + pad + "{ get { return Dark ? " + csColor(b[k]) + " : " + csColor(d[k]) + "; } }");
+    });
+    L.push("");
+    L.push("        // Kích thước bố cục 4 tầng (px @ 96 DPI, tự nhân theo DPI qua AutoScaleMode.Dpi)");
+    L.push("        public const int HeaderHeight = 58;");
+    L.push("        public const int ToolbarHeight = 46;");
+    L.push("        public const int StatusHeight = 52;");
+    L.push("        public const int RowHeight = 26;");
+    L.push("        public const int ColumnHeaderHeight = 30;");
+    L.push("");
+    L.push("        // Font: chỉ Segoe UI (chữ) và Consolas (số, mã, kích thước)");
+    L.push("        public static readonly Font Title    = new Font(\"Segoe UI\", 12f, FontStyle.Bold);");
+    L.push("        public static readonly Font Body     = new Font(\"Segoe UI\", 9f, FontStyle.Regular);");
+    L.push("        public static readonly Font BodyBold = new Font(\"Segoe UI\", 9f, FontStyle.Bold);");
+    L.push("        public static readonly Font Caption  = new Font(\"Segoe UI\", 8.5f, FontStyle.Regular);");
+    L.push("        public static readonly Font Label    = new Font(\"Segoe UI\", 8f, FontStyle.Bold);");
+    L.push("        public static readonly Font Mono     = new Font(\"Consolas\", 9f, FontStyle.Regular);");
+    L.push("        public static readonly Font Readout  = new Font(\"Consolas\", 16f, FontStyle.Regular);");
+    L.push("");
+    L.push("        // Màu hệ thống ống gió (cố định theo mã hệ)");
+    L.push("        public static Color SystemColor(string code)");
+    L.push("        {");
+    L.push("            switch ((code ?? \"\").ToUpperInvariant())");
+    L.push("            {");
+    L.push("                case \"SA\": return Dark ? Color.FromArgb(43, 184, 232) : Color.FromArgb(11, 120, 166);");
+    L.push("                case \"RA\": return Dark ? Color.FromArgb(61, 214, 140) : Color.FromArgb(30, 158, 98);");
+    L.push("                case \"EA\": return Dark ? Color.FromArgb(242, 179, 61) : Color.FromArgb(183, 121, 31);");
+    L.push("                case \"OA\": return Dark ? Color.FromArgb(180, 140, 242) : Color.FromArgb(122, 79, 201);");
+    L.push("                default: return Text2;");
+    L.push("            }");
+    L.push("        }");
+    L.push("    }");
+    L.push("}");
+    return L.join("\n");
+  }
+
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.style.display = "block";
+    clearTimeout(toast._h); toast._h = setTimeout(function () { t.style.display = "none"; }, 2600);
+  }
+
+  /* ---------- Sự kiện ---------- */
+  $("segTheme").addEventListener("click", function (e) {
+    var v = e.target.getAttribute("data-v"); if (!v) return;
+    state.theme = v; save(); applyTheme();
+  });
+  $("segDpi").addEventListener("click", function (e) {
+    var v = e.target.getAttribute("data-v"); if (!v) return;
+    state.dpi = parseFloat(v); applyDpi();
+  });
+  $("tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    state.view = b.getAttribute("data-v"); save(); applyView();
+  });
+  $("offIn").addEventListener("input", function (e) {
+    var n = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10);
+    state.offset = isNaN(n) ? 0 : n; drawDiagram();
+  });
+  $("dirSeg").addEventListener("click", function (e) {
+    var d = e.target.getAttribute("data-d"); if (!d) return;
+    state.dirs[d] = !state.dirs[d]; e.target.classList.toggle("on", state.dirs[d]); drawDiagram();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".chk"), function (c) {
+    c.addEventListener("click", function () { c.classList.toggle("on"); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".radio-seg:not(#dirSeg)"), function (g) {
+    g.addEventListener("click", function (e) {
+      if (e.target.parentNode !== g) return;
+      Array.prototype.forEach.call(g.children, function (s) { s.classList.toggle("on", s === e.target); });
+    });
+  });
+  $("btnExport").addEventListener("click", function () {
+    $("code").textContent = buildCode();
+    $("mInfo").textContent = state.theme === "blueprint" ? "MẶC ĐỊNH: BLUEPRINT TỐI" : "MẶC ĐỊNH: BẢN VẼ SÁNG";
+    $("modal").classList.add("on");
+  });
+  $("btnClose").addEventListener("click", function () { $("modal").classList.remove("on"); });
+  $("modal").addEventListener("click", function (e) { if (e.target === $("modal")) $("modal").classList.remove("on"); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") $("modal").classList.remove("on"); });
+  $("btnCopy").addEventListener("click", function () {
+    var txt = $("code").textContent;
+    function done() { toast("Đã sao chép HDToolTheme.cs. Gửi lại cho trợ lý để áp dụng vào Add-in."); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, function () { fallback(); });
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); done(); } catch (e) { toast("Không sao chép được, hãy bôi đen và Ctrl+C."); }
+      document.body.removeChild(ta);
+    }
+  });
+
+  applyTheme(); applyDpi(); applyView();
+})();
+</script>
+</body>
+</html>

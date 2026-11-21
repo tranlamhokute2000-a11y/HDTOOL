@@ -15,32 +15,19 @@ namespace HDTool
         private Document _doc;
         private Autodesk.Revit.DB.View _activeView;
 
-        // UI Controls
-        private System.Windows.Forms.Panel pnlHeader;
-        private Label lblTitle;
-        private Label lblSubtitle;
-
-        private GroupBox grpInfo;
-        private Label lblCurrentView;
-
-        private Button btnAutoCrop;
-        private Button btnCadToDuct;
-        private Button btnGrids;
-        private Button btnLevel;
-        private Button btnMepQuantity;
-        private Button btnSheetList;
-        private Button btnUpdateSheetList;
-        private Button btnReloadTool;
-        private Button btnSmart;
-        private Button btnExportCad;
-        private Button btnFamilyPalette;
+        // UI Controls (giao diện kỹ thuật - HDToolTheme)
+        private HDToolHeader hdrMain;
+        private System.Windows.Forms.Panel pnlContent;
+        private System.Windows.Forms.Panel pnlStatus;
+        private HDToolStatusText lblStatus;
         private Button btnClose;
+        private readonly List<System.Windows.Forms.Control> _flow = new List<System.Windows.Forms.Control>();
 
         public HDToolMainForm(UIDocument uidoc)
         {
             _uidoc = uidoc;
-            _doc = uidoc.Document;
-            _activeView = uidoc.ActiveView;
+            _doc = uidoc != null ? uidoc.Document : null;
+            _activeView = uidoc != null ? uidoc.ActiveView : null;
 
             InitializeComponent();
         }
@@ -49,279 +36,228 @@ namespace HDTool
         {
             this.SuspendLayout();
 
-            this.Text = "HDTOOL - Trung Tâm Điều Khiển Bản Vẽ Revit";
-            this.Size = new Size(540, 665);
+            this.Text = "HDTOOL — Trung Tâm Điều Khiển";
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.TopMost = true;
-            this.BackColor = Color.FromArgb(245, 247, 250);
-            this.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
+            this.BackColor = HDToolTheme.Bg;
+            this.Font = HDToolTheme.Body;
+            this.ClientSize = new Size(560, 760);
 
-            // 1. Header
-            pnlHeader = new System.Windows.Forms.Panel();
-            pnlHeader.Dock = DockStyle.Top;
-            pnlHeader.Height = 75;
-            pnlHeader.BackColor = Color.FromArgb(24, 43, 73);
+            // TẦNG 1: Header 58px
+            hdrMain = new HDToolHeader();
+            hdrMain.Code = "HDT-00";
+            hdrMain.Title = "TRUNG TÂM ĐIỀU KHIỂN";
+            hdrMain.Subtitle = "Chọn công cụ cần dùng · mọi cửa sổ đều Modeless";
 
-            lblTitle = new Label();
-            lblTitle.Text = "HDTOOL - ĐIỀU KHIỂN & CĂN CHỈNH BẢN VẼ";
-            lblTitle.ForeColor = Color.White;
-            lblTitle.Font = new Font("Segoe UI", 12.0f, FontStyle.Bold);
-            lblTitle.Location = new Point(16, 12);
-            lblTitle.AutoSize = true;
-
-            lblSubtitle = new Label();
-            lblSubtitle.Text = "Tùy chọn công cụ căn chỉnh khi cần (Chủ động lựa chọn - Không ép buộc tự động)";
-            lblSubtitle.ForeColor = Color.FromArgb(189, 195, 199);
-            lblSubtitle.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
-            lblSubtitle.Location = new Point(16, 42);
-            lblSubtitle.AutoSize = true;
-
-            PictureBox picLogo = new PictureBox();
-            picLogo.Size = new Size(130, 42);
-            picLogo.Location = new Point(385, 16);
-            picLogo.SizeMode = PictureBoxSizeMode.Zoom;
-            picLogo.BackColor = Color.White;
-            try
+            // TẦNG 4: Status 52px
+            pnlStatus = new System.Windows.Forms.Panel();
+            pnlStatus.Dock = DockStyle.Bottom;
+            pnlStatus.Height = HDToolTheme.StatusHeight;
+            pnlStatus.BackColor = HDToolTheme.Surface2;
+            pnlStatus.Paint += (s, e) =>
             {
-                using (System.IO.Stream stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("hadomee_logo.png"))
-                {
-                    if (stream != null)
-                    {
-                        picLogo.Image = Image.FromStream(stream);
-                    }
-                }
-            }
-            catch { }
+                using (Pen p = new Pen(HDToolTheme.Line)) e.Graphics.DrawLine(p, 0, 0, pnlStatus.Width, 0);
+            };
 
-            pnlHeader.Controls.Add(lblTitle);
-            pnlHeader.Controls.Add(lblSubtitle);
-            pnlHeader.Controls.Add(picLogo);
-
-            // 2. View Info
-            grpInfo = new GroupBox();
-            grpInfo.Text = "View / Sheet Đang Mở Hiện Tại";
-            grpInfo.Location = new Point(16, 85);
-            grpInfo.Size = new Size(492, 58);
-            grpInfo.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            grpInfo.ForeColor = Color.FromArgb(44, 62, 80);
-
-            lblCurrentView = new Label();
-            lblCurrentView.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
-            lblCurrentView.ForeColor = Color.FromArgb(52, 73, 94);
-            lblCurrentView.Location = new Point(12, 22);
-            lblCurrentView.Size = new Size(465, 28);
-            if (_activeView != null)
-            {
-                lblCurrentView.Text = string.Format("Tên: {0}  |  Loại: {1}  |  Tỷ lệ: 1:{2}",
-                    _activeView.Name, _activeView.ViewType.ToString(), _activeView.Scale);
-            }
-            grpInfo.Controls.Add(lblCurrentView);
-
-            // 3. Button 0: Tự Động Crop View (MỚI THEO LỆNH SẾP HỒ)
-            btnAutoCrop = new Button();
-            btnAutoCrop.Location = new Point(16, 150);
-            btnAutoCrop.Size = new Size(492, 54);
-            btnAutoCrop.BackColor = Color.FromArgb(225, 29, 72); // Rose 600
-            btnAutoCrop.ForeColor = Color.White;
-            btnAutoCrop.FlatStyle = FlatStyle.Flat;
-            btnAutoCrop.FlatAppearance.BorderSize = 0;
-            btnAutoCrop.Cursor = Cursors.Hand;
-            btnAutoCrop.TextAlign = ContentAlignment.MiddleLeft;
-            btnAutoCrop.Padding = new Padding(15, 0, 0, 0);
-            btnAutoCrop.Text = "1. TỰ ĐỘNG CROP VIEW (AUTO CROP BOX - MỚI)\r\n" +
-                               "      Tự động tính Bounding Box ôm khít toàn bộ đối tượng trong View vừa tạo (SĐKG 3D, Plan)";
-            btnAutoCrop.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnAutoCrop.Click += BtnAutoCrop_Click;
-
-            // 4. Button 1: Căn Chỉnh Grids
-            btnGrids = new Button();
-            btnGrids.Location = new Point(16, 210);
-            btnGrids.Size = new Size(492, 54);
-            btnGrids.BackColor = Color.FromArgb(39, 174, 96);
-            btnGrids.ForeColor = Color.White;
-            btnGrids.FlatStyle = FlatStyle.Flat;
-            btnGrids.FlatAppearance.BorderSize = 0;
-            btnGrids.Cursor = Cursors.Hand;
-            btnGrids.TextAlign = ContentAlignment.MiddleLeft;
-            btnGrids.Padding = new Padding(15, 0, 0, 0);
-            btnGrids.Text = "1. CĂN CHỈNH LƯỚI TRỤC (GRIDS)\r\n" +
-                            "      Mặt bằng & Sheet - Nhập thông số 4 hướng Top, Bottom, Left, Right (mm)";
-            btnGrids.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnGrids.Click += BtnGrids_Click;
-
-            // 4. Button 2: Căn Chỉnh Level
-            btnLevel = new Button();
-            btnLevel.Location = new Point(16, 270);
-            btnLevel.Size = new Size(492, 54);
-            btnLevel.BackColor = Color.FromArgb(41, 128, 185);
-            btnLevel.ForeColor = Color.White;
-            btnLevel.FlatStyle = FlatStyle.Flat;
-            btnLevel.FlatAppearance.BorderSize = 0;
-            btnLevel.Cursor = Cursors.Hand;
-            btnLevel.TextAlign = ContentAlignment.MiddleLeft;
-            btnLevel.Padding = new Padding(15, 0, 0, 0);
-            btnLevel.Text = "2. CĂN CHỈNH CAO ĐỘ (LEVEL)\r\n" +
-                            "      Mặt cắt, Mặt đứng & Sheet - Nhập khoảng cách 2 đầu thò ra (mm)";
-            btnLevel.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnLevel.Click += BtnLevel_Click;
-
-            // 5. Button 3: Thống Kê Khối Lượng Ống Nước & Phụ Kiện (Tính Năng Mới)
-            btnMepQuantity = new Button();
-            btnMepQuantity.Location = new Point(16, 330);
-            btnMepQuantity.Size = new Size(492, 56);
-            btnMepQuantity.BackColor = Color.FromArgb(2, 132, 199); // Sky Blue Accent
-            btnMepQuantity.ForeColor = Color.White;
-            btnMepQuantity.FlatStyle = FlatStyle.Flat;
-            btnMepQuantity.FlatAppearance.BorderSize = 0;
-            btnMepQuantity.Cursor = Cursors.Hand;
-            btnMepQuantity.TextAlign = ContentAlignment.MiddleLeft;
-            btnMepQuantity.Padding = new Padding(15, 0, 0, 0);
-            btnMepQuantity.Text = "3. THỐNG KÊ KHỐI LƯỢNG ỐNG NƯỚC & PHỤ KIỆN\r\n" +
-                                  "      Gộp 3 parameters phân mảnh làm 1 cột, quét chọn sáng đối tượng & đưa vào Sheet";
-            btnMepQuantity.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnMepQuantity.Click += BtnMepQuantity_Click;
-
-            // 6. Button 4: Xuất Danh Mục Bản Vẽ
-            btnSheetList = new Button();
-            btnSheetList.Location = new Point(16, 390);
-            btnSheetList.Size = new Size(492, 54);
-            btnSheetList.BackColor = Color.FromArgb(22, 160, 133);
-            btnSheetList.ForeColor = Color.White;
-            btnSheetList.FlatStyle = FlatStyle.Flat;
-            btnSheetList.FlatAppearance.BorderSize = 0;
-            btnSheetList.Cursor = Cursors.Hand;
-            btnSheetList.TextAlign = ContentAlignment.MiddleLeft;
-            btnSheetList.Padding = new Padding(15, 0, 0, 0);
-            btnSheetList.Text = "4. XUẤT DANH MỤC BẢN VẼ (SHEET LIST)\r\n" +
-                                "      Chọn các Sheet và trích xuất danh sách ra file Excel (.xls, .csv) hoặc Clipboard";
-            btnSheetList.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnSheetList.Click += BtnSheetList_Click;
-
-            // 7. Button 5: Cập Nhật Danh Mục Từ Excel
-            btnUpdateSheetList = new Button();
-            btnUpdateSheetList.Location = new Point(16, 450);
-            btnUpdateSheetList.Size = new Size(492, 54);
-            btnUpdateSheetList.BackColor = Color.FromArgb(211, 84, 0); // Orange Accent
-            btnUpdateSheetList.ForeColor = Color.White;
-            btnUpdateSheetList.FlatStyle = FlatStyle.Flat;
-            btnUpdateSheetList.FlatAppearance.BorderSize = 0;
-            btnUpdateSheetList.Cursor = Cursors.Hand;
-            btnUpdateSheetList.TextAlign = ContentAlignment.MiddleLeft;
-            btnUpdateSheetList.Padding = new Padding(15, 0, 0, 0);
-            btnUpdateSheetList.Text = "5. CẬP NHẬT DANH MỤC TỪ EXCEL (UPDATE SHEET LIST)\r\n" +
-                                      "      Đọc file Excel/CSV đã đổi tên và tự động cập nhật bản vẽ trong Revit";
-            btnUpdateSheetList.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnUpdateSheetList.Click += BtnUpdateSheetList_Click;
-
-            // 8. Button 6: Cập Nhật Tính Năng Mới (Hot Reload)
-            btnReloadTool = new Button();
-            btnReloadTool.Location = new Point(16, 510);
-            btnReloadTool.Size = new Size(492, 54);
-            btnReloadTool.BackColor = Color.FromArgb(100, 116, 139); // Slate Grey
-            btnReloadTool.ForeColor = Color.White;
-            btnReloadTool.FlatStyle = FlatStyle.Flat;
-            btnReloadTool.FlatAppearance.BorderSize = 0;
-            btnReloadTool.Cursor = Cursors.Hand;
-            btnReloadTool.TextAlign = ContentAlignment.MiddleLeft;
-            btnReloadTool.Padding = new Padding(15, 0, 0, 0);
-            btnReloadTool.Text = "6. CẬP NHẬT TÍNH NĂNG MỚI (HOT RELOAD TOOL)\r\n" +
-                                "      Nạp trực tiếp DLL mới vào Revit đang mở mà không cần tắt bản vẽ hay khởi động lại";
-            btnReloadTool.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnReloadTool.Click += BtnReloadTool_Click;
-
-            // 9. Button 7: Tự Động Theo View
-            btnSmart = new Button();
-            btnSmart.Location = new Point(16, 570);
-            btnSmart.Size = new Size(492, 44);
-            btnSmart.BackColor = Color.FromArgb(142, 68, 173); // Purple Accent
-            btnSmart.ForeColor = Color.White;
-            btnSmart.FlatStyle = FlatStyle.Flat;
-            btnSmart.FlatAppearance.BorderSize = 0;
-            btnSmart.Cursor = Cursors.Hand;
-            btnSmart.TextAlign = ContentAlignment.MiddleLeft;
-            btnSmart.Padding = new Padding(15, 0, 0, 0);
-            btnSmart.Text = "7. TỰ ĐỘNG CHỌN THEO VIEW HIỆN TẠI (Tùy chọn nhanh)\r\n" +
-                            "      Mặt bằng / Sheet ➔ Mở Grids  |  Mặt cắt / Mặt đứng ➔ Mở Level";
-            btnSmart.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            btnSmart.Click += BtnSmart_Click;
-
-            // Button 8: Dựng Ống Gió 3D Từ CAD Link
-            btnCadToDuct = new Button();
-            btnCadToDuct.Location = new Point(16, 622);
-            btnCadToDuct.Size = new Size(492, 52);
-            btnCadToDuct.BackColor = Color.FromArgb(12, 74, 110); // Deep Sky Navy
-            btnCadToDuct.ForeColor = Color.White;
-            btnCadToDuct.FlatStyle = FlatStyle.Flat;
-            btnCadToDuct.FlatAppearance.BorderSize = 0;
-            btnCadToDuct.Cursor = Cursors.Hand;
-            btnCadToDuct.TextAlign = ContentAlignment.MiddleLeft;
-            btnCadToDuct.Padding = new Padding(15, 0, 0, 0);
-            btnCadToDuct.Text = "8. DỰNG MÔ HÌNH ỐNG GIÓ 3D TỪ BẢN VẼ CAD LINK\r\n" +
-                                "      Nhận diện WxH, Côn đồng tâm, Cút, Chân rẽ Tap & Lan truyền BFS";
-            btnCadToDuct.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnCadToDuct.Click += BtnCadToDuct_Click;
-
-            // Button 9: Xuất CAD & Quy Đổi Layer MEP (MỚI THEO LỆNH SẾP HỒ)
-            btnExportCad = new Button();
-            btnExportCad.Location = new Point(16, 680);
-            btnExportCad.Size = new Size(492, 54);
-            btnExportCad.BackColor = Color.FromArgb(15, 118, 110); // Teal / Emerald Accent
-            btnExportCad.ForeColor = Color.White;
-            btnExportCad.FlatStyle = FlatStyle.Flat;
-            btnExportCad.FlatAppearance.BorderSize = 0;
-            btnExportCad.Cursor = Cursors.Hand;
-            btnExportCad.TextAlign = ContentAlignment.MiddleLeft;
-            btnExportCad.Padding = new Padding(15, 0, 0, 0);
-            btnExportCad.Text = "9. XUẤT CAD & QUY ĐỔI LAYER MEP (MẶT BẰNG / SHEET SANG DWG)\r\n" +
-                                "      Xuất trực tiếp View đang vẽ, Sheet hoặc View dự án & tự động quy đổi Layer/Màu/Nét MEP";
-            btnExportCad.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnExportCad.Click += BtnExportCad_Click;
-
-            // Button 10: Tổng Hợp Family 3D (Palette) (MỚI THEO LỆNH SẾP HỒ)
-            btnFamilyPalette = new Button();
-            btnFamilyPalette.Location = new Point(16, 740);
-            btnFamilyPalette.Size = new Size(492, 54);
-            btnFamilyPalette.BackColor = Color.FromArgb(14, 116, 144); // Cyan 700 Accent
-            btnFamilyPalette.ForeColor = Color.White;
-            btnFamilyPalette.FlatStyle = FlatStyle.Flat;
-            btnFamilyPalette.FlatAppearance.BorderSize = 0;
-            btnFamilyPalette.Cursor = Cursors.Hand;
-            btnFamilyPalette.TextAlign = ContentAlignment.MiddleLeft;
-            btnFamilyPalette.Padding = new Padding(15, 0, 0, 0);
-            btnFamilyPalette.Text = "10. TỔNG HỢP FAMILY CÓ TRONG DỰ ÁN (PALETTE 3D & KÉO THẢ)\r\n" +
-                                    "      Danh sách Family kèm ảnh 3D Isometric Preview, tìm kiếm & kéo đặt trực tiếp vào bản vẽ";
-            btnFamilyPalette.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnFamilyPalette.Click += BtnFamilyPalette_Click;
-
-            // 11. Button Close
             btnClose = new Button();
             btnClose.Text = "Đóng (ESC)";
-            btnClose.Location = new Point(16, 802);
-            btnClose.Size = new Size(492, 38);
-            btnClose.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
+            btnClose.AutoSize = true;
+            btnClose.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnClose.Padding = new Padding(12, 2, 12, 2);
+            btnClose.MinimumSize = new Size(0, 30);
+            btnClose.Font = HDToolTheme.Body;
             btnClose.Click += (s, e) => this.Close();
+            HDToolTheme.StyleButton(btnClose, HDToolButtonKind.Secondary);
             this.CancelButton = btnClose;
 
-            this.Controls.Add(pnlHeader);
-            this.Controls.Add(grpInfo);
-            this.Controls.Add(btnAutoCrop);
-            this.Controls.Add(btnGrids);
-            this.Controls.Add(btnLevel);
-            this.Controls.Add(btnMepQuantity);
-            this.Controls.Add(btnSheetList);
-            this.Controls.Add(btnUpdateSheetList);
-            this.Controls.Add(btnReloadTool);
-            this.Controls.Add(btnSmart);
-            this.Controls.Add(btnCadToDuct);
-            this.Controls.Add(btnExportCad);
-            this.Controls.Add(btnFamilyPalette);
-            this.Controls.Add(btnClose);
+            lblStatus = new HDToolStatusText();
+            lblStatus.Text = "SẴN SÀNG · 13 công cụ · HDTOOL";
+            pnlStatus.Controls.Add(lblStatus);
+            pnlStatus.Controls.Add(btnClose);
+            pnlStatus.Resize += (s, e) => LayoutStatus();
 
-            this.ClientSize = new Size(524, 855);
+            // TẦNG 3: Content (cuộn được, không bao giờ che khuất)
+            pnlContent = new System.Windows.Forms.Panel();
+            pnlContent.Dock = DockStyle.Fill;
+            pnlContent.AutoScroll = true;
+            pnlContent.BackColor = HDToolTheme.Bg;
+            pnlContent.Padding = new Padding(16, 14, 16, 16);
+
+            // Khung thông tin View đang mở
+            HDToolTickPanel pnlInfo = new HDToolTickPanel();
+            pnlInfo.Height = 74;
+            AddInfoLine(pnlInfo, 0, "VIEW", _activeView != null ? _activeView.Name : "—");
+            AddInfoLine(pnlInfo, 1, "LOẠI", _activeView != null ? _activeView.ViewType.ToString() : "—");
+            AddInfoLine(pnlInfo, 2, "TỶ LỆ", (_activeView != null && _activeView.Scale > 0) ? ("1 : " + _activeView.Scale) : "—");
+            AddFlow(pnlInfo, 16);
+
+            AddSection("01", "Căn chỉnh đối tượng");
+            AddGroup(new HDToolToolRow[] {
+                MakeRow("grid", "HDT-01A", "Căn Chỉnh Grids", "Căn đầu trục theo khoảng cách mm tới mép Crop View / Sheet", BtnGrids_Click),
+                MakeRow("level", "HDT-01B", "Căn Chỉnh Level", "Căn 2 đầu cao độ trên Mặt cắt / Mặt đứng / Sheet", BtnLevel_Click),
+                MakeRow("align", "HDT-01C", "Tự Nhận Theo View Đang Mở", "Plan / Sheet → Grids · Section / Elevation → Level", BtnSmart_Click),
+                MakeRow("crop", "HDT-02", "Tự Động Crop View", "Crop ôm khít đối tượng · Plan / Section / 3D / Sheet", BtnAutoCrop_Click)
+            });
+
+            AddSection("02", "Khối lượng MEP");
+            AddGroup(new HDToolToolRow[] {
+                MakeRow("pipe", "HDT-03", "Thống Kê Ống Nước", "Ống & phụ kiện · soi sáng mô hình · đưa vào Sheet", BtnMepQuantity_Click),
+                MakeRow("duct", "HDT-04", "Khối Lượng Ống Gió", "m² tôn theo TCVN 5687:2010 / SMACNA", BtnDuctQuantity_Click),
+                MakeRow("cad2duct", "HDT-05", "Dựng Ống Gió Từ CAD", "Nhận diện tuyến, size WxH · dựng mô hình 3D", BtnCadToDuct_Click)
+            });
+
+            AddSection("03", "Bản vẽ & Sheet");
+            AddGroup(new HDToolToolRow[] {
+                MakeRow("sheetlist", "HDT-06", "Xuất Danh Mục Bản Vẽ", "Excel / CSV / Clipboard · sửa số hiệu & tên trực tiếp", BtnSheetList_Click),
+                MakeRow("sheetsync", "HDT-07", "Cập Nhật Danh Mục", "Đối chiếu file Excel → cập nhật Sheet trong Revit", BtnUpdateSheetList_Click),
+                MakeRow("layers", "HDT-08", "Xuất CAD Quy Đổi Layer", "DWG · Layer & màu ACI theo hệ thống MEP", BtnExportCad_Click)
+            });
+
+            AddSection("04", "Thư viện & hệ thống");
+            AddGroup(new HDToolToolRow[] {
+                MakeRow("family", "HDT-09", "Tổng Hợp Family 3D", "Xem trước 3D · tìm nhanh · đặt vào bản vẽ", BtnFamilyPalette_Click),
+                MakeRow("update", "HDT-10", "Cập Nhật Tool", "Nạp phiên bản mới (Hot Reload) không cần tắt Revit", BtnReloadTool_Click)
+            });
+
+            pnlContent.Resize += (s, e) => LayoutFlow();
+
+            this.Controls.Add(pnlContent);
+            this.Controls.Add(pnlStatus);
+            this.Controls.Add(hdrMain);
+
             this.ResumeLayout(false);
+            this.Shown += (s, e) => { LayoutFlow(); LayoutStatus(); };
+        }
+
+        // ---------- Dựng bố cục dọc (tự co giãn theo chiều rộng khung chứa) ----------
+        private readonly Dictionary<System.Windows.Forms.Control, int> _gapAfter = new Dictionary<System.Windows.Forms.Control, int>();
+
+        private void AddFlow(System.Windows.Forms.Control c, int gapAfter)
+        {
+            pnlContent.Controls.Add(c);
+            _flow.Add(c);
+            _gapAfter[c] = gapAfter;
+        }
+
+        private void AddSection(string no, string text)
+        {
+            HDToolSectionLabel sec = new HDToolSectionLabel();
+            sec.Number = no;
+            sec.Text = text;
+            sec.Height = 28;
+            AddFlow(sec, 6);
+        }
+
+        private void AddGroup(HDToolToolRow[] rows)
+        {
+            System.Windows.Forms.Panel grp = new System.Windows.Forms.Panel();
+            grp.BackColor = HDToolTheme.Surface;
+            grp.Padding = new Padding(1);
+            grp.Paint += (s, e) =>
+            {
+                using (Pen p = new Pen(HDToolTheme.Line)) e.Graphics.DrawRectangle(p, 0, 0, grp.Width - 1, grp.Height - 1);
+            };
+            for (int i = rows.Length - 1; i >= 0; i--)
+            {
+                rows[i].Dock = DockStyle.Top;
+                rows[i].ShowBottomLine = i < rows.Length - 1;
+                grp.Controls.Add(rows[i]);
+            }
+            grp.Height = rows.Length * rows[0].Height + 2;
+            AddFlow(grp, 16);
+        }
+
+        private HDToolToolRow MakeRow(string icon, string code, string title, string desc, EventHandler onClick)
+        {
+            HDToolToolRow row = new HDToolToolRow();
+            row.IconKey = icon;
+            row.Code = code;
+            row.Title = title;
+            row.Description = desc;
+            row.Height = 46;
+            row.Click += onClick;
+            return row;
+        }
+
+        private void AddInfoLine(System.Windows.Forms.Panel host, int index, string key, string value)
+        {
+            Label k = new Label();
+            k.Text = key;
+            k.Font = HDToolTheme.LabelFont;
+            k.ForeColor = HDToolTheme.Text3;
+            k.BackColor = Color.Transparent;
+            k.AutoSize = false;
+            k.Location = new Point(14, 9 + index * 20);
+            k.Size = new Size(64, 18);
+            k.TextAlign = ContentAlignment.MiddleLeft;
+
+            Label v = new Label();
+            v.Text = value;
+            v.Font = HDToolTheme.Mono;
+            v.ForeColor = HDToolTheme.Text;
+            v.BackColor = Color.Transparent;
+            v.AutoSize = false;
+            v.AutoEllipsis = true;
+            v.Location = new Point(84, 9 + index * 20);
+            v.Size = new Size(400, 18);
+            v.TextAlign = ContentAlignment.MiddleLeft;
+            v.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+            host.Controls.Add(k);
+            host.Controls.Add(v);
+            host.Resize += (s, e) => { v.Width = Math.Max(40, host.ClientSize.Width - v.Left - 12); };
+        }
+
+        private void LayoutFlow()
+        {
+            if (pnlContent == null) return;
+            float sc = this.AutoScaleDimensions.Width > 0 ? this.CurrentAutoScaleDimensions.Width / this.AutoScaleDimensions.Width : 1f;
+            Point scroll = pnlContent.AutoScrollPosition;
+            int x = pnlContent.Padding.Left;
+            int w = Math.Max(100, pnlContent.ClientSize.Width - pnlContent.Padding.Horizontal);
+            int y = pnlContent.Padding.Top + scroll.Y;
+            foreach (System.Windows.Forms.Control c in _flow)
+            {
+                c.SetBounds(x, y, w, c.Height);
+                y += c.Height + (int)Math.Round(_gapAfter[c] * Math.Max(1f, sc));
+            }
+        }
+
+        private void LayoutStatus()
+        {
+            if (pnlStatus == null) return;
+            int pad = (int)Math.Round(12 * (this.AutoScaleDimensions.Width > 0 ? this.CurrentAutoScaleDimensions.Width / this.AutoScaleDimensions.Width : 1f));
+            btnClose.Location = new Point(pnlStatus.ClientSize.Width - btnClose.Width - pad, (pnlStatus.ClientSize.Height - btnClose.Height) / 2);
+            lblStatus.SetBounds(pad + 2, 0, Math.Max(40, btnClose.Left - pad * 2), pnlStatus.ClientSize.Height);
+        }
+
+        /// <summary>Mở Khối Lượng Ống Gió bằng đúng lệnh trên Ribbon (PostCommand) để dùng chung ExternalEvent của lệnh gốc.</summary>
+        private void BtnDuctQuantity_Click(object sender, EventArgs e)
+        {
+            PostRibbonCommand("Khối Lượng MEP", "cmdHDToolDuctQuantity", "Khối Lượng Ống Gió");
+        }
+
+        private void PostRibbonCommand(string panelName, string buttonName, string friendlyName)
+        {
+            HDToolModelessHost.EnsureInitialized();
+            HDToolModelessHost.Run(app =>
+            {
+                RevitCommandId id = null;
+                try { id = RevitCommandId.LookupCommandId("CustomCtrl_%CustomCtrl_%HDTOOL%" + panelName + "%" + buttonName); }
+                catch { }
+                if (id != null && app.CanPostCommand(id))
+                {
+                    app.PostCommand(id);
+                }
+                else
+                {
+                    TaskDialog.Show("HDTOOL", "Vui lòng mở \"" + friendlyName + "\" từ thanh Ribbon HDTOOL > " + panelName + ".");
+                }
+            });
+            this.Close();
         }
 
         private void BtnFamilyPalette_Click(object sender, EventArgs e)

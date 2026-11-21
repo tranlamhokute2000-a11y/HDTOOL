@@ -40,27 +40,21 @@ namespace HDTool
 
                     // Mục 1: Bảng điều khiển tích hợp Grids & Level
                     PushButtonData cmdCropAlignUnified_Data = new PushButtonData("cmdCropAlignUnified", "Căn Chỉnh Grids / Level", assemblyPath, "HDTool.CropAlignCommand");
-                    cmdCropAlignUnified_Data.LargeImage = ResourceHelper.CreateCropAlignCombinedIcon(32);
-                    cmdCropAlignUnified_Data.Image = ResourceHelper.CreateCropAlignCombinedIcon(16);
+                    cmdCropAlignUnified_Data.LargeImage = HDToolIcons.Ribbon("align", 32);
+                    cmdCropAlignUnified_Data.Image = HDToolIcons.Ribbon("align", 16);
                     cmdHDToolCropAlignSplit_Btn.AddPushButton(cmdCropAlignUnified_Data);
 
                     // Mục 2: Căn Grids
                     PushButtonData cmdGridCrop_Item_Data = new PushButtonData("cmdGridCrop_Item", "Căn Chỉnh Grids", assemblyPath, "HDTool.GridCropCommand");
-                    cmdGridCrop_Item_Data.LargeImage = ResourceHelper.CreateGridCropIcon(32);
-                    cmdGridCrop_Item_Data.Image = ResourceHelper.CreateGridCropIcon(16);
+                    cmdGridCrop_Item_Data.LargeImage = HDToolIcons.Ribbon("grid", 32);
+                    cmdGridCrop_Item_Data.Image = HDToolIcons.Ribbon("grid", 16);
                     cmdHDToolCropAlignSplit_Btn.AddPushButton(cmdGridCrop_Item_Data);
 
                     // Mục 3: Căn Level
                     PushButtonData cmdLevelCrop_Item_Data = new PushButtonData("cmdLevelCrop_Item", "Căn Chỉnh Level", assemblyPath, "HDTool.LevelCropCommand");
-                    cmdLevelCrop_Item_Data.LargeImage = ResourceHelper.CreateLevelCropIcon(32);
-                    cmdLevelCrop_Item_Data.Image = ResourceHelper.CreateLevelCropIcon(16);
+                    cmdLevelCrop_Item_Data.LargeImage = HDToolIcons.Ribbon("level", 32);
+                    cmdLevelCrop_Item_Data.Image = HDToolIcons.Ribbon("level", 16);
                     cmdHDToolCropAlignSplit_Btn.AddPushButton(cmdLevelCrop_Item_Data);
-
-                    // Mục 4: Tự Động Crop View (Menu con)
-                    PushButtonData cmdAutoCrop_SubItem_Data = new PushButtonData("cmdAutoCrop_SubItem", "Tự Động Crop View", assemblyPath, "HDTool.AutoCropCommand");
-                    cmdAutoCrop_SubItem_Data.LargeImage = ResourceHelper.CreateAutoCropIcon(32);
-                    cmdAutoCrop_SubItem_Data.Image = ResourceHelper.CreateAutoCropIcon(16);
-                    cmdHDToolCropAlignSplit_Btn.AddPushButton(cmdAutoCrop_SubItem_Data);
                 }
 
                 // PushButton Riêng Biệt (Lớn 32x32): TỰ ĐỘNG CROP VIEW (THEO LỆNH SẾP HỒ)
@@ -71,8 +65,8 @@ namespace HDTool
                     "HDTool.AutoCropCommand"
                 );
                 cmdHDToolAutoCrop_Data.ToolTip = "[HDTOOL] Tự động tạo và căn chỉnh Crop View bao quanh toàn bộ các đối tượng có trong View vừa tạo (Sơ đồ không gian 3D, Mặt bằng, Mặt cắt, Viewport trên Sheet).";
-                cmdHDToolAutoCrop_Data.LargeImage = ResourceHelper.CreateAutoCropIcon(32);
-                cmdHDToolAutoCrop_Data.Image = ResourceHelper.CreateAutoCropIcon(16);
+                cmdHDToolAutoCrop_Data.LargeImage = HDToolIcons.Ribbon("crop", 32);
+                cmdHDToolAutoCrop_Data.Image = HDToolIcons.Ribbon("crop", 16);
                 panel_1.AddItem(cmdHDToolAutoCrop_Data);
 
                 // ==================================================================
@@ -83,22 +77,22 @@ namespace HDTool
                 // PushButton: Thống Kê Ống Nước
                 PushButtonData cmdHDToolMepQuantity_Data = new PushButtonData("cmdHDToolMepQuantity", "Thống Kê\nỐng Nước", assemblyPath, "HDTool.MepQuantityCommand");
                 cmdHDToolMepQuantity_Data.ToolTip = "[HDTOOL] Thống kê khối lượng ống nước & phụ kiện: Gộp parameter, soi sáng mô hình và đưa vào Sheet.";
-                cmdHDToolMepQuantity_Data.LargeImage = ResourceHelper.CreateMepQuantityIcon(32);
-                cmdHDToolMepQuantity_Data.Image = ResourceHelper.CreateMepQuantityIcon(16);
+                cmdHDToolMepQuantity_Data.LargeImage = HDToolIcons.Ribbon("pipe", 32);
+                cmdHDToolMepQuantity_Data.Image = HDToolIcons.Ribbon("pipe", 16);
                 panel_2.AddItem(cmdHDToolMepQuantity_Data);
 
                 // PushButton: Khối Lượng Ống Gió
                 PushButtonData cmdHDToolDuctQuantity_Data = new PushButtonData("cmdHDToolDuctQuantity", "Khối Lượng\nỐng Gió", assemblyPath, "HDTool.DuctQuantityCommand");
                 cmdHDToolDuctQuantity_Data.ToolTip = "[HDTOOL] Thống kê khối lượng ống gió HVAC: Tính diện tích tôn m², phân loại cút, côn, lượn, van gió VCD và miệng gió.";
-                cmdHDToolDuctQuantity_Data.LargeImage = ResourceHelper.CreateDuctQuantityIcon(32);
-                cmdHDToolDuctQuantity_Data.Image = ResourceHelper.CreateDuctQuantityIcon(16);
+                cmdHDToolDuctQuantity_Data.LargeImage = HDToolIcons.Ribbon("duct", 32);
+                cmdHDToolDuctQuantity_Data.Image = HDToolIcons.Ribbon("duct", 16);
                 panel_2.AddItem(cmdHDToolDuctQuantity_Data);
 
                 // PushButton: Dựng Ống Gió Từ CAD Link (MỚI VERSION 70 - THEO LỆNH SẾP HỒ)
                 PushButtonData cmdHDToolCadToDuct_Data = new PushButtonData("cmdHDToolCadToDuct", "Dựng Ống Gió\nTừ CAD", assemblyPath, "HDTool.CadToDuctCommand");
                 cmdHDToolCadToDuct_Data.ToolTip = "[HDTOOL] Tự động nhận diện tuyến ống, size WxH, cút, côn đồng tâm, chân rẽ Tap và dựng lại mô hình 3D ống gió hoàn chỉnh từ bản vẽ CAD Link.";
-                cmdHDToolCadToDuct_Data.LargeImage = ResourceHelper.CreateCadToDuctIcon(32);
-                cmdHDToolCadToDuct_Data.Image = ResourceHelper.CreateCadToDuctIcon(16);
+                cmdHDToolCadToDuct_Data.LargeImage = HDToolIcons.Ribbon("cad2duct", 32);
+                cmdHDToolCadToDuct_Data.Image = HDToolIcons.Ribbon("cad2duct", 16);
                 panel_2.AddItem(cmdHDToolCadToDuct_Data);
 
                 // ==================================================================
@@ -109,22 +103,22 @@ namespace HDTool
                 // PushButton: Xuất Danh Mục Bản Vẽ
                 PushButtonData cmdHDToolSheetList_Data = new PushButtonData("cmdHDToolSheetList", "Xuất Danh Mục\nBản Vẽ", assemblyPath, "HDTool.ExportSheetListCommand");
                 cmdHDToolSheetList_Data.ToolTip = "[HDTOOL] Xuất danh mục bản vẽ (Sheet List) ra Excel (.xls, .csv) hoặc Clipboard.";
-                cmdHDToolSheetList_Data.LargeImage = ResourceHelper.CreateSheetListIcon(32);
-                cmdHDToolSheetList_Data.Image = ResourceHelper.CreateSheetListIcon(16);
+                cmdHDToolSheetList_Data.LargeImage = HDToolIcons.Ribbon("sheetlist", 32);
+                cmdHDToolSheetList_Data.Image = HDToolIcons.Ribbon("sheetlist", 16);
                 panel_3.AddItem(cmdHDToolSheetList_Data);
 
                 // PushButton: Cập Nhật Danh Mục
                 PushButtonData cmdHDToolUpdateSheetList_Data = new PushButtonData("cmdHDToolUpdateSheetList", "Cập Nhật\nDanh Mục", assemblyPath, "HDTool.UpdateSheetListCommand");
                 cmdHDToolUpdateSheetList_Data.ToolTip = "[HDTOOL] Cập nhật lại tên và thông tin Sheet trong Revit từ file Excel.";
-                cmdHDToolUpdateSheetList_Data.LargeImage = ResourceHelper.CreateUpdateSheetListIcon(32);
-                cmdHDToolUpdateSheetList_Data.Image = ResourceHelper.CreateUpdateSheetListIcon(16);
+                cmdHDToolUpdateSheetList_Data.LargeImage = HDToolIcons.Ribbon("sheetsync", 32);
+                cmdHDToolUpdateSheetList_Data.Image = HDToolIcons.Ribbon("sheetsync", 16);
                 panel_3.AddItem(cmdHDToolUpdateSheetList_Data);
 
                 // PushButton: Xuất CAD Quy Đổi Layer (MỚI THEO LỆNH SẾP HỒ)
                 PushButtonData cmdHDToolExportCad_Data = new PushButtonData("cmdHDToolExportCad", "Xuất CAD\nQuy Đổi Layer", assemblyPath, "HDTool.ExportCadCommand");
                 cmdHDToolExportCad_Data.ToolTip = "[HDTOOL] Xuất bản vẽ hoặc View đang vẽ sang AutoCAD (.dwg) & tự động quy đổi Layer/Màu/Nét chuẩn hệ thống MEP (Ducts, Pipes, Equipment).";
-                cmdHDToolExportCad_Data.LargeImage = ResourceHelper.CreateExportCadIcon(32);
-                cmdHDToolExportCad_Data.Image = ResourceHelper.CreateExportCadIcon(16);
+                cmdHDToolExportCad_Data.LargeImage = HDToolIcons.Ribbon("layers", 32);
+                cmdHDToolExportCad_Data.Image = HDToolIcons.Ribbon("layers", 16);
                 panel_3.AddItem(cmdHDToolExportCad_Data);
 
                 // ==================================================================
@@ -140,8 +134,8 @@ namespace HDTool
                     "HDTool.FamilyPaletteCommand"
                 );
                 cmdHDToolFamilyPalette_Data.ToolTip = "[HDTOOL] Palette trực quan tổng hợp toàn bộ Family trong dự án: Xem trước ảnh 3D Isometric, tìm kiếm nhanh và kéo/đặt trực tiếp vào bản vẽ Revit đang vẽ.";
-                cmdHDToolFamilyPalette_Data.LargeImage = ResourceHelper.CreateFamilyPaletteIcon(32);
-                cmdHDToolFamilyPalette_Data.Image = ResourceHelper.CreateFamilyPaletteIcon(16);
+                cmdHDToolFamilyPalette_Data.LargeImage = HDToolIcons.Ribbon("family", 32);
+                cmdHDToolFamilyPalette_Data.Image = HDToolIcons.Ribbon("family", 16);
                 panel_family.AddItem(cmdHDToolFamilyPalette_Data);
 
                 // ==================================================================
@@ -152,15 +146,15 @@ namespace HDTool
                 // PushButton: Cập Nhật Tool
                 PushButtonData cmdHDToolUpdateTool_Data = new PushButtonData("cmdHDToolUpdateTool", "Cập Nhật\nTool", assemblyPath, "HDTool.UpdateToolCommand");
                 cmdHDToolUpdateTool_Data.ToolTip = "[HDTOOL] Nạp lại tính năng mới / Hot Reload trực tiếp không cần tắt Revit.";
-                cmdHDToolUpdateTool_Data.LargeImage = ResourceHelper.CreateUpdateToolIcon(32);
-                cmdHDToolUpdateTool_Data.Image = ResourceHelper.CreateUpdateToolIcon(16);
+                cmdHDToolUpdateTool_Data.LargeImage = HDToolIcons.Ribbon("update", 32);
+                cmdHDToolUpdateTool_Data.Image = HDToolIcons.Ribbon("update", 16);
                 panel_4.AddItem(cmdHDToolUpdateTool_Data);
 
                 // PushButton: Menu HDTOOL
                 PushButtonData cmdHDToolMenu_Data = new PushButtonData("cmdHDToolMenu", "Menu\nHDTOOL", assemblyPath, "HDTool.HDToolMainCommand");
                 cmdHDToolMenu_Data.ToolTip = "[HDTOOL] Bảng điều khiển trung tâm: Tự do lựa chọn công cụ mong muốn.";
-                cmdHDToolMenu_Data.LargeImage = ResourceHelper.CreateHDToolMenuIcon(32);
-                cmdHDToolMenu_Data.Image = ResourceHelper.CreateHDToolMenuIcon(16);
+                cmdHDToolMenu_Data.LargeImage = HDToolIcons.Ribbon("menu", 32);
+                cmdHDToolMenu_Data.Image = HDToolIcons.Ribbon("menu", 16);
                 panel_4.AddItem(cmdHDToolMenu_Data);
 
                 // Dam bao CLR nhan dien Assembly dong cho Hot Reload
@@ -264,8 +258,8 @@ namespace HDTool
                                 "HDTool.AutoCropCommand"
                             );
                             btnData.ToolTip = "[HDTOOL] Tự động tạo và căn chỉnh Crop View bao quanh toàn bộ các đối tượng có trong View vừa tạo (Sơ đồ không gian 3D, Mặt bằng, Mặt cắt, Viewport trên Sheet).";
-                            btnData.LargeImage = ResourceHelper.CreateAutoCropIcon(32);
-                            btnData.Image = ResourceHelper.CreateAutoCropIcon(16);
+                            btnData.LargeImage = HDToolIcons.Ribbon("crop", 32);
+                            btnData.Image = HDToolIcons.Ribbon("crop", 16);
                             p.AddItem(btnData);
                         }
                         break;
@@ -323,8 +317,8 @@ namespace HDTool
 
                             PushButtonData btnData = new PushButtonData("cmdHDToolCadToDuct", "Dựng Ống Gió\nTừ CAD", assemblyPath, "HDTool.CadToDuctCommand");
                             btnData.ToolTip = "[HDTOOL] Tự động nhận diện tuyến ống, size WxH, cút, côn đồng tâm, chân rẽ Tap và dựng lại mô hình 3D ống gió hoàn chỉnh từ bản vẽ CAD Link.";
-                            btnData.LargeImage = ResourceHelper.CreateCadToDuctIcon(32);
-                            btnData.Image = ResourceHelper.CreateCadToDuctIcon(16);
+                            btnData.LargeImage = HDToolIcons.Ribbon("cad2duct", 32);
+                            btnData.Image = HDToolIcons.Ribbon("cad2duct", 16);
                             p.AddItem(btnData);
                         }
                         break;
@@ -379,8 +373,8 @@ namespace HDTool
 
                             PushButtonData btnData = new PushButtonData("cmdHDToolExportCad", "Xuất CAD\nQuy Đổi Layer", assemblyPath, "HDTool.ExportCadCommand");
                             btnData.ToolTip = "[HDTOOL] Xuất bản vẽ hoặc View đang vẽ sang AutoCAD (.dwg) & tự động quy đổi Layer/Màu/Nét chuẩn hệ thống MEP (Ducts, Pipes, Equipment).";
-                            btnData.LargeImage = ResourceHelper.CreateExportCadIcon(32);
-                            btnData.Image = ResourceHelper.CreateExportCadIcon(16);
+                            btnData.LargeImage = HDToolIcons.Ribbon("layers", 32);
+                            btnData.Image = HDToolIcons.Ribbon("layers", 16);
                             p.AddItem(btnData);
                         }
                         break;
@@ -477,8 +471,8 @@ namespace HDTool
                             "HDTool.FamilyPaletteCommand"
                         );
                         btnData.ToolTip = "[HDTOOL] Palette trực quan tổng hợp toàn bộ Family trong dự án: Xem trước ảnh 3D Isometric, tìm kiếm nhanh và kéo/đặt trực tiếp vào bản vẽ Revit đang vẽ.";
-                        btnData.LargeImage = ResourceHelper.CreateFamilyPaletteIcon(32);
-                        btnData.Image = ResourceHelper.CreateFamilyPaletteIcon(16);
+                        btnData.LargeImage = HDToolIcons.Ribbon("family", 32);
+                        btnData.Image = HDToolIcons.Ribbon("family", 16);
                         targetPanel.AddItem(btnData);
                     }
                 }

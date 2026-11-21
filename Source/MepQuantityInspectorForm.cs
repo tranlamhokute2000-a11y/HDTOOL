@@ -164,7 +164,7 @@ namespace HDTool
             _extEvent = extEvent;
             _handler = handler;
 
-            // Sáº¾P Há»’: Tá»± Ä‘á»™ng táº£i láº¡i toÃ n bá»™ tÃ¹y chá»n ngÆ°á»i dÃ¹ng Ä‘Ã£ lÆ°u á»Ÿ láº§n lÃ m viá»‡c trÆ°á»›c
+            // SẾP HỒ: Tự động tải lại toàn bộ tùy chọn người dùng đã lưu ở lần làm việc trước
             var settings = MepUserSettings.Instance;
             if (initialMode == MepQuantityFilterMode.All && settings.FilterMode != 0)
             {
@@ -783,7 +783,7 @@ namespace HDTool
             };
 
             radPipeSum = new RadioButton();
-            radPipeSum.Text = "Gom MÃ©t DÃ i (SUM)";
+            radPipeSum.Text = "Gom Mét Dài (SUM)";
             radPipeSum.Location = new Point(255, 2);
             radPipeSum.Size = new Size(115, 20);
             radPipeSum.Checked = false;
@@ -1209,7 +1209,7 @@ namespace HDTool
             dgvItems.Columns[8].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgvItems.Columns[9].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
-            // Sáº¾P Há»’: Tá»± Ä‘á»™ng khÃ´i phá»¥c Ä‘á»™ rá»™ng, thá»© tá»± kÃ©o tháº£ vÃ  áº©n/hiá»‡n cá»™t Ä‘Ã£ lÆ°u
+            // SẾP HỒ: Tự động khôi phục độ rộng, thứ tự kéo thả và ẩn/hiện cột đã lưu
             RestoreColumnSettings();
         }
 
@@ -1448,13 +1448,13 @@ namespace HDTool
 
                         if (_activeView is ViewSheet)
                         {
-                            // ÄANG á»ž TRÃŠN SHEET: Cho phÃ©p click chá»n thÃªm má»™t Viewport trÃªn Sheet
+                            // ĐANG Ở TRÊN SHEET: Cho phép click chọn thêm một Viewport trên Sheet
                             try
                             {
                                 Reference pickedRef = uidoc.Selection.PickObject(
                                     global::Autodesk.Revit.UI.Selection.ObjectType.Element,
                                     new SheetOrMepSelectionFilter(chkIncludePipes.Checked, chkIncludeFittings.Checked, true),
-                                    "HDTOOL: Click chuá»™t chá»n má»™t Viewport trÃªn Sheet Ä‘á»ƒ bÃ³c cá»™ng dá»“n toÃ n bá»™ Ä‘á»‘i tÆ°á»£ng trong View Ä‘Ã³..."
+                                    "HDTOOL: Click chuột chọn một Viewport trên Sheet để bóc cộng dồn toàn bộ đối tượng trong View đó..."
                                 );
 
                                 if (pickedRef != null && pickedRef.ElementId != ElementId.InvalidElementId)
@@ -1483,10 +1483,10 @@ namespace HDTool
                         }
                         else
                         {
-                            // TRONG VIEW MÃ” HÃŒNH: KÃ©o chuá»™t quÃ©t thÃªm má»™t khung chá»¯ nháº­t
+                            // TRONG VIEW MÔ HÌNH: Kéo chuột quét thêm một khung chữ nhật
                             IList<Element> picked = uidoc.Selection.PickElementsByRectangle(
                                 new SheetOrMepSelectionFilter(chkIncludePipes.Checked, chkIncludeFittings.Checked, false),
-                                "HDTOOL: KÃ©o chuá»™t quÃ©t thÃªm vÃ¹ng bá»• sung Ä‘á»ƒ bÃ³c cá»™ng dá»“n khá»‘i lÆ°á»£ng..."
+                                "HDTOOL: Kéo chuột quét thêm vùng bổ sung để bóc cộng dồn khối lượng..."
                             );
 
                             if (picked != null)
@@ -1524,7 +1524,7 @@ namespace HDTool
                                 }
 
                                 _customSelectionIds = idSet.ToList();
-                                radSelection.Text = string.Format("VÃ¹ng QuÃ©t Cá»¥c Bá»™ ({0} Ä‘.tÆ°á»£ng)", _customSelectionIds.Count);
+                                radSelection.Text = string.Format("Vùng Quét Cục Bộ ({0} đ.tượng)", _customSelectionIds.Count);
 
                                 chkIncludeFittings.Checked = true;
                                 chkIncludePipes.Checked = true;
@@ -1536,20 +1536,20 @@ namespace HDTool
                                 radSelection.Checked = true;
                                 LoadDataAndRefreshUi();
 
-                                // Tá»± Ä‘á»™ng highlight toÃ n bá»™ Ä‘á»‘i tÆ°á»£ng Ä‘Ã£ bÃ³c trÃªn mÃ n hÃ¬nh Revit
+                                // Tự động highlight toàn bộ đối tượng đã bóc trên màn hình Revit
                                 MepHighlightManager.HighlightElements(_uidoc, _customSelectionIds, new Autodesk.Revit.DB.Color(255, 69, 0), 5, false);
                                 lblHighlightStatus.ForeColor = Color.FromArgb(234, 88, 12);
-                                lblHighlightStatus.Text = string.Format("ÄÃƒ Tá»° Äá»˜NG HIGHLIGHT TOÃ€N Bá»˜ {0} Äá»I TÆ¯á»¢NG ÄÃƒ BÃ“C TRÃŠN MÃ€N HÃŒNH REVIT!", _customSelectionIds.Count);
+                                lblHighlightStatus.Text = string.Format("ĐÃ TỰ ĐỘNG HIGHLIGHT TOÀN BỘ {0} ĐỐI TƯỢNG ĐÃ BÓC TRÊN MÀN HÌNH REVIT!", _customSelectionIds.Count);
 
                                 string infoMsg = !string.IsNullOrEmpty(detectedAppendName)
-                                    ? string.Format("ÄÃ£ bÃ³c thÃªm thÃ nh cÃ´ng tá»« View '{0}': {1} Ä‘á»‘i tÆ°á»£ng má»›i!\n\nTá»•ng cá»™ng hiá»‡n táº¡i: {2} Ä‘á»‘i tÆ°á»£ng.", detectedAppendName, addedCount, _customSelectionIds.Count)
-                                    : string.Format("ÄÃ£ bÃ³c thÃªm thÃ nh cÃ´ng {0} Ä‘á»‘i tÆ°á»£ng má»›i!\n\nTá»•ng cá»™ng hiá»‡n táº¡i: {1} Ä‘á»‘i tÆ°á»£ng.", addedCount, _customSelectionIds.Count);
+                                    ? string.Format("Đã bóc thêm thành công từ View '{0}': {1} đối tượng mới!\n\nTổng cộng hiện tại: {2} đối tượng.", detectedAppendName, addedCount, _customSelectionIds.Count)
+                                    : string.Format("Đã bóc thêm thành công {0} đối tượng mới!\n\nTổng cộng hiện tại: {1} đối tượng.", addedCount, _customSelectionIds.Count);
 
-                                MessageBox.Show(infoMsg, "BÃ³c ThÃªm ThÃ nh CÃ´ng", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                MessageBox.Show(infoMsg, "Bóc Thêm Thành Công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
                             else
                             {
-                                MessageBox.Show("KhÃ´ng tÃ¬m tháº¥y phá»¥ kiá»‡n hoáº·c Ä‘Æ°á»ng á»‘ng má»›i nÃ o trong View hoáº·c vÃ¹ng vá»«a chá»n thÃªm.", "ThÃ´ng BÃ¡o", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                MessageBox.Show("Không tìm thấy phụ kiện hoặc đường ống mới nào trong View hoặc vùng vừa chọn thêm.", "Thông Báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
                         });
                     }
@@ -1571,7 +1571,7 @@ namespace HDTool
                             this.WindowState = FormWindowState.Normal;
                             this.BringToFront();
                             this.Activate();
-                            MessageBox.Show("Lá»—i bÃ³c thÃªm Ä‘á»‘i tÆ°á»£ng: " + ex.Message, "HDTOOL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            MessageBox.Show("Lỗi bóc thêm đối tượng: " + ex.Message, "HDTOOL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         });
                     }
                 };
@@ -3669,7 +3669,7 @@ namespace HDTool
                     }
                     else
                     {
-                        MessageBox.Show("Vui lÃ²ng chá»n má»™t Sheet trong danh sÃ¡ch.", "ThÃ´ng BÃ¡o", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Vui lòng chọn một Sheet trong danh sách.", "Thông Báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             };

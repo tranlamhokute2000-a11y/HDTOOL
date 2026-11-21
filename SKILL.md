@@ -4,7 +4,7 @@ description: >-
   HDTOOL (Revit 2024–2027): Auto Crop (Vertex-Exact + Liang-Barsky), căn Grids/Level; CAD-to-Duct BIM (trích DWG accoreconsole, lọc giả 4 tầng, tách tuyến giao chéo, ống chính + Transition + Tap ưu tiên Family sẵn, chuẩn WxH); Khối lượng Ống gió TCVN/SMACNA & Ống nước (Live Tracking); Quản lý Sheet & Xuất CAD Quy Đổi Layer MEP (View đang vẽ / Sheet / View dự án; tự động chuyển đổi đối tượng sang đúng Layer & Màu sắc ACI qua AutoLISP entmake/entmod; tự động lưu và nạp cấu hình mặc định); Tổng Hợp Family 3D (Palette Bảng Ô Cột Siêu Mượt, Toolbar Khoa Học Dropdown, Lazy Load 3D Preview, Click/Double-Click Đặt Vào Bản Vẽ); 100% Modeless, ESC thoát lệnh & Hot Reload.
 ---
 
-# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 108)
+# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 109)
 
 ## 1. Kiến Trúc & Quy Chuẩn Bắt Buộc
 - **Build & Đóng gói**: Biên dịch thuần bằng `csc.exe` (C# 5, `.NET Framework 4.8`) qua `Build.ps1` -> `Build/HDTOOL.dll` và bộ cài độc lập `HDTOOL_Setup_Version_{N}.exe` (không dùng MSBuild/`.csproj`).
@@ -15,7 +15,14 @@ description: >-
 - **Ghi đúng dự án gốc**: Trong lambda ExternalEvent luôn lấy `HDToolModelessHost.ResolveOwnerDocument(_doc)` (dự án Form được mở), KHÔNG dùng `app.ActiveUIDocument.Document` (người dùng có thể đã chuyển sang dự án khác). Trả về `null` nếu dự án gốc đã đóng -> dừng và báo.
 - **Transaction nhiều pha (đổi số Sheet qua mã tạm `HD_TMP_`)**: có lỗi ở bất kỳ phần tử nào -> `RollBack` toàn bộ; trạng thái trong bảng chỉ cập nhật sau `Commit` thành công.
 - **Tương thích API 2026+**: Dùng `ElementId.Value` (`long`), không dùng `ElementId.IntegerValue` (đã bị loại bỏ); Category Id ép `(int)id.Value` khi cần `BuiltInCategory`.
-- **UI & Lưu Trữ**: Dùng `TableLayoutPanel` 4 tầng chống che khuất 100%, thiết lập `SplitterDistance` an toàn trong `OnShown`, tự co giãn `AdjustInspectorLayout` chống tràn nút/cắt chữ, tuyệt đối không dùng emoji gây lỗi ô vuông (``); lưu trữ chỉ giữ các bản mới nhất trong thư mục dự án, `0` file trên Desktop.
+- **UI & Lưu Trữ**: Dùng `TableLayoutPanel` 4 tầng chống che khuất 100%, thiết lập `SplitterDistance` an toàn trong `OnShown`, tự co giãn `AdjustInspectorLayout` chống tràn nút/cắt chữ, tuyệt đối không dùng emoji gây lỗi ô vuông; lưu trữ chỉ giữ các bản mới nhất trong thư mục dự án, `0` file trên Desktop.
+- **Giao diện kỹ thuật `HDToolTheme` (chế độ Bản Vẽ Sáng, chốt từ `PreviewStudio/HDTool_ThemeStudio.html`)**:
+  * `HDToolBaseForm`: `AutoScaleDimensions(96,96)` + `AutoScaleMode.Dpi` + `PerformAutoScale()` trong `OnLoad` (tự co giãn 125%/150%), rồi `HDToolTheme.ApplyTo(this)` khoác áo toàn Form.
+  * `ApplyTo` chỉ đổi màu được đặt tường minh (`ShouldSerializeBackColor/ForeColor`), giữ nguyên bố cục, sự kiện, logic; control thêm động được áp qua `ControlAdded`. Phân loại: nền tối -> `Header` (+ vạch nhấn 4px nếu là dải đầu Form), nền sáng -> `Bg`/`Surface`/`Surface2`, màu bão hòa -> `Accent`/`Ok`/`Warn`/`Err`; nút màu -> Primary, nút đỏ/"Xóa" -> Danger, còn lại Secondary; TextBox giữ chữ xám placeholder (`Color.Gray`) vì code so sánh màu này.
+  * `StyleGrid`: tiêu đề `Surface2` + vạch Accent 2px, không xuống dòng; dòng 26px xen màu `RowAlt`; cột số / kích thước / mã -> Consolas; cột `System`/"Hệ Thống" vẽ chip màu SA/RA/EA/OA (`SystemCodeFromName`). Không đổi `HeaderText` (MepQuantityInspector dùng HeaderText làm tên Parameter).
+  * Token: `Bg, Surface, Surface2, Header, Line, LineStrong, Text, Text2, Text3, Accent (11,120,166), AccentSoft, Ok, Warn, Err, RowAlt, Input, GridMinor/Major`. Font chỉ `Segoe UI` + `Consolas`.
+  * Control tự vẽ dùng chung (`HDToolPaintedControl`): `HDToolHeader` (mã HDT-xx, tiêu đề, mô tả, "ESC · ĐÓNG"), `HDToolSectionLabel` ("01 TIÊU ĐỀ" + thước vạch), `HDToolToolRow`, `HDToolTickPanel` (góc ngắm), `HDToolStatusText` (dòng lệnh kiểu CAD). Mọi `TextRenderer.DrawText` phải có `NoPrefix` (không thì "&" thành gạch chân).
+  * Icon `HDToolIcons` (vector GDI+ lưới 32, nét mực + 1 điểm nhấn Accent; khóa `align, grid, level, crop, pipe, duct, cad2duct, sheetlist, sheetsync, layers, family, update, menu`); `HDToolIcons.Ribbon(key, size)` vẽ theo DPI màn hình và đổi màu theo `UIThemeManager.CurrentTheme` (Sáng/Tối Revit).
 
 ---
 
@@ -88,13 +95,15 @@ description: >-
 ---
 
 ### Panel 5 — Hệ Thống & Menu
-- `HDToolMainForm` (Menu trung tâm điều phối công cụ) và `UpdateToolForm` / `ToolHotReloadManager` (cập nhật DLL nóng trực tiếp trong Revit).
+- `HDToolMainForm` (Menu trung tâm `HDT-00`): danh sách công cụ đánh mã theo nhóm Panel — 01 Căn chỉnh (`HDT-01A` Grids, `HDT-01B` Level, `HDT-01C` Tự nhận theo View, `HDT-02` Crop View), 02 Khối lượng MEP (`HDT-03` Ống nước, `HDT-04` Ống gió qua `PostCommand` lệnh Ribbon `CustomCtrl_%CustomCtrl_%HDTOOL%Khối Lượng MEP%cmdHDToolDuctQuantity`, `HDT-05` CAD→Ống gió), 03 Bản vẽ & Sheet (`HDT-06..08`), 04 Thư viện & hệ thống (`HDT-09` Family, `HDT-10` Cập nhật tool).
+- `UpdateToolForm` / `ToolHotReloadManager` (cập nhật DLL nóng trực tiếp trong Revit).
+- Ribbon Panel 1: SplitButton "Căn Chỉnh Grids / Level" gồm 3 mục (Bảng tích hợp, Grids, Level) + nút lớn riêng "Tự Động Crop View" (không lặp Crop trong SplitButton).
 
 ---
 
 ## 3. Bản Đồ Mã Nguồn & Vị Trí File
 - Thư mục gốc: `c:\Users\Nguye\Desktop\ADDIN REVIT`
-- **File cài đặt chính thức**: `HDTOOL_Setup_Version_108.exe`
+- **File cài đặt chính thức**: `HDTOOL_Setup_Version_109.exe`
 - **Bộ cài & Lưu trữ**: Chỉ lưu các bản mới nhất trong thư mục dự án.
 - **Core Files Palette Family**: `Source/FamilyPaletteCommand.cs`, `Source/FamilyPaletteForm.cs`, `Source/FamilyPaletteService.cs`, `Source/FamilyPaletteModels.cs`.
 - **Core Files Xuất CAD & Layer**: `Source/ExportCadCommand.cs`, `Source/ExportCadOptionsForm.cs`, `Source/CadExportMepService.cs`, `Source/CadLayerMappingModels.cs`.

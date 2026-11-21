@@ -1028,8 +1028,8 @@ namespace HDTool
             }
             else
             {
-                // B. QUÃ‰T THEO VIEW HOáº¶C TOÃ€N Bá»˜ Dá»° ÃN
-                // Tá»± Ä‘á»™ng nháº­n diá»‡n náº¿u ActiveView lÃ  Sheet: QuÃ©t gom toÃ n bá»™ Model Viewports trÃªn Sheet Ä‘Ã³
+                // B. QUÉT THEO VIEW HOẶC TOÀN BỘ DỰ ÁN
+                // Tự động nhận diện nếu ActiveView là Sheet: Quét gom toàn bộ Model Viewports trên Sheet đó
                 List<Autodesk.Revit.DB.View> viewsToScan = new List<Autodesk.Revit.DB.View>();
                 bool isSheetScan = currentViewOnly && activeView is ViewSheet;
 
@@ -1059,7 +1059,7 @@ namespace HDTool
                     viewsToScan.Add(activeView);
                 }
 
-                // 1. Phá»¥ Kiá»‡n á»ng & Van (Pipe Fittings & Accessories)
+                // 1. Phụ Kiện Ống & Van (Pipe Fittings & Accessories)
                 if (includeFittings)
                 {
                     if (currentViewOnly)
@@ -1074,7 +1074,7 @@ namespace HDTool
 
                             foreach (Element el in fittings)
                             {
-                                ProcessFittingElement(doc, el, groupDict, "Phá»¥ Kiá»‡n á»ng");
+                                ProcessFittingElement(doc, el, groupDict, "Phụ Kiện Ống");
                             }
 
                             FilteredElementCollector accCol = new FilteredElementCollector(doc, targetV.Id);
@@ -1085,7 +1085,7 @@ namespace HDTool
 
                             foreach (Element el in accessories)
                             {
-                                ProcessFittingElement(doc, el, groupDict, "Phá»¥ Kiá»‡n Van");
+                                ProcessFittingElement(doc, el, groupDict, "Phụ Kiện Van");
                             }
                         }
                     }
@@ -1099,7 +1099,7 @@ namespace HDTool
 
                         foreach (Element el in fittings)
                         {
-                            ProcessFittingElement(doc, el, groupDict, "Phá»¥ Kiá»‡n á»ng");
+                            ProcessFittingElement(doc, el, groupDict, "Phụ Kiện Ống");
                         }
 
                         FilteredElementCollector accCol = new FilteredElementCollector(doc);
@@ -1109,11 +1109,11 @@ namespace HDTool
                             .ToElements();
 
                         foreach (Element el in accessories)
-                            ProcessFittingElement(doc, el, groupDict, "Phá»¥ Kiá»‡n Van");
+                            ProcessFittingElement(doc, el, groupDict, "Phụ Kiện Van");
                     }
                 }
 
-                // 2. ÄÆ°á»ng á»ng (Pipes)
+                // 2. Đường Ống (Pipes)
                 if (includePipes)
                 {
                     if (currentViewOnly)

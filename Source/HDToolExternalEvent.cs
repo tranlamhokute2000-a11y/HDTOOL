@@ -296,7 +296,19 @@ namespace HDTool
         public HDToolBaseForm()
         {
             this.KeyPreview = true;
+            // Tự co giãn bố cục theo DPI Windows (125% / 150%...): kích thước control tính theo 96 DPI sẽ được nhân đúng tỷ lệ,
+            // khớp với font (pt) vốn đã tự to lên -> không còn chữ bị cắt / đè.
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = AutoScaleMode.Dpi;
             HDToolEscapeMessageFilter.EnsureRegistered();
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            try { this.PerformAutoScale(); } catch { }
+            // Khoác giao diện kỹ thuật (HDToolTheme - Bản Vẽ Sáng) cho toàn bộ control của Form
+            HDToolTheme.ApplyTo(this);
         }
 
         protected override void OnShown(EventArgs e)
