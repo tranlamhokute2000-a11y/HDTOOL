@@ -176,7 +176,7 @@ namespace HDTool
             cmbCadLinks.SelectedIndexChanged += CmbCadLinks_SelectedIndexChanged;
 
             btnPickCadLink = new System.Windows.Forms.Button();
-            btnPickCadLink.Text = "🎯 Pick CAD";
+            btnPickCadLink.Text = "Pick CAD";
             btnPickCadLink.Location = new Point(413, 22);
             btnPickCadLink.Size = new Size(95, 28);
             btnPickCadLink.BackColor = Color.FromArgb(224, 231, 255);
@@ -213,7 +213,7 @@ namespace HDTool
             grpActions.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
             btnPickChain = new System.Windows.Forms.Button();
-            btnPickChain.Text = "🎯 PICK CHỌN HÌNH VẼ TUYẾN ỐNG TRÊN CAD LINK";
+            btnPickChain.Text = "PICK CHỌN HÌNH VẼ TUYẾN ỐNG TRÊN CAD LINK";
             btnPickChain.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             btnPickChain.Location = new Point(12, 21);
             btnPickChain.Size = new Size(430, 36);
@@ -236,7 +236,7 @@ namespace HDTool
             toolTip.SetToolTip(btnPickRegion, "Quét chọn một vùng chữ nhật chứa hệ thống ống gió (tự động tách riêng các tuyến đi ngang qua nhau / khác hệ thống)");
 
             btnScanAll = new System.Windows.Forms.Button();
-            btnScanAll.Text = "🌐 Quét Toàn Bộ CAD";
+            btnScanAll.Text = "Quét Toàn Bộ CAD";
             btnScanAll.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnScanAll.Location = new Point(653, 21);
             btnScanAll.Size = new Size(191, 36);
@@ -411,7 +411,7 @@ namespace HDTool
             lblStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
             btnBuild = new System.Windows.Forms.Button();
-            btnBuild.Text = "🚀 DỰNG MÔ HÌNH REVIT 3D";
+            btnBuild.Text = "DỰNG MÔ HÌNH REVIT 3D";
             btnBuild.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnBuild.Location = new Point(568, 658);
             btnBuild.Size = new Size(210, 40);
@@ -903,7 +903,7 @@ namespace HDTool
             double centerElevMm = TryParseElevationMm(out parsedElev) ? parsedElev : 0;
             string selectedLayer = GetSelectedLayerSafe();
 
-            SetStatus(Color.FromArgb(2, 132, 199), "⏳ Đang nhận diện hình học (Ống, Côn, Cút cong/góc, Chân rẽ) và trích xuất Text WxH từ file DWG gốc...");
+            SetStatus(Color.FromArgb(2, 132, 199), "Đang nhận diện hình học (Ống, Côn, Cút cong/góc, Chân rẽ) và trích xuất Text WxH từ file DWG gốc...");
 
             HDToolModelessHost.Run(uiapp =>
             {
@@ -1217,7 +1217,7 @@ namespace HDTool
             bool useConcentric = chkConcentric.Checked;
             bool useTap = chkTakeoffTap.Checked;
 
-            SetStatus(Color.FromArgb(2, 132, 199), "⏳ Đang dựng ống gió và tự động lắp côn thu, cút, chân rẽ trong Revit...");
+            SetStatus(Color.FromArgb(2, 132, 199), "Đang dựng ống gió và tự động lắp côn thu, cút, chân rẽ trong Revit...");
 
             HDToolModelessHost.Run(uiapp =>
             {

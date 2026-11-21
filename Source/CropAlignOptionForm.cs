@@ -324,7 +324,7 @@ namespace HDTool
         private void BuildTabGrids()
         {
             tabGrids = new TabPage();
-            tabGrids.Text = " 📐  CĂN CHỈNH LƯỚI TRỤC (GRIDS) ";
+            tabGrids.Text = " CĂN CHỈNH LƯỚI TRỤC (GRIDS) ";
             tabGrids.BackColor = Color.FromArgb(250, 252, 254);
             tabGrids.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
 
@@ -509,11 +509,11 @@ namespace HDTool
             btnGridAuto.Font = new Font("Segoe UI", 10.0f, FontStyle.Bold);
             if (_isSheet)
             {
-                btnGridAuto.Text = string.Format("⚡  TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS TRÊN SHEET ({0} VIEW)", _sheetPlanViews.Count);
+                btnGridAuto.Text = string.Format("TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS TRÊN SHEET ({0} VIEW)", _sheetPlanViews.Count);
             }
             else
             {
-                btnGridAuto.Text = "⚡  TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS THEO CROP VIEW";
+                btnGridAuto.Text = "TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS THEO CROP VIEW";
             }
             btnGridAuto.Click += BtnGridAuto_Click;
 
@@ -526,7 +526,7 @@ namespace HDTool
             btnGridPick.FlatAppearance.BorderSize = 0;
             btnGridPick.Cursor = Cursors.Hand;
             btnGridPick.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnGridPick.Text = "🎯  CLICK / QUÉT CHỌN GRIDS HOẶC CROP TRÊN MÀN HÌNH (PICK)";
+            btnGridPick.Text = "CLICK / QUÉT CHỌN GRIDS HOẶC CROP TRÊN MÀN HÌNH (PICK)";
             btnGridPick.Click += BtnGridPick_Click;
 
             tabGrids.Controls.Add(grpGridInputs);
@@ -538,7 +538,7 @@ namespace HDTool
         private void BuildTabLevel()
         {
             tabLevel = new TabPage();
-            tabLevel.Text = " 📏  CĂN CHỈNH CAO ĐỘ (LEVEL) ";
+            tabLevel.Text = " CĂN CHỈNH CAO ĐỘ (LEVEL) ";
             tabLevel.BackColor = Color.FromArgb(250, 252, 254);
             tabLevel.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
 
@@ -701,7 +701,7 @@ namespace HDTool
             btnLevelAuto.FlatAppearance.BorderSize = 0;
             btnLevelAuto.Cursor = Cursors.Hand;
             btnLevelAuto.Font = new Font("Segoe UI", 10.0f, FontStyle.Bold);
-            btnLevelAuto.Text = "⚡  TỰ ĐỘNG CĂN CHỈNH LEVEL (TẤT CẢ VIEW ĐÃ CHỌN)";
+            btnLevelAuto.Text = "TỰ ĐỘNG CĂN CHỈNH LEVEL (TẤT CẢ VIEW ĐÃ CHỌN)";
             btnLevelAuto.Click += BtnLevelAuto_Click;
 
             btnLevelPick = new Button();
@@ -713,7 +713,7 @@ namespace HDTool
             btnLevelPick.FlatAppearance.BorderSize = 0;
             btnLevelPick.Cursor = Cursors.Hand;
             btnLevelPick.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnLevelPick.Text = "🎯  CHỌN LEVEL / VIEWPORT TRÊN MÀN HÌNH (PICK)";
+            btnLevelPick.Text = "CHỌN LEVEL / VIEWPORT TRÊN MÀN HÌNH (PICK)";
             btnLevelPick.Click += BtnLevelPick_Click;
 
             tabLevel.Controls.Add(grpLevelViews);
@@ -1088,7 +1088,7 @@ namespace HDTool
         private void BuildTabAutoCrop()
         {
             tabAutoCrop = new TabPage();
-            tabAutoCrop.Text = " 🔲  TỰ ĐỘNG CROP VIEW ";
+            tabAutoCrop.Text = " TỰ ĐỘNG CROP VIEW ";
             tabAutoCrop.BackColor = Color.FromArgb(250, 252, 254);
             tabAutoCrop.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
 
@@ -1231,7 +1231,7 @@ namespace HDTool
             btnCropAuto.FlatAppearance.BorderSize = 0;
             btnCropAuto.Cursor = Cursors.Hand;
             btnCropAuto.Font = new Font("Segoe UI", 10.0f, FontStyle.Bold);
-            btnCropAuto.Text = "⚡  TỰ ĐỘNG FIT CROP VIEW (ÔM KHÍT TOÀN BỘ ĐỐI TƯỢNG)";
+            btnCropAuto.Text = "TỰ ĐỘNG FIT CROP VIEW (ÔM KHÍT TOÀN BỘ ĐỐI TƯỢNG)";
             btnCropAuto.Click += BtnCropAuto_Click;
 
             btnCropPick = new Button();
@@ -1243,7 +1243,7 @@ namespace HDTool
             btnCropPick.FlatAppearance.BorderSize = 0;
             btnCropPick.Cursor = Cursors.Hand;
             btnCropPick.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnCropPick.Text = "🎯  CLICK / QUÉT CHỌN CỤM ĐỐI TƯỢNG CẦN CROP (PICK)";
+            btnCropPick.Text = "CLICK / QUÉT CHỌN CỤM ĐỐI TƯỢNG CẦN CROP (PICK)";
             btnCropPick.Click += BtnCropPick_Click;
 
             tabAutoCrop.Controls.Add(grpCropInfo);

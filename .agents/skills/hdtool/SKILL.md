@@ -4,18 +4,22 @@ description: >-
   HDTOOL (Revit 2024–2027): Auto Crop (Vertex-Exact + Liang-Barsky), căn Grids/Level; CAD-to-Duct BIM (trích DWG accoreconsole, lọc giả 4 tầng, tách tuyến giao chéo, ống chính + Transition + Tap ưu tiên Family sẵn, chuẩn WxH); Khối lượng Ống gió TCVN/SMACNA & Ống nước (Live Tracking); Quản lý Sheet & Xuất CAD Quy Đổi Layer MEP (View đang vẽ / Sheet / View dự án; tự động chuyển đổi đối tượng sang đúng Layer & Màu sắc ACI qua AutoLISP entmake/entmod; tự động lưu và nạp cấu hình mặc định); Tổng Hợp Family 3D (Palette Bảng Ô Cột Siêu Mượt, Toolbar Khoa Học Dropdown, Lazy Load 3D Preview, Click/Double-Click Đặt Vào Bản Vẽ); 100% Modeless, ESC thoát lệnh & Hot Reload.
 ---
 
-# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 106)
+# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 108)
 
 ## 1. Kiến Trúc & Quy Chuẩn Bắt Buộc
 - **Build & Đóng gói**: Biên dịch thuần bằng `csc.exe` (C# 5, `.NET Framework 4.8`) qua `Build.ps1` -> `Build/HDTOOL.dll` và bộ cài độc lập `HDTOOL_Setup_Version_{N}.exe` (không dùng MSBuild/`.csproj`).
 - **Dynamic Ribbon & Hot Reload**: Tab `HDTOOL` gồm 5 Panel + Menu HDTOOL trung tâm. `ToolHotReloadManager` nạp `HDTOOL.dll` vào bộ nhớ (`byte[]` -> `AppDomain`) không khóa file (`HasActiveHotReloadAssembly`) và tự bơm nút mới (`EnsureAutoCropButtonDynamic`, `EnsureCadToDuctButtonDynamic`, `EnsureExportCadButtonDynamic`, `EnsureFamilyPaletteButtonDynamic`).
-- **Khởi động & Nạp Lệnh An Toàn**: File `HDTOOL.addin` đăng ký đầy đủ 17 Command (gồm `ExportCadCommand` và `FamilyPaletteCommand`).
-- **Modeless 100% & Thoát Phím `ESC`**: Mọi công cụ chạy qua `HDToolModelessHost` (tuyệt đối không dùng `ShowDialog()` khóa Revit) và mọi Form kế thừa `HDToolBaseForm` (`KeyPreview = true`, `ProcessCmdKey(Keys.Escape)`, gọi `Activate()` sau thao tác `Pick`).
+- **Khởi động & Nạp Lệnh An Toàn**: File `HDTOOL.addin` đăng ký 1 Application (`HDTool.App`) + 14 Command (gồm `ExportCadCommand` và `FamilyPaletteCommand`).
+- **Modeless 100% & Thoát Phím `ESC`**: Mọi công cụ chạy qua `HDToolModelessHost` (cửa sổ công cụ chính tuyệt đối không dùng `ShowDialog()` khóa Revit; chỉ hộp thoại con ngắn như chọn file/thư mục/màu được phép `ShowDialog(this)`) và mọi Form kế thừa `HDToolBaseForm` (`KeyPreview = true`, `ProcessCmdKey(Keys.Escape)`, gọi `Activate()` sau thao tác `Pick`).
+- **Revit API chỉ chạy trong API context**: ExternalEvent dùng chung được khởi tạo sẵn trong `App.OnStartup`. Mọi thao tác Transaction/Pick/Selection/`ExternalEvent.Create` từ Form Modeless phải đi qua `HDToolModelessHost.Run(app => ...)`; nếu không có ExternalEvent thì báo `ReportNoApiContext()`, không bao giờ gọi API trực tiếp.
+- **Ghi đúng dự án gốc**: Trong lambda ExternalEvent luôn lấy `HDToolModelessHost.ResolveOwnerDocument(_doc)` (dự án Form được mở), KHÔNG dùng `app.ActiveUIDocument.Document` (người dùng có thể đã chuyển sang dự án khác). Trả về `null` nếu dự án gốc đã đóng -> dừng và báo.
+- **Transaction nhiều pha (đổi số Sheet qua mã tạm `HD_TMP_`)**: có lỗi ở bất kỳ phần tử nào -> `RollBack` toàn bộ; trạng thái trong bảng chỉ cập nhật sau `Commit` thành công.
+- **Tương thích API 2026+**: Dùng `ElementId.Value` (`long`), không dùng `ElementId.IntegerValue` (đã bị loại bỏ); Category Id ép `(int)id.Value` khi cần `BuiltInCategory`.
 - **UI & Lưu Trữ**: Dùng `TableLayoutPanel` 4 tầng chống che khuất 100%, thiết lập `SplitterDistance` an toàn trong `OnShown`, tự co giãn `AdjustInspectorLayout` chống tràn nút/cắt chữ, tuyệt đối không dùng emoji gây lỗi ô vuông (``); lưu trữ chỉ giữ các bản mới nhất trong thư mục dự án, `0` file trên Desktop.
 
 ---
 
-## 2. Hệ Thống Chức Năng (4 Panel Thực Tế)
+## 2. Hệ Thống Chức Năng (5 Panel Thực Tế)
 
 ### Panel 1 — Căn Chỉnh Đối Tượng
 1. **Auto Crop View (`AutoCrop`)**:
@@ -51,10 +55,10 @@ description: >-
      * Cấu hình `DWGExportOptions` + `ExportLayerTable` nạp sẵn Predefined Setup trong Document Revit, gán `ModifierType.Category` + `ModifierType.SystemType` cho mọi Category MEP để tách từng hệ thống sang Layer riêng biệt khi Revit xuất.
      * Xử lý hậu kỳ an toàn qua `accoreconsole.exe`: Copy DWG sang file tạm ASCII trong `%TEMP%` (tránh lỗi đường dẫn tiếng Việt và tránh khóa file), thực thi AutoLISP thuần túy (`entmake` & `entmod`) tạo Layer đích, gán mã màu ACI (1–255), chuyển đổi 100% đối tượng (entities) sang đúng Layer CAD đích và đổi thuộc tính màu về ByLayer (`256`).
    - **Ghi nhớ & Tự động nạp Cài Đặt Layer (Persistence)**:
-     * Tự động lưu toàn bộ bảng cấu hình Layer vào file JSON `%APPDATA%\Autodesk\Revit\Addins\HDTOOL\mep_cad_layer_mapping.json` sau mỗi lần xuất CAD thành công hoặc khi bấm nút `💾 Lưu Mặc Định`.
+     * Tự động lưu toàn bộ bảng cấu hình Layer vào file JSON `%APPDATA%\Autodesk\Revit\Addins\HDTOOL\mep_cad_layer_mapping.json` sau mỗi lần xuất CAD thành công hoặc khi bấm nút `Lưu Mặc Định`.
      * Tự động nạp lại toàn bộ cấu hình Layer đã lưu mỗi khi mở Form, người dùng không cần thiết lập lại.
-     * Bổ sung nút: `💾 Lưu Mặc Định`, `🔄 Nạp Đã Lưu`, `⚡ Lấy Từ Dự Án`, `➕ Thêm`, `📁 Xuất JSON`, `📂 Nhập JSON`.
-     * Cột DataGridView hiển thị rõ ràng: `🔄 CHUYỂN ĐỔI SANG LAYER CAD (Tên Layer)` và `🎨 MÀU SẮC CAD (ACI 1-255)`.
+     * Bổ sung nút: `Lưu Mặc Định`, `Nạp Đã Lưu`, `Quét Lại Hệ Thống`, `Thêm Dòng`, `Xuất JSON`, `Nhập JSON`, `✖ Xóa Dòng Đã Chọn`.
+     * Cột DataGridView hiển thị rõ ràng: `CHUYỂN ĐỔI SANG LAYER CAD (Tên Layer)` và `MÀU SẮC CAD (ACI 1-255)`.
 4. **Xuất CAD/PDF Hàng Loạt (`ExportCadPdfOptionsForm` / `SheetExportCadPdfService`)**: Xuất PDF gộp, CAD rời hoặc **gộp nhiều Sheet thành 1 file DWG đa Layout** (`ExportToSingleCombinedCad` qua `accoreconsole.exe`).
 5. **Cập Nhật Danh Mục Từ Excel (`UpdateSheetList`)**: Đối chiếu (`MatchAndCompare`) và cập nhật ngược tên/số hiệu Sheet hàng loạt (`ApplyUpdatesToDocument`).
 
@@ -90,7 +94,7 @@ description: >-
 
 ## 3. Bản Đồ Mã Nguồn & Vị Trí File
 - Thư mục gốc: `c:\Users\Nguye\Desktop\ADDIN REVIT`
-- **File cài đặt chính thức**: `HDTOOL_Setup_Version_106.exe`
+- **File cài đặt chính thức**: `HDTOOL_Setup_Version_108.exe`
 - **Bộ cài & Lưu trữ**: Chỉ lưu các bản mới nhất trong thư mục dự án.
 - **Core Files Palette Family**: `Source/FamilyPaletteCommand.cs`, `Source/FamilyPaletteForm.cs`, `Source/FamilyPaletteService.cs`, `Source/FamilyPaletteModels.cs`.
 - **Core Files Xuất CAD & Layer**: `Source/ExportCadCommand.cs`, `Source/ExportCadOptionsForm.cs`, `Source/CadExportMepService.cs`, `Source/CadLayerMappingModels.cs`.

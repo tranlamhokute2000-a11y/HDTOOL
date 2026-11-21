@@ -131,7 +131,7 @@ namespace HDTool
             btnAutoCrop.Cursor = Cursors.Hand;
             btnAutoCrop.TextAlign = ContentAlignment.MiddleLeft;
             btnAutoCrop.Padding = new Padding(15, 0, 0, 0);
-            btnAutoCrop.Text = "🔲  1. TỰ ĐỘNG CROP VIEW (AUTO CROP BOX - MỚI)\r\n" +
+            btnAutoCrop.Text = "1. TỰ ĐỘNG CROP VIEW (AUTO CROP BOX - MỚI)\r\n" +
                                "      Tự động tính Bounding Box ôm khít toàn bộ đối tượng trong View vừa tạo (SĐKG 3D, Plan)";
             btnAutoCrop.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnAutoCrop.Click += BtnAutoCrop_Click;
@@ -147,7 +147,7 @@ namespace HDTool
             btnGrids.Cursor = Cursors.Hand;
             btnGrids.TextAlign = ContentAlignment.MiddleLeft;
             btnGrids.Padding = new Padding(15, 0, 0, 0);
-            btnGrids.Text = "📐  1. CĂN CHỈNH LƯỚI TRỤC (GRIDS)\r\n" +
+            btnGrids.Text = "1. CĂN CHỈNH LƯỚI TRỤC (GRIDS)\r\n" +
                             "      Mặt bằng & Sheet - Nhập thông số 4 hướng Top, Bottom, Left, Right (mm)";
             btnGrids.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnGrids.Click += BtnGrids_Click;
@@ -163,7 +163,7 @@ namespace HDTool
             btnLevel.Cursor = Cursors.Hand;
             btnLevel.TextAlign = ContentAlignment.MiddleLeft;
             btnLevel.Padding = new Padding(15, 0, 0, 0);
-            btnLevel.Text = "📏  2. CĂN CHỈNH CAO ĐỘ (LEVEL)\r\n" +
+            btnLevel.Text = "2. CĂN CHỈNH CAO ĐỘ (LEVEL)\r\n" +
                             "      Mặt cắt, Mặt đứng & Sheet - Nhập khoảng cách 2 đầu thò ra (mm)";
             btnLevel.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnLevel.Click += BtnLevel_Click;
@@ -179,7 +179,7 @@ namespace HDTool
             btnMepQuantity.Cursor = Cursors.Hand;
             btnMepQuantity.TextAlign = ContentAlignment.MiddleLeft;
             btnMepQuantity.Padding = new Padding(15, 0, 0, 0);
-            btnMepQuantity.Text = "💧  3. THỐNG KÊ KHỐI LƯỢNG ỐNG NƯỚC & PHỤ KIỆN\r\n" +
+            btnMepQuantity.Text = "3. THỐNG KÊ KHỐI LƯỢNG ỐNG NƯỚC & PHỤ KIỆN\r\n" +
                                   "      Gộp 3 parameters phân mảnh làm 1 cột, quét chọn sáng đối tượng & đưa vào Sheet";
             btnMepQuantity.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnMepQuantity.Click += BtnMepQuantity_Click;
@@ -195,7 +195,7 @@ namespace HDTool
             btnSheetList.Cursor = Cursors.Hand;
             btnSheetList.TextAlign = ContentAlignment.MiddleLeft;
             btnSheetList.Padding = new Padding(15, 0, 0, 0);
-            btnSheetList.Text = "📋  4. XUẤT DANH MỤC BẢN VẼ (SHEET LIST)\r\n" +
+            btnSheetList.Text = "4. XUẤT DANH MỤC BẢN VẼ (SHEET LIST)\r\n" +
                                 "      Chọn các Sheet và trích xuất danh sách ra file Excel (.xls, .csv) hoặc Clipboard";
             btnSheetList.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnSheetList.Click += BtnSheetList_Click;
@@ -211,7 +211,7 @@ namespace HDTool
             btnUpdateSheetList.Cursor = Cursors.Hand;
             btnUpdateSheetList.TextAlign = ContentAlignment.MiddleLeft;
             btnUpdateSheetList.Padding = new Padding(15, 0, 0, 0);
-            btnUpdateSheetList.Text = "🔄  5. CẬP NHẬT DANH MỤC TỪ EXCEL (UPDATE SHEET LIST)\r\n" +
+            btnUpdateSheetList.Text = "5. CẬP NHẬT DANH MỤC TỪ EXCEL (UPDATE SHEET LIST)\r\n" +
                                       "      Đọc file Excel/CSV đã đổi tên và tự động cập nhật bản vẽ trong Revit";
             btnUpdateSheetList.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnUpdateSheetList.Click += BtnUpdateSheetList_Click;
@@ -227,7 +227,7 @@ namespace HDTool
             btnReloadTool.Cursor = Cursors.Hand;
             btnReloadTool.TextAlign = ContentAlignment.MiddleLeft;
             btnReloadTool.Padding = new Padding(15, 0, 0, 0);
-            btnReloadTool.Text = "🚀  6. CẬP NHẬT TÍNH NĂNG MỚI (HOT RELOAD TOOL)\r\n" +
+            btnReloadTool.Text = "6. CẬP NHẬT TÍNH NĂNG MỚI (HOT RELOAD TOOL)\r\n" +
                                 "      Nạp trực tiếp DLL mới vào Revit đang mở mà không cần tắt bản vẽ hay khởi động lại";
             btnReloadTool.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnReloadTool.Click += BtnReloadTool_Click;
@@ -243,7 +243,7 @@ namespace HDTool
             btnSmart.Cursor = Cursors.Hand;
             btnSmart.TextAlign = ContentAlignment.MiddleLeft;
             btnSmart.Padding = new Padding(15, 0, 0, 0);
-            btnSmart.Text = "⚡  7. TỰ ĐỘNG CHỌN THEO VIEW HIỆN TẠI (Tùy chọn nhanh)\r\n" +
+            btnSmart.Text = "7. TỰ ĐỘNG CHỌN THEO VIEW HIỆN TẠI (Tùy chọn nhanh)\r\n" +
                             "      Mặt bằng / Sheet ➔ Mở Grids  |  Mặt cắt / Mặt đứng ➔ Mở Level";
             btnSmart.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
             btnSmart.Click += BtnSmart_Click;
@@ -259,7 +259,7 @@ namespace HDTool
             btnCadToDuct.Cursor = Cursors.Hand;
             btnCadToDuct.TextAlign = ContentAlignment.MiddleLeft;
             btnCadToDuct.Padding = new Padding(15, 0, 0, 0);
-            btnCadToDuct.Text = "💨  8. DỰNG MÔ HÌNH ỐNG GIÓ 3D TỪ BẢN VẼ CAD LINK\r\n" +
+            btnCadToDuct.Text = "8. DỰNG MÔ HÌNH ỐNG GIÓ 3D TỪ BẢN VẼ CAD LINK\r\n" +
                                 "      Nhận diện WxH, Côn đồng tâm, Cút, Chân rẽ Tap & Lan truyền BFS";
             btnCadToDuct.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnCadToDuct.Click += BtnCadToDuct_Click;
@@ -275,7 +275,7 @@ namespace HDTool
             btnExportCad.Cursor = Cursors.Hand;
             btnExportCad.TextAlign = ContentAlignment.MiddleLeft;
             btnExportCad.Padding = new Padding(15, 0, 0, 0);
-            btnExportCad.Text = "📁  9. XUẤT CAD & QUY ĐỔI LAYER MEP (MẶT BẰNG / SHEET SANG DWG)\r\n" +
+            btnExportCad.Text = "9. XUẤT CAD & QUY ĐỔI LAYER MEP (MẶT BẰNG / SHEET SANG DWG)\r\n" +
                                 "      Xuất trực tiếp View đang vẽ, Sheet hoặc View dự án & tự động quy đổi Layer/Màu/Nét MEP";
             btnExportCad.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnExportCad.Click += BtnExportCad_Click;
@@ -291,7 +291,7 @@ namespace HDTool
             btnFamilyPalette.Cursor = Cursors.Hand;
             btnFamilyPalette.TextAlign = ContentAlignment.MiddleLeft;
             btnFamilyPalette.Padding = new Padding(15, 0, 0, 0);
-            btnFamilyPalette.Text = "📦  10. TỔNG HỢP FAMILY CÓ TRONG DỰ ÁN (PALETTE 3D & KÉO THẢ)\r\n" +
+            btnFamilyPalette.Text = "10. TỔNG HỢP FAMILY CÓ TRONG DỰ ÁN (PALETTE 3D & KÉO THẢ)\r\n" +
                                     "      Danh sách Family kèm ảnh 3D Isometric Preview, tìm kiếm & kéo đặt trực tiếp vào bản vẽ";
             btnFamilyPalette.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnFamilyPalette.Click += BtnFamilyPalette_Click;
@@ -393,10 +393,27 @@ namespace HDTool
         {
             try
             {
-                MepInspectorExternalEventHandler handler = new MepInspectorExternalEventHandler();
-                ExternalEvent extEvent = ExternalEvent.Create(handler);
-                MepQuantityInspectorForm form = new MepQuantityInspectorForm(_uidoc, extEvent, handler);
-                OpenChildModeless(form);
+                // ExternalEvent.Create chỉ hợp lệ trong API context -> tạo bên trong ExternalEvent dùng chung,
+                // sau đó quay về luồng UI để mở Form (không gọi Create trực tiếp từ sự kiện Click của Form Modeless)
+                HDToolModelessHost.EnsureInitialized();
+                HDToolModelessHost.Run(app =>
+                {
+                    MepInspectorExternalEventHandler handler = new MepInspectorExternalEventHandler();
+                    ExternalEvent extEvent = ExternalEvent.Create(handler);
+                    if (this.IsDisposed || !this.IsHandleCreated) return;
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        try
+                        {
+                            MepQuantityInspectorForm form = new MepQuantityInspectorForm(_uidoc, extEvent, handler);
+                            OpenChildModeless(form);
+                        }
+                        catch (Exception ex2)
+                        {
+                            TaskDialog.Show("HDTOOL MEP", "Lỗi mở giao diện Thống kê khối lượng MEP: " + ex2.Message);
+                        }
+                    });
+                });
             }
             catch (Exception ex)
             {

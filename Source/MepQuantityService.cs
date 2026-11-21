@@ -2671,7 +2671,7 @@ namespace HDTool
                     LastPlacedTable = meta;
                 }
 
-                resultMessage = string.Format("✅ Đã tạo bảng khối lượng dạng LEGENDS thành công trên Sheet '{0}'!\n\n📋 Gồm {1} nhóm quy cách, khung nhìn ôm sát rạt vừa vặn 100%, không bị to và không bị đẩy ra xa.",
+                resultMessage = string.Format("✔ Đã tạo bảng khối lượng dạng LEGENDS thành công trên Sheet '{0}'!\n\nGồm {1} nhóm quy cách, khung nhìn ôm sát rạt vừa vặn 100%, không bị to và không bị đẩy ra xa.",
                     targetSheet != null ? targetSheet.Name : "Project Browser (Legends)", items.Count);
                 return true;
             }

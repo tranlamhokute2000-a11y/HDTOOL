@@ -356,7 +356,7 @@ namespace HDTool
 
             // 5. Buttons
             btnAuto = new System.Windows.Forms.Button();
-            btnAuto.Text = "⚡  TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS THEO CROP VIEW";
+            btnAuto.Text = "TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS THEO CROP VIEW";
             btnAuto.Font = new System.Drawing.Font("Segoe UI", 10.0f, FontStyle.Bold);
             btnAuto.Location = new System.Drawing.Point(15, 484);
             btnAuto.Size = new System.Drawing.Size(485, 42);
@@ -368,7 +368,7 @@ namespace HDTool
             toolTip.SetToolTip(btnAuto, "Tự động căn chỉnh tất cả các lưới trục Grids cân đối theo khung Crop View và cập nhật ký hiệu 4 hướng");
 
             btnPick = new System.Windows.Forms.Button();
-            btnPick.Text = "🎯  CLICK / QUÉT CHỌN CROP VIEW HOẶC GRIDS (PICK)";
+            btnPick.Text = "CLICK / QUÉT CHỌN CROP VIEW HOẶC GRIDS (PICK)";
             btnPick.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnPick.Location = new System.Drawing.Point(15, 532);
             btnPick.Size = new System.Drawing.Size(485, 36);
@@ -380,7 +380,7 @@ namespace HDTool
             toolTip.SetToolTip(btnPick, "Bấm để click chọn khung Crop View hoặc chọn cụ thể các Grids trên màn hình");
 
             btnSwitchLevel = new System.Windows.Forms.Button();
-            btnSwitchLevel.Text = "📏  CHUYỂN SANG CĂN LEVEL";
+            btnSwitchLevel.Text = "CHUYỂN SANG CĂN LEVEL";
             btnSwitchLevel.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnSwitchLevel.Location = new System.Drawing.Point(15, 574);
             btnSwitchLevel.Size = new System.Drawing.Size(238, 34);
@@ -430,8 +430,8 @@ namespace HDTool
                     string viewNames = string.Join(", ", _targetViews.Select(v => v.Name).ToArray());
                     lblViewInfo.Text = string.Format("Trang in (Sheet): {0} | Tìm thấy {1} View: {2} | Tổng {3} Grids",
                         _activeView.Name, _targetViews.Count, viewNames, _allGrids.Count);
-                    btnAuto.Text = string.Format("⚡  TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS TRÊN SHEET ({0} VIEW)", _targetViews.Count);
-                    btnPick.Text = "🎯  CHỌN VIEWPORT TRÊN SHEET HOẶC GRIDS (PICK)";
+                    btnAuto.Text = string.Format("TỰ ĐỘNG CĂN CHỈNH TẤT CẢ GRIDS TRÊN SHEET ({0} VIEW)", _targetViews.Count);
+                    btnPick.Text = "CHỌN VIEWPORT TRÊN SHEET HOẶC GRIDS (PICK)";
                 }
                 else
                 {

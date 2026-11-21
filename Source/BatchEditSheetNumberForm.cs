@@ -209,7 +209,7 @@ namespace HDTool
             grpScope.ForeColor = Color.FromArgb(24, 43, 73);
 
             rdoScopeMatched = new System.Windows.Forms.RadioButton();
-            rdoScopeMatched.Text = "⭐ Cùng tiền tố (0 bản vẽ)";
+            rdoScopeMatched.Text = "★ Cùng tiền tố (0 bản vẽ)";
             rdoScopeMatched.Location = new Point(10, 19);
             rdoScopeMatched.Size = new Size(230, 22);
             rdoScopeMatched.Checked = true;
@@ -352,7 +352,7 @@ namespace HDTool
             txtAddSuffix.TextChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             System.Windows.Forms.Label lblAddHint = new System.Windows.Forms.Label();
-            lblAddHint.Text = "💡 Ví dụ: Thêm tiền tố \"PCCC-\" hoặc thêm hậu tố \"-REV1\" vào tất cả các số hiệu đang chọn.";
+            lblAddHint.Text = "Ví dụ: Thêm tiền tố \"PCCC-\" hoặc thêm hậu tố \"-REV1\" vào tất cả các số hiệu đang chọn.";
             lblAddHint.Location = new Point(12, 46);
             lblAddHint.AutoSize = true;
             lblAddHint.ForeColor = Color.FromArgb(100, 110, 120);
@@ -439,7 +439,7 @@ namespace HDTool
             txtNumSuffix.TextChanged += (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); };
 
             System.Windows.Forms.Label lblNumHint = new System.Windows.Forms.Label();
-            lblNumHint.Text = "💡 Ví dụ: Tiền tố \"HDM/CB/B1/T1.\" ➔ Đánh số tự động: HDM/CB/B1/T1.01, HDM/CB/B1/T1.02...";
+            lblNumHint.Text = "Ví dụ: Tiền tố \"HDM/CB/B1/T1.\" ➔ Đánh số tự động: HDM/CB/B1/T1.01, HDM/CB/B1/T1.02...";
             lblNumHint.Location = new Point(10, 46);
             lblNumHint.AutoSize = true;
             lblNumHint.ForeColor = Color.FromArgb(100, 110, 120);
@@ -479,14 +479,14 @@ namespace HDTool
             pnlPreviewToolbar.Padding = new Padding(6, 3, 6, 3);
 
             lblExcelHint = new System.Windows.Forms.Label();
-            lblExcelHint.Text = "✨ Kéo ô vuông góc dưới-phải (Fill Handle) hoặc bấm nút để số đuôi tự động tăng dần:";
+            lblExcelHint.Text = "Kéo ô vuông góc dưới-phải (Fill Handle) hoặc bấm nút để số đuôi tự động tăng dần:";
             lblExcelHint.Font = new Font("Segoe UI", 8.5f, FontStyle.Italic);
             lblExcelHint.ForeColor = Color.FromArgb(16, 124, 65); // Excel Green
             lblExcelHint.Location = new Point(6, 7);
             lblExcelHint.AutoSize = true;
 
             btnQuickAutoFill = new System.Windows.Forms.Button();
-            btnQuickAutoFill.Text = "⚡ Kéo Tăng Đuôi Theo Ô Đang Chọn";
+            btnQuickAutoFill.Text = "Kéo Tăng Đuôi Theo Ô Đang Chọn";
             btnQuickAutoFill.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
             btnQuickAutoFill.Size = new Size(220, 26);
             btnQuickAutoFill.Location = new Point(510, 3);
@@ -599,8 +599,8 @@ namespace HDTool
 
             // Context Menu
             ctxGridMenu = new ContextMenuStrip();
-            ToolStripMenuItem mnuAutoFill = new ToolStripMenuItem("⚡ Tự Động Kéo Tăng Dần Số Đuôi (AutoFill)", null, (s, e) => { AutoFillFromCurrentSelection(); });
-            ToolStripMenuItem mnuFillDown = new ToolStripMenuItem("📋 Sao Chép Ô Đầu Xuống Dưới (Fill Down)", null, (s, e) => { FillDownFromCurrentSelection(); });
+            ToolStripMenuItem mnuAutoFill = new ToolStripMenuItem("Tự Động Kéo Tăng Dần Số Đuôi (AutoFill)", null, (s, e) => { AutoFillFromCurrentSelection(); });
+            ToolStripMenuItem mnuFillDown = new ToolStripMenuItem("Sao Chép Ô Đầu Xuống Dưới (Fill Down)", null, (s, e) => { FillDownFromCurrentSelection(); });
             ToolStripMenuItem mnuReset = new ToolStripMenuItem("↺ Đặt Lại Theo Tiền Tố Ban Đầu", null, (s, e) => { _manualOverrides.Clear(); UpdateLivePreview(); });
             ctxGridMenu.Items.Add(mnuAutoFill);
             ctxGridMenu.Items.Add(mnuFillDown);
@@ -630,7 +630,7 @@ namespace HDTool
             btnApply.Click += BtnApply_Click;
 
             btnCancel = new System.Windows.Forms.Button();
-            btnCancel.Text = "❌  HỦY BỎ";
+            btnCancel.Text = "✖  HỦY BỎ";
             btnCancel.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             btnCancel.BackColor = Color.FromArgb(149, 165, 166);
             btnCancel.ForeColor = Color.White;
@@ -1182,7 +1182,7 @@ namespace HDTool
             List<SheetItem> matchedSheets = GetMatchedSheets();
             if (rdoScopeMatched != null)
             {
-                rdoScopeMatched.Text = string.Format("⭐ Cùng tiền tố ({0} bản vẽ)", matchedSheets.Count);
+                rdoScopeMatched.Text = string.Format("★ Cùng tiền tố ({0} bản vẽ)", matchedSheets.Count);
             }
 
             if (rdoScopeMatched != null && rdoScopeMatched.Checked)

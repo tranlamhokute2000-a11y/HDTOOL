@@ -1397,14 +1397,14 @@ namespace HDTool
                         g.FillEllipse(fitBrush, 21.5f * scale, 8.5f * scale, 3f * scale, 3f * scale);
                     }
 
-                    // 3. Huy hiệu tia sét Auto ⚡ ở góc phải
+                    // 3. Huy hiệu tia sét Auto ở góc phải
                     using (SolidBrush flashBg = new SolidBrush(System.Drawing.Color.FromArgb(245, 158, 11)))
                     using (Pen flashBorder = new Pen(System.Drawing.Color.White, 1.0f * scale))
                     {
                         g.FillEllipse(flashBg, 18f * scale, 18f * scale, 12f * scale, 12f * scale);
                         g.DrawEllipse(flashBorder, 18f * scale, 18f * scale, 12f * scale, 12f * scale);
                     }
-                    // Vẽ tia sét ⚡ bằng Vector Polygon chuẩn nét
+                    // Vẽ tia sét bằng Vector Polygon chuẩn nét
                     using (SolidBrush flashB = new SolidBrush(System.Drawing.Color.White))
                     {
                         PointF[] bolt = new PointF[] {

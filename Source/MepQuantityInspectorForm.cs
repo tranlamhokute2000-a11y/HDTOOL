@@ -2517,7 +2517,7 @@ namespace HDTool
                 {
                     try
                     {
-                        Document doc = app.ActiveUIDocument != null ? app.ActiveUIDocument.Document : _doc;
+                        Document doc = HDToolModelessHost.ResolveOwnerDocument(_doc);
                         if (doc == null) return;
 
                         int updatedCount = 0;
@@ -2582,7 +2582,7 @@ namespace HDTool
                 {
                     try
                     {
-                        Document doc = app.ActiveUIDocument != null ? app.ActiveUIDocument.Document : _doc;
+                        Document doc = HDToolModelessHost.ResolveOwnerDocument(_doc);
                         if (doc == null) return;
 
                         int totalUpdated = 0;
@@ -3614,7 +3614,7 @@ namespace HDTool
 
             // ================= GỢI Ý & NÚT THỰC HIỆN =================
             Label lblNote = new Label();
-            lblNote.Text = "💡 Bảng khối lượng đưa vào Sheet giữ NGUYÊN 100% các cột, hàng và thứ tự đúng như bạn đang nhìn thấy trên bảng (WYSIWYG)!";
+            lblNote.Text = "Bảng khối lượng đưa vào Sheet giữ NGUYÊN 100% các cột, hàng và thứ tự đúng như bạn đang nhìn thấy trên bảng (WYSIWYG)!";
             lblNote.Location = new Point(20, 296);
             lblNote.Size = new Size(520, 32);
             lblNote.Font = new Font("Segoe UI", 8.5f, FontStyle.Italic);

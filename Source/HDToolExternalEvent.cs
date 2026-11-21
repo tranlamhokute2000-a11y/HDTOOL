@@ -113,9 +113,36 @@ namespace HDTool
             }
             else
             {
-                // Fallback nếu không có ExternalEvent (gọi trực tiếp)
-                action(null);
+                // KHÔNG gọi trực tiếp Revit API ngoài API context (Revit sẽ từ chối Transaction/Pick)
+                ReportNoApiContext();
             }
+        }
+
+        /// <summary>
+        /// Thông báo khi không thể đưa tác vụ vào ExternalEvent (không được gọi Revit API trực tiếp từ Form Modeless).
+        /// </summary>
+        public static void ReportNoApiContext()
+        {
+            MessageBox.Show(
+                "Không thể thực hiện thao tác lên mô hình Revit lúc này (ExternalEvent chưa sẵn sàng).\n\nVui lòng đóng cửa sổ công cụ và mở lại từ thanh Ribbon HDTOOL.",
+                "HDTOOL - Thông Báo",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+        }
+
+        /// <summary>
+        /// Trả về đúng Document gốc mà cửa sổ công cụ đang làm việc.
+        /// Form Modeless có thể vẫn mở khi người dùng chuyển sang dự án khác: KHÔNG được ghi vào ActiveUIDocument
+        /// (sẽ sửa nhầm dự án). Trả về null nếu dự án gốc đã bị đóng.
+        /// </summary>
+        public static Autodesk.Revit.DB.Document ResolveOwnerDocument(Autodesk.Revit.DB.Document ownerDoc)
+        {
+            try
+            {
+                if (ownerDoc != null && ownerDoc.IsValidObject) return ownerDoc;
+            }
+            catch { }
+            return null;
         }
 
         public static void EnableEscToClose(Form form, Button cancelButton = null)

@@ -152,7 +152,7 @@ namespace HDTool
             grpFormat.ForeColor = Color.FromArgb(44, 62, 80);
 
             radPdf = new RadioButton();
-            radPdf.Text = "📄  Xuất File PDF (.pdf)";
+            radPdf.Text = "Xuất File PDF (.pdf)";
             radPdf.Location = new Point(18, 22);
             radPdf.Size = new Size(200, 24);
             radPdf.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
@@ -182,7 +182,7 @@ namespace HDTool
             txtPdfFileName.Text = defaultName;
 
             radCad = new RadioButton();
-            radCad.Text = "📐  Xuất File AutoCAD (.dwg)";
+            radCad.Text = "Xuất File AutoCAD (.dwg)";
             radCad.Location = new Point(18, 102);
             radCad.Size = new Size(250, 24);
             radCad.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
@@ -245,7 +245,7 @@ namespace HDTool
             txtFolder.Text = defaultExportDir;
 
             btnBrowseFolder = new Button();
-            btnBrowseFolder.Text = "📁  Duyệt...";
+            btnBrowseFolder.Text = "Duyệt...";
             btnBrowseFolder.Location = new Point(488, 24);
             btnBrowseFolder.Size = new Size(100, 27);
             btnBrowseFolder.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
@@ -268,7 +268,7 @@ namespace HDTool
 
             // 5. Action Buttons
             btnStartExport = new Button();
-            btnStartExport.Text = string.Format("🚀   BẮT ĐẦU XUẤT ({0} BẢN VẼ)", _sheets.Count);
+            btnStartExport.Text = string.Format("BẮT ĐẦU XUẤT ({0} BẢN VẼ)", _sheets.Count);
             btnStartExport.Location = new Point(16, 618);
             btnStartExport.Size = new Size(450, 48);
             btnStartExport.Font = new Font("Segoe UI", 10.5f, FontStyle.Bold);
@@ -325,7 +325,7 @@ namespace HDTool
             {
                 if (!string.IsNullOrEmpty(g.Key))
                 {
-                    lstSheets.Items.Add(string.Format("📁  [{0}] ({1} bản vẽ)", g.Key.ToUpper(), g.Count()));
+                    lstSheets.Items.Add(string.Format("[{0}] ({1} bản vẽ)", g.Key.ToUpper(), g.Count()));
                 }
                 foreach (SheetItem s in g)
                 {
@@ -350,12 +350,12 @@ namespace HDTool
             if (isPdf)
             {
                 btnStartExport.BackColor = Color.FromArgb(192, 57, 43); // Red HadoMEE
-                btnStartExport.Text = string.Format("📄   XUẤT {0} BẢN VẼ SANG PDF", _sheets.Count);
+                btnStartExport.Text = string.Format("XUẤT {0} BẢN VẼ SANG PDF", _sheets.Count);
             }
             else
             {
                 btnStartExport.BackColor = Color.FromArgb(24, 43, 73); // Navy
-                btnStartExport.Text = string.Format("📐   XUẤT {0} BẢN VẼ SANG CAD (.DWG)", _sheets.Count);
+                btnStartExport.Text = string.Format("XUẤT {0} BẢN VẼ SANG CAD (.DWG)", _sheets.Count);
             }
         }
 

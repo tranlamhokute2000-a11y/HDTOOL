@@ -283,14 +283,14 @@ namespace HDTool
             btnDeselectAll.Click += (s, e) => SetSelectionState(false);
 
             btnInvert = new System.Windows.Forms.Button();
-            btnInvert.Text = "🔄 Đảo";
+            btnInvert.Text = "Đảo";
             btnInvert.Location = new Point(628, 20);
             btnInvert.Size = new Size(62, 27);
             btnInvert.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
             btnInvert.Click += (s, e) => InvertSelection();
 
             btnGroupFilter = new System.Windows.Forms.Button();
-            btnGroupFilter.Text = "📁 Gom Nhóm...";
+            btnGroupFilter.Text = "Gom Nhóm...";
             btnGroupFilter.Location = new Point(696, 20);
             btnGroupFilter.Size = new Size(105, 27);
             btnGroupFilter.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
@@ -325,7 +325,7 @@ namespace HDTool
             grpFilter.Controls.Add(btnBatchEditNumber);
 
             System.Windows.Forms.Label lblHint = new System.Windows.Forms.Label();
-            lblHint.Text = "💡 Giữ Shift chọn dải  |  Phím Cách (Space) bật/tắt chọn  |  Ctrl+C / Ctrl+V / Ctrl+D sao chép & điền nhóm  |  Kéo thả bản vẽ vào Cây Thư Mục";
+            lblHint.Text = "Giữ Shift chọn dải  |  Phím Cách (Space) bật/tắt chọn  |  Ctrl+C / Ctrl+V / Ctrl+D sao chép & điền nhóm  |  Kéo thả bản vẽ vào Cây Thư Mục";
             lblHint.Location = new Point(16, 52);
             lblHint.AutoSize = true;
             lblHint.ForeColor = Color.FromArgb(70, 95, 120);
@@ -351,14 +351,14 @@ namespace HDTool
             pnlTreeHeader.BackColor = Color.FromArgb(235, 240, 246);
 
             lblTreeTitle = new System.Windows.Forms.Label();
-            lblTreeTitle.Text = "📁 CÂY THƯ MỤC HỒ SƠ";
+            lblTreeTitle.Text = "CÂY THƯ MỤC HỒ SƠ";
             lblTreeTitle.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             lblTreeTitle.ForeColor = Color.FromArgb(24, 43, 73);
             lblTreeTitle.Location = new Point(8, 9);
             lblTreeTitle.AutoSize = true;
 
             btnNewGroup = new System.Windows.Forms.Button();
-            btnNewGroup.Text = "➕ Nhóm Mới";
+            btnNewGroup.Text = "Nhóm Mới";
             btnNewGroup.Font = new Font("Segoe UI", 8.0f, FontStyle.Bold);
             btnNewGroup.BackColor = Color.FromArgb(39, 174, 96);
             btnNewGroup.ForeColor = Color.White;
@@ -371,7 +371,7 @@ namespace HDTool
             toolTip.SetToolTip(btnNewGroup, "Tạo thư mục nhóm mới và gán các bản vẽ đang chọn vào nhóm");
 
             btnAutoGroup = new System.Windows.Forms.Button();
-            btnAutoGroup.Text = "⚡ Tự Động";
+            btnAutoGroup.Text = "Tự Động";
             btnAutoGroup.Font = new Font("Segoe UI", 8.0f, FontStyle.Bold);
             btnAutoGroup.BackColor = Color.FromArgb(41, 128, 185);
             btnAutoGroup.ForeColor = Color.White;
@@ -410,10 +410,10 @@ namespace HDTool
             cmsTree = new ContextMenuStrip();
             cmsTree.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
 
-            ToolStripMenuItem miTreeGroup = new ToolStripMenuItem("📁 Gom các bản vẽ đang chọn vào nhóm...");
+            ToolStripMenuItem miTreeGroup = new ToolStripMenuItem("Gom các bản vẽ đang chọn vào nhóm...");
             miTreeGroup.Click += (s, e) => OpenGroupTitleDialog();
 
-            ToolStripMenuItem miTreeAuto = new ToolStripMenuItem("⚡ Tự động phân nhóm theo bộ môn (Kiến trúc, Điện, Nước, MEP...)");
+            ToolStripMenuItem miTreeAuto = new ToolStripMenuItem("Tự động phân nhóm theo bộ môn (Kiến trúc, Điện, Nước, MEP...)");
             miTreeAuto.Click += (s, e) => AutoDetectDisciplines();
 
             ToolStripMenuItem miTreeRename = new ToolStripMenuItem("✏ Đổi tên thư mục nhóm này...");
@@ -425,7 +425,7 @@ namespace HDTool
             ToolStripMenuItem miTreeUncheck = new ToolStripMenuItem("✖ Bỏ chọn toàn bộ bản vẽ trong nhóm này");
             miTreeUncheck.Click += (s, e) => CheckSelectedGroup(false);
 
-            ToolStripMenuItem miTreeDelete = new ToolStripMenuItem("🗑 Giải tán nhóm này (Chuyển về Chưa phân nhóm)");
+            ToolStripMenuItem miTreeDelete = new ToolStripMenuItem("Giải tán nhóm này (Chuyển về Chưa phân nhóm)");
             miTreeDelete.Click += (s, e) => DeleteSelectedGroup();
 
             cmsTree.Items.Add(miTreeGroup);
@@ -447,14 +447,14 @@ namespace HDTool
             pnlFolderBreadcrumb.BackColor = Color.FromArgb(244, 247, 250);
 
             lblCurrentFolder = new System.Windows.Forms.Label();
-            lblCurrentFolder.Text = "📁 Đang hiển thị: Tất Cả Bản Vẽ";
+            lblCurrentFolder.Text = "Đang hiển thị: Tất Cả Bản Vẽ";
             lblCurrentFolder.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             lblCurrentFolder.ForeColor = Color.FromArgb(24, 43, 73);
             lblCurrentFolder.Location = new Point(10, 8);
             lblCurrentFolder.AutoSize = true;
 
             btnViewAll = new System.Windows.Forms.Button();
-            btnViewAll.Text = "🔄 Xem Tất Cả";
+            btnViewAll.Text = "Xem Tất Cả";
             btnViewAll.Font = new Font("Segoe UI", 8.25f, FontStyle.Regular);
             btnViewAll.Location = new Point(235, 4);
             btnViewAll.Size = new Size(95, 26);
@@ -462,12 +462,12 @@ namespace HDTool
             {
                 _selectedTreeGroup = null;
                 if (_rootNode != null) tvGroups.SelectedNode = _rootNode;
-                lblCurrentFolder.Text = string.Format("📁 Đang hiển thị: Tất Cả Bản Vẽ ({0} bản vẽ)", _allSheets.Count);
+                lblCurrentFolder.Text = string.Format("Đang hiển thị: Tất Cả Bản Vẽ ({0} bản vẽ)", _allSheets.Count);
                 ApplyFilter();
             };
 
             btnGroupSelected = new System.Windows.Forms.Button();
-            btnGroupSelected.Text = "📁 Gom Vào Nhóm...";
+            btnGroupSelected.Text = "Gom Vào Nhóm...";
             btnGroupSelected.Font = new Font("Segoe UI", 8.25f, FontStyle.Bold);
             btnGroupSelected.BackColor = Color.FromArgb(41, 128, 185);
             btnGroupSelected.ForeColor = Color.White;
@@ -480,7 +480,7 @@ namespace HDTool
             toolTip.SetToolTip(btnGroupSelected, "Gom các bản vẽ đang chọn vào một nhóm thư mục mới hoặc nhóm có sẵn");
 
             btnPasteGroup = new System.Windows.Forms.Button();
-            btnPasteGroup.Text = "📋 Dán Nhóm (Ctrl+V)";
+            btnPasteGroup.Text = "Dán Nhóm (Ctrl+V)";
             btnPasteGroup.Font = new Font("Segoe UI", 8.25f, FontStyle.Bold);
             btnPasteGroup.BackColor = Color.FromArgb(39, 174, 96);
             btnPasteGroup.ForeColor = Color.White;
@@ -493,7 +493,7 @@ namespace HDTool
             toolTip.SetToolTip(btnPasteGroup, "Dán tên nhóm đang sao chép vào tất cả các bản vẽ đang bôi đen (Phím tắt: Ctrl + V)");
 
             btnFillUnassigned = new System.Windows.Forms.Button();
-            btnFillUnassigned.Text = "⚡ Điền Ô Trống";
+            btnFillUnassigned.Text = "Điền Ô Trống";
             btnFillUnassigned.Font = new Font("Segoe UI", 8.25f, FontStyle.Bold);
             btnFillUnassigned.BackColor = Color.FromArgb(230, 126, 34);
             btnFillUnassigned.ForeColor = Color.White;
@@ -640,19 +640,19 @@ namespace HDTool
             miInvertSelected = new ToolStripMenuItem("◫ Đảo chọn các dòng đang bôi đen");
             miInvertSelected.Click += (s, e) => InvertSelectedRowsCheckState();
 
-            miCopyGroup = new ToolStripMenuItem("📋 Sao chép tên nhóm (Ctrl+C)");
+            miCopyGroup = new ToolStripMenuItem("Sao chép tên nhóm (Ctrl+C)");
             miCopyGroup.Click += (s, e) => CopyCurrentSelection();
 
-            miPasteGroup = new ToolStripMenuItem("📥 Dán tên nhóm vào các dòng đang chọn (Ctrl+V)");
+            miPasteGroup = new ToolStripMenuItem("Dán tên nhóm vào các dòng đang chọn (Ctrl+V)");
             miPasteGroup.Click += (s, e) => PasteToSelectedRows();
 
-            miFillDown = new ToolStripMenuItem("⚡ Điền tên nhóm xuống các dòng dưới (Ctrl+D)");
+            miFillDown = new ToolStripMenuItem("Điền tên nhóm xuống các dòng dưới (Ctrl+D)");
             miFillDown.Click += (s, e) => FillDownGroupTitle();
 
-            miFillEmpty = new ToolStripMenuItem("⚡ Điền tên nhóm này vào tất cả ô chưa có nhóm");
+            miFillEmpty = new ToolStripMenuItem("Điền tên nhóm này vào tất cả ô chưa có nhóm");
             miFillEmpty.Click += (s, e) => FillEmptyGroupCells();
 
-            miQuickAssignSubmenu = new ToolStripMenuItem("📁 Gán nhanh tên nhóm");
+            miQuickAssignSubmenu = new ToolStripMenuItem("Gán nhanh tên nhóm");
 
             miMoveUp = new ToolStripMenuItem("▲ Di chuyển lên (Alt + Lên)");
             miMoveUp.Click += BtnMoveUp_Click;
@@ -722,7 +722,7 @@ namespace HDTool
 
             // Nút Xuất Excel
             btnExport = new System.Windows.Forms.Button();
-            btnExport.Text = "⚡  XUẤT EXCEL";
+            btnExport.Text = "XUẤT EXCEL";
             btnExport.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnExport.BackColor = Color.FromArgb(39, 174, 96);
             btnExport.ForeColor = Color.White;
@@ -736,7 +736,7 @@ namespace HDTool
 
             // Nút Xuất PDF
             btnExportPdf = new System.Windows.Forms.Button();
-            btnExportPdf.Text = "📄  XUẤT RA PDF";
+            btnExportPdf.Text = "XUẤT RA PDF";
             btnExportPdf.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnExportPdf.BackColor = Color.FromArgb(192, 57, 43); // Red Accent
             btnExportPdf.ForeColor = Color.White;
@@ -750,7 +750,7 @@ namespace HDTool
 
             // Nút Xuất CAD (Tùy chọn)
             btnExportCad = new System.Windows.Forms.Button();
-            btnExportCad.Text = "📐  XUẤT CAD";
+            btnExportCad.Text = "XUẤT CAD";
             btnExportCad.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnExportCad.BackColor = Color.FromArgb(24, 43, 73); // Navy Accent
             btnExportCad.ForeColor = Color.White;
@@ -764,7 +764,7 @@ namespace HDTool
 
             // Nút Xuất Gộp 1 File CAD
             btnExportCombinedCad = new System.Windows.Forms.Button();
-            btnExportCombinedCad.Text = "📦  GỘP 1 FILE CAD";
+            btnExportCombinedCad.Text = "GỘP 1 FILE CAD";
             btnExportCombinedCad.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnExportCombinedCad.BackColor = Color.FromArgb(31, 58, 96); // Deep Indigo/Navy
             btnExportCombinedCad.ForeColor = Color.White;
@@ -1244,16 +1244,16 @@ namespace HDTool
 
             if (!string.IsNullOrEmpty(curGroup) && curGroup != "[Chưa phân nhóm]")
             {
-                miCopyGroup.Text = string.Format("📋 Sao chép tên nhóm \"{0}\" (Ctrl+C)", curGroup);
+                miCopyGroup.Text = string.Format("Sao chép tên nhóm \"{0}\" (Ctrl+C)", curGroup);
                 miCopyGroup.Enabled = true;
-                miFillEmpty.Text = string.Format("⚡ Điền \"{0}\" vào tất cả ô chưa có nhóm", curGroup);
+                miFillEmpty.Text = string.Format("Điền \"{0}\" vào tất cả ô chưa có nhóm", curGroup);
                 miFillEmpty.Enabled = true;
             }
             else
             {
-                miCopyGroup.Text = "📋 Sao chép tên nhóm (Ctrl+C)";
+                miCopyGroup.Text = "Sao chép tên nhóm (Ctrl+C)";
                 miCopyGroup.Enabled = false;
-                miFillEmpty.Text = "⚡ Điền tên nhóm này vào tất cả ô chưa có nhóm";
+                miFillEmpty.Text = "Điền tên nhóm này vào tất cả ô chưa có nhóm";
                 miFillEmpty.Enabled = false;
             }
 
@@ -1263,23 +1263,23 @@ namespace HDTool
 
             if (!string.IsNullOrEmpty(clip))
             {
-                miPasteGroup.Text = string.Format("📥 Dán tên nhóm \"{0}\" vào {1} dòng đang chọn (Ctrl+V)", clip, selCount);
+                miPasteGroup.Text = string.Format("Dán tên nhóm \"{0}\" vào {1} dòng đang chọn (Ctrl+V)", clip, selCount);
                 miPasteGroup.Enabled = true;
             }
             else
             {
-                miPasteGroup.Text = "📥 Dán tên nhóm vào các dòng đang chọn (Ctrl+V)";
+                miPasteGroup.Text = "Dán tên nhóm vào các dòng đang chọn (Ctrl+V)";
                 miPasteGroup.Enabled = false;
             }
 
             if (selCount >= 2)
             {
-                miFillDown.Text = string.Format("⚡ Điền tên nhóm từ dòng trên xuống {0} dòng dưới (Ctrl+D)", selCount - 1);
+                miFillDown.Text = string.Format("Điền tên nhóm từ dòng trên xuống {0} dòng dưới (Ctrl+D)", selCount - 1);
                 miFillDown.Enabled = true;
             }
             else
             {
-                miFillDown.Text = "⚡ Điền tên nhóm xuống các dòng dưới (Ctrl+D)";
+                miFillDown.Text = "Điền tên nhóm xuống các dòng dưới (Ctrl+D)";
                 miFillDown.Enabled = false;
             }
 
@@ -1291,13 +1291,13 @@ namespace HDTool
                 foreach (string g in existingGroups)
                 {
                     string groupName = g;
-                    ToolStripMenuItem item = new ToolStripMenuItem(string.Format("📁 {0}", groupName));
+                    ToolStripMenuItem item = new ToolStripMenuItem(string.Format("{0}", groupName));
                     item.Click += (s, ev) => PasteToSelectedRows(groupName);
                     miQuickAssignSubmenu.DropDownItems.Add(item);
                 }
                 miQuickAssignSubmenu.DropDownItems.Add(new ToolStripSeparator());
             }
-            ToolStripMenuItem miClearGroup = new ToolStripMenuItem("❌ Xóa nhóm (Chuyển về Chưa phân nhóm)");
+            ToolStripMenuItem miClearGroup = new ToolStripMenuItem("✖ Xóa nhóm (Chuyển về Chưa phân nhóm)");
             miClearGroup.Click += (s, ev) => PasteToSelectedRows(string.Empty);
             miQuickAssignSubmenu.DropDownItems.Add(miClearGroup);
         }
@@ -1716,7 +1716,7 @@ namespace HDTool
                         {
                             Clipboard.SetText(grp);
                             _lastCopiedGroupTitle = grp;
-                            lblStatus.Text = string.Format("📋 Đã sao chép tên nhóm: \"{0}\" (Bấm Ctrl+V để dán vào các dòng khác)", grp);
+                            lblStatus.Text = string.Format("Đã sao chép tên nhóm: \"{0}\" (Bấm Ctrl+V để dán vào các dòng khác)", grp);
                             return;
                         }
                     }
@@ -1733,7 +1733,7 @@ namespace HDTool
                         {
                             Clipboard.SetText(sVal);
                             _lastCopiedGroupTitle = sVal;
-                            lblStatus.Text = string.Format("📋 Đã sao chép: \"{0}\"", sVal);
+                            lblStatus.Text = string.Format("Đã sao chép: \"{0}\"", sVal);
                             return;
                         }
                     }
@@ -1746,7 +1746,7 @@ namespace HDTool
                     {
                         Clipboard.SetText(item.GroupTitle);
                         _lastCopiedGroupTitle = item.GroupTitle;
-                        lblStatus.Text = string.Format("📋 Đã sao chép tên nhóm: \"{0}\"", item.GroupTitle);
+                        lblStatus.Text = string.Format("Đã sao chép tên nhóm: \"{0}\"", item.GroupTitle);
                     }
                 }
             }
@@ -1816,11 +1816,11 @@ namespace HDTool
                 _lastCopiedGroupTitle = cleanGroup;
                 if (string.IsNullOrEmpty(cleanGroup))
                 {
-                    lblStatus.Text = string.Format("❌ Đã xóa nhóm cho {0} bản vẽ đang chọn.", targetRows.Count);
+                    lblStatus.Text = string.Format("✖ Đã xóa nhóm cho {0} bản vẽ đang chọn.", targetRows.Count);
                 }
                 else
                 {
-                    lblStatus.Text = string.Format("📥 Đã dán tên nhóm \"{0}\" vào {1} bản vẽ đang chọn.", cleanGroup, targetRows.Count);
+                    lblStatus.Text = string.Format("Đã dán tên nhóm \"{0}\" vào {1} bản vẽ đang chọn.", cleanGroup, targetRows.Count);
                 }
 
                 this.BeginInvoke((MethodInvoker)delegate
@@ -1874,7 +1874,7 @@ namespace HDTool
                                 SheetItem nextItem = nextRow.Tag as SheetItem;
                                 if (nextItem != null) nextItem.GroupTitle = grp;
                                 UpdateRowGroupCell(nextRow, grp);
-                                lblStatus.Text = string.Format("⚡ Đã điền tên nhóm \"{0}\" xuống dòng tiếp theo (Ctrl+D).", grp);
+                                lblStatus.Text = string.Format("Đã điền tên nhóm \"{0}\" xuống dòng tiếp theo (Ctrl+D).", grp);
                                 this.BeginInvoke((MethodInvoker)delegate { try { RebuildTreeNodes(); } catch { } });
                             }
                         }
@@ -1903,7 +1903,7 @@ namespace HDTool
                     UpdateRowGroupCell(r, sourceGroup);
                 }
 
-                lblStatus.Text = string.Format("⚡ Đã điền tên nhóm \"{0}\" xuống {1} bản vẽ bên dưới (Ctrl+D).", sourceGroup, targetRows.Count - 1);
+                lblStatus.Text = string.Format("Đã điền tên nhóm \"{0}\" xuống {1} bản vẽ bên dưới (Ctrl+D).", sourceGroup, targetRows.Count - 1);
                 this.BeginInvoke((MethodInvoker)delegate
                 {
                     try
@@ -1968,7 +1968,7 @@ namespace HDTool
                     return;
                 }
 
-                lblStatus.Text = string.Format("⚡ Đã điền tên nhóm \"{0}\" vào {1} bản vẽ chưa có nhóm.", groupToFill, filledCount);
+                lblStatus.Text = string.Format("Đã điền tên nhóm \"{0}\" vào {1} bản vẽ chưa có nhóm.", groupToFill, filledCount);
                 this.BeginInvoke((MethodInvoker)delegate
                 {
                     try
@@ -2312,7 +2312,7 @@ namespace HDTool
             if (e.Node == _rootNode)
             {
                 _selectedTreeGroup = null;
-                lblCurrentFolder.Text = string.Format("📁 Đang hiển thị: Tất Cả Bản Vẽ ({0} bản vẽ)", _allSheets.Count);
+                lblCurrentFolder.Text = string.Format("Đang hiển thị: Tất Cả Bản Vẽ ({0} bản vẽ)", _allSheets.Count);
                 ApplyFilter();
             }
             else if (e.Node.Tag is string)
@@ -2324,7 +2324,7 @@ namespace HDTool
                     if (groupName == "[Chưa phân nhóm]") return string.IsNullOrEmpty(s.GroupTitle);
                     return string.Equals(s.GroupTitle, groupName, StringComparison.OrdinalIgnoreCase);
                 });
-                lblCurrentFolder.Text = string.Format("📁 Đang hiển thị: Thư mục \"{0}\" ({1} bản vẽ)", groupName, count);
+                lblCurrentFolder.Text = string.Format("Đang hiển thị: Thư mục \"{0}\" ({1} bản vẽ)", groupName, count);
                 ApplyFilter();
             }
             else if (e.Node.Tag is SheetItem)
@@ -2339,7 +2339,7 @@ namespace HDTool
                     if (!inCurGroup)
                     {
                         _selectedTreeGroup = null;
-                        lblCurrentFolder.Text = string.Format("📁 Đang hiển thị: Tất Cả Bản Vẽ ({0} bản vẽ)", _allSheets.Count);
+                        lblCurrentFolder.Text = string.Format("Đang hiển thị: Tất Cả Bản Vẽ ({0} bản vẽ)", _allSheets.Count);
                         ApplyFilter();
                     }
                 }
@@ -2987,10 +2987,19 @@ namespace HDTool
 
             HDToolModelessHost.Run(uiapp =>
             {
-                Document docToUse = (uiapp != null && uiapp.ActiveUIDocument != null) ? uiapp.ActiveUIDocument.Document : _doc;
+                // Luôn ghi vào đúng dự án gốc của danh mục (không dùng ActiveUIDocument vì Form Modeless có thể đang mở khi chuyển dự án)
+                Document docToUse = HDToolModelessHost.ResolveOwnerDocument(_doc);
+                if (docToUse == null)
+                {
+                    TaskDialog.Show("HDTOOL", "Dự án gốc của danh mục bản vẽ đã bị đóng. Vui lòng mở lại công cụ.");
+                    return;
+                }
                 int successCount = 0;
+                bool rolledBack = false;
                 List<string> details = new List<string>();
                 List<string> errors = new List<string>();
+                // Chỉ cập nhật trạng thái trong bảng SAU KHI Transaction Commit thành công
+                List<Action> pendingItemUpdates = new List<Action>();
 
                 using (Transaction trans = new Transaction(docToUse, "HDTOOL - Đổi Tên & Số Hiệu Bản Vẽ Trực Tiếp"))
                 {
@@ -3009,7 +3018,10 @@ namespace HDTool
                                     vs.SheetNumber = "HD_TMP_" + Guid.NewGuid().ToString("N").Substring(0, 8);
                                 }
                             }
-                            catch { }
+                            catch (Exception ex)
+                            {
+                                errors.Add(string.Format("• [{0}]: Lỗi đổi số tạm ({1})", item.OriginalSheetNumber, ex.Message));
+                            }
                         }
                     }
 
@@ -3025,18 +3037,20 @@ namespace HDTool
                                 string oldNum = item.OriginalSheetNumber;
                                 string oldName = item.OriginalSheetName;
 
-                                if (item.IsNumberModified)
+                                SheetItem it = item;
+                                if (it.IsNumberModified)
                                 {
-                                    vs.SheetNumber = item.SheetNumber;
-                                    item.OriginalSheetNumber = item.SheetNumber;
+                                    vs.SheetNumber = it.SheetNumber;
+                                    pendingItemUpdates.Add(delegate { it.OriginalSheetNumber = it.SheetNumber; });
                                 }
 
-                                if (item.IsNameModified)
+                                string newName = it.SheetName;
+                                if (it.IsNameModified)
                                 {
-                                    string sanitizedName = UpdateSheetListService.SanitizeSheetName(item.SheetName);
+                                    string sanitizedName = UpdateSheetListService.SanitizeSheetName(it.SheetName);
                                     vs.Name = sanitizedName;
-                                    item.SheetName = sanitizedName;
-                                    item.OriginalSheetName = sanitizedName;
+                                    newName = sanitizedName;
+                                    pendingItemUpdates.Add(delegate { it.SheetName = sanitizedName; it.OriginalSheetName = sanitizedName; });
                                 }
 
                                 if (!string.IsNullOrEmpty(item.Revision))
@@ -3056,7 +3070,7 @@ namespace HDTool
                                 }
 
                                 details.Add(string.Format("• [{0}]: Số hiệu \"{1}\"➔\"{2}\" | Tên \"{3}\"➔\"{4}\"",
-                                    vs.SheetNumber, oldNum, item.SheetNumber, oldName, item.SheetName));
+                                    vs.SheetNumber, oldNum, item.SheetNumber, oldName, newName));
                                 successCount++;
                             }
                         }
@@ -3066,11 +3080,31 @@ namespace HDTool
                         }
                     }
 
-                    trans.Commit();
+                    if (errors.Count > 0)
+                    {
+                        // Có lỗi -> hoàn tác TOÀN BỘ để không bản vẽ nào bị kẹt số hiệu tạm "HD_TMP_..."
+                        trans.RollBack();
+                        rolledBack = true;
+                        successCount = 0;
+                        details.Clear();
+                    }
+                    else
+                    {
+                        trans.Commit();
+                        foreach (Action upd in pendingItemUpdates) upd();
+                    }
                 }
 
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine(string.Format("Đã cập nhật thành công {0} bản vẽ trong Revit!", successCount));
+                if (rolledBack)
+                {
+                    sb.AppendLine("CHƯA LƯU: Có bản vẽ gặp lỗi nên đã hoàn tác toàn bộ, mô hình Revit giữ nguyên như trước.");
+                    sb.AppendLine("Vui lòng sửa các bản vẽ bị lỗi bên dưới (ví dụ: trùng số hiệu) rồi bấm Lưu lại.");
+                }
+                else
+                {
+                    sb.AppendLine(string.Format("Đã cập nhật thành công {0} bản vẽ trong Revit!", successCount));
+                }
                 if (details.Count > 0)
                 {
                     sb.AppendLine("\nChi tiết thay đổi:");
@@ -3094,13 +3128,16 @@ namespace HDTool
                         {
                             RefreshGridData();
                             UpdateSaveButtonState();
-                            MessageBox.Show(sb.ToString(), "HDTOOL - Đã Lưu Vào Revit", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show(sb.ToString(),
+                                rolledBack ? "HDTOOL - Chưa Lưu (Đã Hoàn Tác)" : "HDTOOL - Đã Lưu Vào Revit",
+                                MessageBoxButtons.OK,
+                                rolledBack ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
                         }
                     });
                 }
                 else
                 {
-                    TaskDialog.Show("HDTOOL - Đã Lưu Vào Revit", sb.ToString());
+                    TaskDialog.Show(rolledBack ? "HDTOOL - Chưa Lưu (Đã Hoàn Tác)" : "HDTOOL - Đã Lưu Vào Revit", sb.ToString());
                 }
             });
 

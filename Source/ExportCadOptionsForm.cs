@@ -227,7 +227,7 @@ namespace HDTool
 
             // Left: GroupBox Scope (View đang vẽ / Sheet / View dự án)
             grpScope = new GroupBox();
-            grpScope.Text = " 📋 1. Nguồn Đối Tượng Cần Xuất ";
+            grpScope.Text = " 1. Nguồn Đối Tượng Cần Xuất ";
             grpScope.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             grpScope.ForeColor = Color.FromArgb(56, 189, 248);
             grpScope.Dock = DockStyle.Left;
@@ -241,7 +241,7 @@ namespace HDTool
             pnlScopeRadios.BackColor = Color.FromArgb(15, 23, 42);
 
             radScopeActiveView = new RadioButton();
-            radScopeActiveView.Text = "👉 View Đang Vẽ";
+            radScopeActiveView.Text = "View Đang Vẽ";
             radScopeActiveView.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
             radScopeActiveView.ForeColor = Color.FromArgb(52, 211, 153);
             radScopeActiveView.Location = new Point(8, 4);
@@ -250,7 +250,7 @@ namespace HDTool
             radScopeActiveView.CheckedChanged += delegate { if (radScopeActiveView.Checked) SwitchScopeMode(CadExportScope.ActiveView); };
 
             radScopeSheets = new RadioButton();
-            radScopeSheets.Text = "📑 Sheet Bản Vẽ";
+            radScopeSheets.Text = "Sheet Bản Vẽ";
             radScopeSheets.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
             radScopeSheets.ForeColor = Color.FromArgb(203, 213, 225);
             radScopeSheets.Location = new Point(160, 4);
@@ -258,7 +258,7 @@ namespace HDTool
             radScopeSheets.CheckedChanged += delegate { if (radScopeSheets.Checked) SwitchScopeMode(CadExportScope.Sheets); };
 
             radScopeViews = new RadioButton();
-            radScopeViews.Text = "📂 View Dự Án";
+            radScopeViews.Text = "View Dự Án";
             radScopeViews.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
             radScopeViews.ForeColor = Color.FromArgb(203, 213, 225);
             radScopeViews.Location = new Point(310, 4);
@@ -295,7 +295,7 @@ namespace HDTool
             lblActiveViewName.Padding = new Padding(8, 0, 8, 0);
 
             lblActiveViewDesc = new Label();
-            lblActiveViewDesc.Text = "⚡ Xuất trực tiếp toàn bộ mô hình MEP từ View đang vẽ, không cần tạo Sheet.";
+            lblActiveViewDesc.Text = "Xuất trực tiếp toàn bộ mô hình MEP từ View đang vẽ, không cần tạo Sheet.";
             lblActiveViewDesc.Font = new Font("Segoe UI", 8F, FontStyle.Italic);
             lblActiveViewDesc.ForeColor = Color.FromArgb(148, 163, 184);
             lblActiveViewDesc.Location = new Point(12, 80);
@@ -510,7 +510,7 @@ namespace HDTool
 
             // ==================== 2. MIDDLE CONTAINER: DATA GRID ====================
             grpLayerMapping = new GroupBox();
-            grpLayerMapping.Text = " 🎨 3. Bảng Quy Đổi Layer Hệ Thống MEP (DataGrid Trực Quan) ";
+            grpLayerMapping.Text = " 3. Bảng Quy Đổi Layer Hệ Thống MEP (DataGrid Trực Quan) ";
             grpLayerMapping.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             grpLayerMapping.ForeColor = Color.FromArgb(245, 158, 11);
             grpLayerMapping.Dock = DockStyle.Fill;
@@ -565,32 +565,32 @@ namespace HDTool
             cboPresets.SelectedIndex = 0;
             cboPresets.SelectedIndexChanged += CboPresets_SelectedIndexChanged;
 
-            btnSaveDefault = CreateSmallButton("💾 Lưu Mặc Định", Color.FromArgb(79, 70, 229));
+            btnSaveDefault = CreateSmallButton("Lưu Mặc Định", Color.FromArgb(79, 70, 229));
             btnSaveDefault.Location = new Point(563, 5);
             btnSaveDefault.Size = new Size(125, 28);
             btnSaveDefault.Click += BtnSaveDefault_Click;
 
-            btnLoadDefault = CreateSmallButton("🔄 Nạp Đã Lưu", Color.FromArgb(13, 148, 136));
+            btnLoadDefault = CreateSmallButton("Nạp Đã Lưu", Color.FromArgb(13, 148, 136));
             btnLoadDefault.Location = new Point(694, 5);
             btnLoadDefault.Size = new Size(108, 28);
             btnLoadDefault.Click += BtnLoadDefault_Click;
 
-            btnLoadProjectSys = CreateSmallButton("⚡ Quét Lại Hệ Thống", Color.FromArgb(2, 132, 199));
+            btnLoadProjectSys = CreateSmallButton("Quét Lại Hệ Thống", Color.FromArgb(2, 132, 199));
             btnLoadProjectSys.Location = new Point(808, 5);
             btnLoadProjectSys.Size = new Size(130, 28);
             btnLoadProjectSys.Click += BtnLoadProjectSys_Click;
 
-            btnAddRow = CreateSmallButton("➕ Thêm Dòng", Color.FromArgb(5, 150, 105));
+            btnAddRow = CreateSmallButton("Thêm Dòng", Color.FromArgb(5, 150, 105));
             btnAddRow.Location = new Point(932, 5);
             btnAddRow.Size = new Size(95, 28);
             btnAddRow.Click += BtnAddRow_Click;
 
-            btnSaveJson = CreateSmallButton("📁 Xuất JSON", Color.FromArgb(51, 65, 85));
+            btnSaveJson = CreateSmallButton("Xuất JSON", Color.FromArgb(51, 65, 85));
             btnSaveJson.Location = new Point(1034, 5);
             btnSaveJson.Size = new Size(98, 28);
             btnSaveJson.Click += BtnSaveJson_Click;
 
-            btnLoadJson = CreateSmallButton("📂 Nhập JSON", Color.FromArgb(51, 65, 85));
+            btnLoadJson = CreateSmallButton("Nhập JSON", Color.FromArgb(51, 65, 85));
             btnLoadJson.Location = new Point(1138, 5);
             btnLoadJson.Size = new Size(98, 28);
             btnLoadJson.Click += BtnLoadJson_Click;
@@ -647,13 +647,13 @@ namespace HDTool
             pnlMatrixFooter.Padding = new Padding(6, 3, 6, 3);
 
             lblMatrixFooterNote = new Label();
-            lblMatrixFooterNote.Text = "💡 Nhấp đúp vào ô để sửa trực tiếp Tên Layer và Màu sắc (ACI 1-255). Bấm '💾 Lưu Mặc Định' để Add-in tự nhớ cho các lần sau.";
+            lblMatrixFooterNote.Text = "Nhấp đúp vào ô để sửa trực tiếp Tên Layer và Màu sắc (ACI 1-255). Bấm 'Lưu Mặc Định' để Add-in tự nhớ cho các lần sau.";
             lblMatrixFooterNote.Font = new Font("Segoe UI", 8.5F, FontStyle.Italic);
             lblMatrixFooterNote.ForeColor = Color.FromArgb(148, 163, 184);
             lblMatrixFooterNote.Dock = DockStyle.Left;
             lblMatrixFooterNote.AutoSize = true;
 
-            btnDeleteRow = CreateSmallButton("❌ Xóa Dòng Đã Chọn", Color.FromArgb(127, 29, 29));
+            btnDeleteRow = CreateSmallButton("✖ Xóa Dòng Đã Chọn", Color.FromArgb(127, 29, 29));
             btnDeleteRow.Dock = DockStyle.Right;
             btnDeleteRow.Size = new Size(160, 22);
             btnDeleteRow.Click += BtnDeleteRow_Click;
@@ -690,7 +690,7 @@ namespace HDTool
             lblModelessNotice.AutoSize = true;
 
             btnExport = new System.Windows.Forms.Button();
-            btnExport.Text = "🚀 BẮT ĐẦU XUẤT CAD & QUY ĐỔI LAYER MEP";
+            btnExport.Text = "BẮT ĐẦU XUẤT CAD & QUY ĐỔI LAYER MEP";
             btnExport.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnExport.ForeColor = Color.White;
             btnExport.BackColor = Color.FromArgb(5, 150, 105);
@@ -796,7 +796,7 @@ namespace HDTool
 
             DataGridViewTextBoxColumn colTargetLayer = new DataGridViewTextBoxColumn();
             colTargetLayer.Name = "colTargetLayer";
-            colTargetLayer.HeaderText = "🔄 CHUYỂN ĐỔI SANG LAYER CAD (Tên Layer)";
+            colTargetLayer.HeaderText = "CHUYỂN ĐỔI SANG LAYER CAD (Tên Layer)";
             colTargetLayer.Width = 260;
             colTargetLayer.DefaultCellStyle.ForeColor = Color.FromArgb(52, 211, 153);
             colTargetLayer.DefaultCellStyle.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
@@ -804,7 +804,7 @@ namespace HDTool
 
             DataGridViewTextBoxColumn colColor = new DataGridViewTextBoxColumn();
             colColor.Name = "colColor";
-            colColor.HeaderText = "🎨 MÀU SẮC CAD (ACI 1-255)";
+            colColor.HeaderText = "MÀU SẮC CAD (ACI 1-255)";
             colColor.Width = 155;
             dgvMappings.Columns.Add(colColor);
 
@@ -1073,7 +1073,7 @@ namespace HDTool
                         dgvMappings.InvalidateCell(e.ColumnIndex, e.RowIndex);
 
                         lblMatrixFooterNote.Text = string.Format(CultureInfo.InvariantCulture,
-                            "✔ Đã chọn màu AutoCAD ACI {0} cho hệ thống '{1}'. Bấm '💾 Lưu Mặc Định' để ghi nhớ cho lần sau.",
+                            "✔ Đã chọn màu AutoCAD ACI {0} cho hệ thống '{1}'. Bấm 'Lưu Mặc Định' để ghi nhớ cho lần sau.",
                             newAci, item.RevitSystemName);
                         lblMatrixFooterNote.ForeColor = Color.FromArgb(52, 211, 153);
                     }
@@ -1386,7 +1386,7 @@ namespace HDTool
             _currentSettings.LayerMappings = new List<CadLayerMappingItem>(_allMappings);
 
             btnExport.Enabled = false;
-            lblStatus.Text = string.Format(CultureInfo.InvariantCulture, "⏳ Đang tiến hành xuất {0} đối tượng sang AutoCAD DWG...", targetIds.Count);
+            lblStatus.Text = string.Format(CultureInfo.InvariantCulture, "Đang tiến hành xuất {0} đối tượng sang AutoCAD DWG...", targetIds.Count);
 
             // Chạy trong ExternalEvent của HDToolModelessHost
             HDToolModelessHost.Run(delegate(UIApplication app)

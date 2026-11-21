@@ -81,7 +81,7 @@ namespace HDTool
                     string typeName = symbol.Name;
                     Category cat = symbol.Category;
                     string catName = (cat != null) ? cat.Name : "Khác";
-                    BuiltInCategory bic = (cat != null) ? (BuiltInCategory)cat.Id.IntegerValue : BuiltInCategory.INVALID;
+                    BuiltInCategory bic = (cat != null) ? (BuiltInCategory)(int)cat.Id.Value : BuiltInCategory.INVALID;
                     FamilyCategoryGroup catGroup = ResolveCategoryGroup(cat);
 
                     // Lọc theo Category Group nếu người dùng chỉ định
@@ -284,7 +284,7 @@ namespace HDTool
             BuiltInCategory bic = BuiltInCategory.INVALID;
             try
             {
-                bic = (BuiltInCategory)cat.Id.IntegerValue;
+                bic = (BuiltInCategory)(int)cat.Id.Value;
             }
             catch { }
 

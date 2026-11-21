@@ -316,7 +316,7 @@ namespace HDTool
             lblSummary.Size = new Size(600, 22);
 
             btnApply = new System.Windows.Forms.Button();
-            btnApply.Text = "🚀  CẬP NHẬT VÀO REVIT (ÁP DỤNG NGAY)";
+            btnApply.Text = "CẬP NHẬT VÀO REVIT (ÁP DỤNG NGAY)";
             btnApply.Font = new Font("Segoe UI", 10.0f, FontStyle.Bold);
             btnApply.BackColor = Color.FromArgb(211, 84, 0); // Orange Accent
             btnApply.ForeColor = Color.White;
@@ -442,18 +442,18 @@ namespace HDTool
             int notFoundCount = _allItems.Count(delegate(SheetUpdateItem x) { return x.Status == SheetUpdateStatus.NotFound; });
             int unchangedCount = _allItems.Count(delegate(SheetUpdateItem x) { return x.Status == SheetUpdateStatus.Unchanged; });
 
-            lblSummary.Text = string.Format("📊 Thống kê: {0} bản vẽ có thay đổi ({1} được chọn cập nhật) | {2} giữ nguyên | {3} không tìm thấy",
+            lblSummary.Text = string.Format("Thống kê: {0} bản vẽ có thay đổi ({1} được chọn cập nhật) | {2} giữ nguyên | {3} không tìm thấy",
                 changedCount, selectedCount, unchangedCount, notFoundCount);
 
             btnApply.Enabled = (selectedCount > 0);
             if (selectedCount > 0)
             {
-                btnApply.Text = string.Format("🚀  CẬP NHẬT {0} BẢN VẼ VÀO REVIT (ÁP DỤNG NGAY)", selectedCount);
+                btnApply.Text = string.Format("CẬP NHẬT {0} BẢN VẼ VÀO REVIT (ÁP DỤNG NGAY)", selectedCount);
                 btnApply.BackColor = Color.FromArgb(211, 84, 0);
             }
             else
             {
-                btnApply.Text = "🚀  CẬP NHẬT VÀO REVIT (Vui lòng chọn ít nhất 1 bản vẽ)";
+                btnApply.Text = "CẬP NHẬT VÀO REVIT (Vui lòng chọn ít nhất 1 bản vẽ)";
                 btnApply.BackColor = Color.FromArgb(180, 180, 180);
             }
         }
@@ -698,7 +698,8 @@ namespace HDTool
             {
                 try
                 {
-                    Document targetDoc = (uiapp != null && uiapp.ActiveUIDocument != null) ? uiapp.ActiveUIDocument.Document : _doc;
+                    Document targetDoc = HDToolModelessHost.ResolveOwnerDocument(_doc);
+                    if (targetDoc == null) { TaskDialog.Show("HDTOOL", "Dự án gốc của danh mục bản vẽ đã bị đóng. Vui lòng mở lại công cụ."); return; }
                     string report;
                     int count = UpdateSheetListService.ApplyUpdatesToDocument(targetDoc, _allItems, out report);
                     this.UpdatedCount = count;

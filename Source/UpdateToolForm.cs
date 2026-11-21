@@ -133,7 +133,7 @@ namespace HDTool
             txtFilePath.TextChanged += TxtFilePath_TextChanged;
 
             btnBrowse = new Button();
-            btnBrowse.Text = "📁  Duyệt File...";
+            btnBrowse.Text = "Duyệt File...";
             btnBrowse.Location = new Point(405, 46);
             btnBrowse.Size = new Size(115, 27);
             btnBrowse.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
@@ -156,7 +156,7 @@ namespace HDTool
 
             // 4. Action Buttons
             btnApply = new Button();
-            btnApply.Text = "🚀   NẠP & CẬP NHẬT NGAY VÀO REVIT";
+            btnApply.Text = "NẠP & CẬP NHẬT NGAY VÀO REVIT";
             btnApply.Location = new Point(16, 355);
             btnApply.Size = new Size(390, 48);
             btnApply.Font = new Font("Segoe UI", 10.0f, FontStyle.Bold);

@@ -365,7 +365,7 @@ namespace HDTool
             // 5. NÚT APPLY TO MÀU ĐỎ RỰC RỠ
             btnApply = new Button
             {
-                Text = "⚡ TỰ ĐỘNG FIT CROP VIEW (ÔM KHÍT ĐỐI TƯỢNG)",
+                Text = "TỰ ĐỘNG FIT CROP VIEW (ÔM KHÍT ĐỐI TƯỢNG)",
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
                 Size = new Size(528, 44),
                 Location = new System.Drawing.Point(16, 516),
@@ -381,7 +381,7 @@ namespace HDTool
             // Nút Pick & Đóng
             btnPickElements = new Button
             {
-                Text = "🎯 Pick Chọn Cụm Đối Tượng / Viewport",
+                Text = "Pick Chọn Cụm Đối Tượng / Viewport",
                 Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
                 Size = new Size(260, 34),
                 Location = new System.Drawing.Point(16, 566),
@@ -562,7 +562,7 @@ namespace HDTool
 
             if (_externalEvent != null && _eventHandler != null)
             {
-                SetStatusSafely("⏳ Đang tính toán và cập nhật Crop View trong Revit...", true);
+                SetStatusSafely("Đang tính toán và cập nhật Crop View trong Revit...", true);
                 _eventHandler.Run(doAction, _externalEvent);
             }
             else

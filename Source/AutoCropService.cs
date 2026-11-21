@@ -802,7 +802,7 @@ namespace HDTool
         private static bool IsMepElement(Element el)
         {
             if (el == null || el.Category == null) return false;
-            int catId = el.Category.Id.IntegerValue;
+            int catId = (int)el.Category.Id.Value;
             return catId == (int)BuiltInCategory.OST_PipeCurves ||
                    catId == (int)BuiltInCategory.OST_PipeFitting ||
                    catId == (int)BuiltInCategory.OST_PipeAccessory ||
@@ -849,7 +849,7 @@ namespace HDTool
 
             if (cat.CategoryType != CategoryType.Model) return false;
 
-            int catId = cat.Id.IntegerValue;
+            int catId = (int)cat.Id.Value;
             if (catId == (int)BuiltInCategory.OST_Grids ||
                 catId == (int)BuiltInCategory.OST_Levels ||
                 catId == (int)BuiltInCategory.OST_VolumeOfInterest || // Scope Box

@@ -166,6 +166,10 @@ namespace HDTool
                 // Dam bao CLR nhan dien Assembly dong cho Hot Reload
                 ToolHotReloadManager.EnsureAssemblyResolve();
 
+                // Khởi tạo ExternalEvent dùng chung ngay trong API context lúc khởi động Revit,
+                // để mọi Form Modeless luôn có kênh ExternalEvent hợp lệ (không phải tạo từ sự kiện Click)
+                HDToolModelessHost.EnsureInitialized();
+
                 // Dang ky tu dong kiem tra va can khop ty le Bang Khoi Luong khi kich hoat View/Sheet
                 try
                 {

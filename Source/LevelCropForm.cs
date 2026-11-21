@@ -318,7 +318,7 @@ namespace HDTool
 
             // 5. Các nút thao tác chính
             btnApplyAllViews = new System.Windows.Forms.Button();
-            btnApplyAllViews.Text = "⚡  ĐỒNG LOẠT CĂN CHỈNH TẤT CẢ VIEW ĐÃ CHỌN";
+            btnApplyAllViews.Text = "ĐỒNG LOẠT CĂN CHỈNH TẤT CẢ VIEW ĐÃ CHỌN";
             btnApplyAllViews.Font = new System.Drawing.Font("Segoe UI", 10.0f, FontStyle.Bold);
             btnApplyAllViews.Location = new System.Drawing.Point(15, 502);
             btnApplyAllViews.Size = new System.Drawing.Size(515, 44);
@@ -332,12 +332,12 @@ namespace HDTool
             btnPick = new System.Windows.Forms.Button();
             if (_preselectedLevels.Count > 0 && !_isSheet)
             {
-                btnPick.Text = string.Format("⚡  CĂN CHỈNH {0} LEVEL ĐÃ CHỌN TRÊN MÀN HÌNH", _preselectedLevels.Count);
+                btnPick.Text = string.Format("CĂN CHỈNH {0} LEVEL ĐÃ CHỌN TRÊN MÀN HÌNH", _preselectedLevels.Count);
                 btnPick.BackColor = System.Drawing.Color.FromArgb(230, 126, 34);
             }
             else
             {
-                btnPick.Text = _isSheet ? "🎯  CHỌN VIEWPORT TRÊN SHEET (PICK)" : "🎯  CHỌN LEVEL TRÊN MÀN HÌNH (PICK)";
+                btnPick.Text = _isSheet ? "CHỌN VIEWPORT TRÊN SHEET (PICK)" : "CHỌN LEVEL TRÊN MÀN HÌNH (PICK)";
                 btnPick.BackColor = System.Drawing.Color.FromArgb(41, 128, 185);
             }
             btnPick.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Bold);
@@ -350,7 +350,7 @@ namespace HDTool
             toolTip.SetToolTip(btnPick, "Click chọn thủ công các đối tượng trên bản vẽ");
 
             btnSwitchGrid = new System.Windows.Forms.Button();
-            btnSwitchGrid.Text = "📐  CHUYỂN SANG CĂN GRIDS";
+            btnSwitchGrid.Text = "CHUYỂN SANG CĂN GRIDS";
             btnSwitchGrid.Font = new System.Drawing.Font("Segoe UI", 9.0f, FontStyle.Bold);
             btnSwitchGrid.Location = new System.Drawing.Point(15, 594);
             btnSwitchGrid.Size = new System.Drawing.Size(252, 34);
@@ -455,12 +455,12 @@ namespace HDTool
         {
             if (checkedCount > 1)
             {
-                btnApplyAllViews.Text = string.Format("⚡  ĐỒNG LOẠT CĂN CHỈNH {0} VIEW ĐANG CHỌN", checkedCount);
+                btnApplyAllViews.Text = string.Format("ĐỒNG LOẠT CĂN CHỈNH {0} VIEW ĐANG CHỌN", checkedCount);
                 btnApplyAllViews.Enabled = true;
             }
             else if (checkedCount == 1)
             {
-                btnApplyAllViews.Text = "⚡  CĂN CHỈNH 1 VIEW ĐÃ CHỌN";
+                btnApplyAllViews.Text = "CĂN CHỈNH 1 VIEW ĐÃ CHỌN";
                 btnApplyAllViews.Enabled = true;
             }
             else

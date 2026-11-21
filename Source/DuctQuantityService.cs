@@ -369,7 +369,7 @@ namespace HDTool
             item.ElementIds.Add(elem.Id);
 
             Category cat = elem.Category;
-            BuiltInCategory bic = (BuiltInCategory)cat.Id.IntegerValue;
+            BuiltInCategory bic = (BuiltInCategory)(int)cat.Id.Value;
 
             // 1. Tầng (Level)
             item.LocationByLevel = GetElementLevelName(doc, elem);
@@ -1878,7 +1878,7 @@ namespace HDTool
                     }
 
                     // Dòng tổng kết
-                    string summaryText = string.Format("📊 TỔNG CỘNG: {0:0.00} m² tôn mạ kẽm  |  {1:0.00} mét dài ống  |  {2} phụ kiện, van, miệng gió  |  HadoMEE", totalArea, totalLen, totalCount);
+                    string summaryText = string.Format("TỔNG CỘNG: {0:0.00} m² tôn mạ kẽm  |  {1:0.00} mét dài ống  |  {2} phụ kiện, van, miệng gió  |  HadoMEE", totalArea, totalLen, totalCount);
                     double summaryMidY = -totalHFt + (summaryHFt / 2.0);
                     SafeDrawTextNote(doc, tableView, headerTextType.Id, new XYZ(totalWidthFt / 2.0, summaryMidY, 0), summaryText, HorizontalTextAlignment.Center, VerticalTextAlignment.Middle, totalWidthFt - (paddingXFt * 2));
 
@@ -1952,20 +1952,20 @@ namespace HDTool
                         if (vp == null)
                         {
                             vp = Viewport.Create(doc, targetSheet.Id, tableView.Id, centerPt);
-                            resultMessage = string.Format("✅ Đã tạo bảng '{0}' và đặt thành công lên Sheet {1} ({2})!",
+                            resultMessage = string.Format("✔ Đã tạo bảng '{0}' và đặt thành công lên Sheet {1} ({2})!",
                                 cleanTitle, targetSheet.SheetNumber, targetSheet.Name);
                         }
                         else
                         {
                             vp.SetBoxCenter(centerPt);
-                            resultMessage = string.Format("✅ Đã cập nhật thành công Bảng Khối Lượng '{0}' trên Sheet {1} ({2})!",
+                            resultMessage = string.Format("✔ Đã cập nhật thành công Bảng Khối Lượng '{0}' trên Sheet {1} ({2})!",
                                 cleanTitle, targetSheet.SheetNumber, targetSheet.Name);
                         }
                         createdViewport = vp;
                     }
                     else
                     {
-                        resultMessage = string.Format("✅ Đã tạo bảng '{0}' trong danh sách Legend Views! Sếp có thể kéo thả vào bất kỳ Sheet nào.", cleanTitle);
+                        resultMessage = string.Format("✔ Đã tạo bảng '{0}' trong danh sách Legend Views! Sếp có thể kéo thả vào bất kỳ Sheet nào.", cleanTitle);
                     }
 
                     tx.Commit();

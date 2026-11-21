@@ -136,7 +136,7 @@ namespace HDTool
             if (cat == null) return false;
             try
             {
-                int catId = cat.Id.IntegerValue;
+                int catId = (int)cat.Id.Value;
                 return catId == (int)BuiltInCategory.OST_DuctCurves ||
                        catId == (int)BuiltInCategory.OST_DuctFitting ||
                        catId == (int)BuiltInCategory.OST_DuctAccessory ||
@@ -207,7 +207,7 @@ namespace HDTool
                 // 4. Kiem tra Category
                 if (elem.Category != null)
                 {
-                    int catId = elem.Category.Id.IntegerValue;
+                    int catId = (int)elem.Category.Id.Value;
                     if (catId == (int)BuiltInCategory.OST_DuctInsulations || catId == (int)BuiltInCategory.OST_DuctLinings)
                     {
                         Parameter pHost = elem.get_Parameter(BuiltInParameter.HOST_ID_PARAM);
@@ -344,7 +344,7 @@ namespace HDTool
                     TaskDialog tdEmpty = new TaskDialog("HDTOOL - KẾT QUẢ QUÉT VÙNG");
                     tdEmpty.MainInstruction = "Không tìm thấy ống gió nào trong vùng vừa quét!";
                     tdEmpty.MainContent = "Khu vực Sếp vừa quét không có đối tượng thuộc hệ thống thông gió (hoặc đang ở View Thoát Nước/Cấp Nước/Kiến Trúc).\n\n" +
-                                          "💡 Gợi ý:\n" +
+                                          "Gợi ý:\n" +
                                           "• Mở Mặt bằng có ống gió (ví dụ: 'MB ÔNG GIÓ HÀNH LANG TẦNG 2').\n" +
                                           "• Hoặc Sếp có thể dùng chuột quét chọn ống gió ngoài Revit trước, rồi bấm HDTOOL là tự động nhận diện ngay 100%!";
                     tdEmpty.CommonButtons = TaskDialogCommonButtons.Ok;
@@ -387,7 +387,7 @@ namespace HDTool
         private bool _isDisposedOrClosing = false;
         private bool _isRevitEventRegistered = false;
         private CheckBox chkLiveSync;
-        private HashSet<int> _lastKnownSelIds = new HashSet<int>();
+        private HashSet<long> _lastKnownSelIds = new HashSet<long>();
         private bool _isUpdatingGrid = false;
         private bool _isUpdatingScope = false;
 
@@ -663,7 +663,7 @@ namespace HDTool
                 {
                     foreach (ElementId id in sel)
                     {
-                        if (!_lastKnownSelIds.Contains(id.IntegerValue))
+                        if (!_lastKnownSelIds.Contains(id.Value))
                         {
                             changed = true;
                             break;
@@ -674,7 +674,7 @@ namespace HDTool
                 if (!changed) return;
 
                 _lastKnownSelIds.Clear();
-                foreach (ElementId id in sel) _lastKnownSelIds.Add(id.IntegerValue);
+                foreach (ElementId id in sel) _lastKnownSelIds.Add(id.Value);
 
                 List<ElementId> ductIds = new List<ElementId>();
                 foreach (ElementId id in sel)
@@ -849,7 +849,7 @@ namespace HDTool
 
             // Cụm 2: Nút quét chuột siêu mượt
             btnPickArea = new Button();
-            btnPickArea.Text = "⬛ QUÉT VÙNG MỚI\r\n(Kéo quét hoặc Click View)";
+            btnPickArea.Text = "■ QUÉT VÙNG MỚI\r\n(Kéo quét hoặc Click View)";
             btnPickArea.Location = new Point(265, 20);
             btnPickArea.Size = new Size(160, 42);
             btnPickArea.BackColor = Color.FromArgb(217, 83, 79);
@@ -862,7 +862,7 @@ namespace HDTool
             toolTip.SetToolTip(btnPickArea, "Trên Sheet: Click chọn trực tiếp vào khung nhìn Viewport để lấy toàn bộ ống gió của View!\nTrong View mô hình: Kéo quét một khung chữ nhật cực nhanh không lag.");
 
             btnPickAppendArea = new Button();
-            btnPickAppendArea.Text = "➕ Bóc Thêm (Cộng Dồn)";
+            btnPickAppendArea.Text = "Bóc Thêm (Cộng Dồn)";
             btnPickAppendArea.Location = new Point(265, 66);
             btnPickAppendArea.Size = new Size(160, 34);
             btnPickAppendArea.BackColor = Color.FromArgb(13, 148, 136);
@@ -971,7 +971,7 @@ namespace HDTool
             chkAutoHighlight.ForeColor = Color.FromArgb(3, 105, 161);
 
             btnHighlightAll = new Button();
-            btnHighlightAll.Text = "💡 Sáng Đã Bóc";
+            btnHighlightAll.Text = "Sáng Đã Bóc";
             btnHighlightAll.Location = new Point(230, 6);
             btnHighlightAll.Size = new Size(110, 26);
             btnHighlightAll.BackColor = Color.FromArgb(217, 119, 6);
@@ -995,7 +995,7 @@ namespace HDTool
             btnClearHighlight.Click += BtnClearHighlight_Click;
 
             btnZoom = new Button();
-            btnZoom.Text = "🔍 Zoom Gần";
+            btnZoom.Text = "Zoom Gần";
             btnZoom.Location = new Point(430, 6);
             btnZoom.Size = new Size(95, 26);
             btnZoom.BackColor = Color.FromArgb(2, 132, 199);
@@ -1008,7 +1008,7 @@ namespace HDTool
 
             // NÚT THÊM CỘT PARAMETER DỰ ÁN & HỆ ỐNG GIÓ
             btnAddParamCol = new Button();
-            btnAddParamCol.Text = "➕ Thêm Cột Parameter";
+            btnAddParamCol.Text = "Thêm Cột Parameter";
             btnAddParamCol.Location = new Point(pnlActionToolbar.Width - 280, 6);
             btnAddParamCol.Size = new Size(165, 26);
             btnAddParamCol.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -1022,7 +1022,7 @@ namespace HDTool
             toolTip.SetToolTip(btnAddParamCol, "Bổ sung bất kỳ tham số nào của Dự án hoặc Hệ ống gió vào bảng (Comments, Mark, Loại Bảo Ôn...)");
 
             btnRemoveParamCol = new Button();
-            btnRemoveParamCol.Text = "🗑️ Xóa Cột";
+            btnRemoveParamCol.Text = "Xóa Cột";
             btnRemoveParamCol.Location = new Point(pnlActionToolbar.Width - 105, 6);
             btnRemoveParamCol.Size = new Size(95, 26);
             btnRemoveParamCol.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -1036,7 +1036,7 @@ namespace HDTool
             toolTip.SetToolTip(btnRemoveParamCol, "Xóa một cột tham số tùy chọn đã thêm khỏi bảng");
 
             chkLiveSync = new CheckBox();
-            chkLiveSync.Text = "⚡ Tự bóc khi chọn trên Revit";
+            chkLiveSync.Text = "Tự bóc khi chọn trên Revit";
             chkLiveSync.Checked = false;
             chkLiveSync.Location = new Point(540, 9);
             chkLiveSync.AutoSize = true;
@@ -1075,7 +1075,7 @@ namespace HDTool
 
             // ================= 5. SUMMARY BAR =================
             lblSummary = new Label();
-            lblSummary.Text = "📊 Đang tính toán dữ liệu khối lượng ống gió...";
+            lblSummary.Text = "Đang tính toán dữ liệu khối lượng ống gió...";
             lblSummary.Location = new Point(14, this.ClientSize.Height - 110);
             lblSummary.Size = new Size(this.ClientSize.Width - 28, 24);
             lblSummary.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -1090,7 +1090,7 @@ namespace HDTool
             pnlBottom.BorderStyle = BorderStyle.FixedSingle;
 
             btnPlaceSheet = new Button();
-            btnPlaceSheet.Text = "🚀 ĐẶT / CẬP NHẬT VÀO SHEET MONG MUỐN...";
+            btnPlaceSheet.Text = "ĐẶT / CẬP NHẬT VÀO SHEET MONG MUỐN...";
             btnPlaceSheet.Location = new Point(12, 9);
             btnPlaceSheet.Size = new Size(340, 36);
             btnPlaceSheet.BackColor = Color.FromArgb(16, 185, 129);
@@ -1102,7 +1102,7 @@ namespace HDTool
             btnPlaceSheet.Click += BtnPlaceSheet_Click;
 
             btnExportExcel = new Button();
-            btnExportExcel.Text = "📊 Xuất Excel (.csv / .xlsx)";
+            btnExportExcel.Text = "Xuất Excel (.csv / .xlsx)";
             btnExportExcel.Location = new Point(360, 9);
             btnExportExcel.Size = new Size(180, 36);
             btnExportExcel.BackColor = Color.FromArgb(13, 148, 136);
@@ -1114,7 +1114,7 @@ namespace HDTool
             btnExportExcel.Click += BtnExportExcel_Click;
 
             btnCopyClipboard = new Button();
-            btnCopyClipboard.Text = "📋 Copy Bảng";
+            btnCopyClipboard.Text = "Copy Bảng";
             btnCopyClipboard.Location = new Point(548, 9);
             btnCopyClipboard.Size = new Size(110, 36);
             btnCopyClipboard.BackColor = Color.FromArgb(71, 85, 105);
@@ -1449,7 +1449,7 @@ namespace HDTool
                 }
 
                 lblSummary.Text = string.Format(
-                    "📊 TỔNG CỘNG DIỆN TÍCH TÔN: {0:0.00} m² tôn mạ kẽm  |  {1:0.00} mét dài ống ({2} đoạn)  |  {3} phụ kiện & van/miệng gió  |  {4} dòng thống kê",
+                    "TỔNG CỘNG DIỆN TÍCH TÔN: {0:0.00} m² tôn mạ kẽm  |  {1:0.00} mét dài ống ({2} đoạn)  |  {3} phụ kiện & van/miệng gió  |  {4} dòng thống kê",
                     totalAreaM2, totalLengthM, ductSections, fittingsCount, displayList.Count
                 );
             }
@@ -1896,7 +1896,7 @@ namespace HDTool
             lblPrompt.ForeColor = Color.FromArgb(15, 23, 42);
 
             Label lblSearch = new Label();
-            lblSearch.Text = "🔍 Tìm kiếm nhanh parameter:";
+            lblSearch.Text = "Tìm kiếm nhanh parameter:";
             lblSearch.Location = new Point(14, 50);
             lblSearch.Size = new Size(200, 18);
             lblSearch.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
@@ -1920,7 +1920,7 @@ namespace HDTool
             FilterList();
 
             Button btnOk = new Button();
-            btnOk.Text = "➕ Thêm Cột Này";
+            btnOk.Text = "Thêm Cột Này";
             btnOk.Location = new Point(230, 425);
             btnOk.Size = new Size(140, 34);
             btnOk.BackColor = Color.FromArgb(14, 116, 144);
@@ -2010,7 +2010,7 @@ namespace HDTool
 
                 if (DuctQuantityCommand.IsDuctCategory(cat)) return true;
 
-                int catId = cat.Id.IntegerValue;
+                int catId = (int)cat.Id.Value;
                 if (catId == (int)BuiltInCategory.OST_IOSModelGroups ||
                     catId == (int)BuiltInCategory.OST_DuctInsulations ||
                     catId == (int)BuiltInCategory.OST_DuctLinings ||
@@ -2334,11 +2334,11 @@ namespace HDTool
                         }
 
                         TaskDialog.Show("HDTOOL — Thành Công",
-                            string.Format("🎉 ĐÃ ĐẶT THÀNH CÔNG BẢNG KHỐI LƯỢNG ỐNG GIÓ VÀO SHEET!\n\n" +
+                            string.Format("ĐÃ ĐẶT THÀNH CÔNG BẢNG KHỐI LƯỢNG ỐNG GIÓ VÀO SHEET!\n\n" +
                                           "• Sheet: {0} - {1}\n" +
                                           "• Bảng: {2}\n" +
                                           "• Tổng số dòng: {3}\n\n" +
-                                          "💡 Bảng được lưu trong Legend Views, có thể đặt vào nhiều Sheet cùng lúc!",
+                                          "Bảng được lưu trong Legend Views, có thể đặt vào nhiều Sheet cùng lúc!",
                                           targetSheet.SheetNumber, targetSheet.Name, tTitle, _items != null ? _items.Count : 0));
                     }
                     else

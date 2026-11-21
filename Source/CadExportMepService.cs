@@ -307,7 +307,7 @@ namespace HDTool
                     string catName = "Ống Gió (Ducts)";
                     BuiltInCategory bic = BuiltInCategory.OST_DuctCurves;
                     string sysName = null;
-                    int bicVal = elem.Category.Id.IntegerValue;
+                    int bicVal = (int)elem.Category.Id.Value;
 
                     if (bicVal == (int)BuiltInCategory.OST_DuctCurves)
                     {
@@ -1606,7 +1606,7 @@ namespace HDTool
                     exportName = SheetExportCadPdfService.SanitizeFileName(exportName);
                     if (string.IsNullOrEmpty(exportName))
                     {
-                        exportName = "View_" + vid.IntegerValue.ToString();
+                        exportName = "View_" + vid.Value.ToString();
                     }
 
                     List<ElementId> singleIdList = new List<ElementId>();
