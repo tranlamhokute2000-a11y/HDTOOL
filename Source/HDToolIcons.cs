@@ -43,7 +43,8 @@ namespace HDTool
 
             bool dark = IsRevitDarkTheme();
             Color ink = dark ? InkDark : InkLight;
-            Color acc = dark ? AccentDark : AccentLight;
+            Color acc = HDToolTheme.ToolColor(key); // điểm nhấn = màu nhận diện riêng của từng công cụ
+            if (dark) acc = HDToolTheme.Mix(acc, Color.White, 0.2);
 
             int px = Math.Max(size, (int)Math.Round(size * scale));
             using (Bitmap bmp = new Bitmap(px, px, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
@@ -200,6 +201,7 @@ namespace HDTool
             float side = Math.Min(r.Width, r.Height);
             Ctx c = new Ctx();
             c.G = g;
+            // Icon nhỏ (nút bấm) không có điểm nhấn: nét cùng màu với chữ của nút
             c.S = side / 32f;
             c.X = r.X + (r.Width - side) / 2f;
             c.Y = r.Y + (r.Height - side) / 2f;
@@ -224,6 +226,20 @@ namespace HDTool
                     case "layers": DrawLayers(c); break;
                     case "family": DrawFamily(c); break;
                     case "update": DrawUpdate(c); break;
+                    case "pick": DrawPick(c); break;
+                    case "plus": DrawPlus(c); break;
+                    case "refresh": DrawRefresh(c); break;
+                    case "light": DrawLight(c, false); break;
+                    case "lightoff": DrawLight(c, true); break;
+                    case "zoom": DrawZoom(c); break;
+                    case "col": DrawCol(c); break;
+                    case "copy": DrawCopy(c); break;
+                    case "xls": DrawXls(c); break;
+                    case "sheet": DrawSheet(c); break;
+                    case "area": DrawArea(c); break;
+                    case "ruler": DrawRuler(c); break;
+                    case "hash": DrawHash(c); break;
+                    case "valve": DrawValve(c); break;
                     default: DrawMenu(c); break;
                 }
             }
@@ -367,6 +383,91 @@ namespace HDTool
             Poly(c, c.Ink, 1.6f, false, 24, 3, 24, 8.5f, 18.5f, 8.5f);
             Line(c, c.Acc, 1.9f, 16, 10, 16, 20);
             Poly(c, c.Acc, 1.9f, false, 11.5f, 16, 16, 20.5f, 20.5f, 16);
+        }
+
+        // ---------- Icon nhỏ cho nút bấm (vẽ trên lưới 32, nét dày hơn để rõ ở 16px) ----------
+        private static void DrawPick(Ctx c)
+        {
+            Circle(c, c.Ink, 2.8f, 16, 16, 10);
+            Line(c, c.Ink, 2.8f, 16, 2, 16, 10); Line(c, c.Ink, 2.8f, 16, 22, 16, 30);
+            Line(c, c.Ink, 2.8f, 2, 16, 10, 16); Line(c, c.Ink, 2.8f, 22, 16, 30, 16);
+        }
+
+        private static void DrawPlus(Ctx c)
+        {
+            Line(c, c.Ink, 3.2f, 16, 6, 16, 26); Line(c, c.Ink, 3.2f, 6, 16, 26, 16);
+        }
+
+        private static void DrawRefresh(Ctx c)
+        {
+            Arc(c, c.Ink, 2.8f, 16, 16, 11, 300, 280);
+            Poly(c, c.Ink, 2.8f, false, 25, 3, 25, 9.5f, 18.5f, 9.5f);
+        }
+
+        private static void DrawLight(Ctx c, bool off)
+        {
+            Poly(c, c.Ink, 2.6f, false, 11, 22, 11, 18.5f, 8, 14, 8, 11);
+            Arc(c, c.Ink, 2.6f, 16, 11, 8, 180, 180);
+            Poly(c, c.Ink, 2.6f, false, 24, 11, 24, 14, 21, 18.5f, 21, 22);
+            Line(c, c.Ink, 2.6f, 11, 22, 21, 22); Line(c, c.Ink, 2.6f, 12, 27, 20, 27);
+            if (off) Line(c, c.Ink, 2.6f, 4, 4, 28, 28);
+        }
+
+        private static void DrawZoom(Ctx c)
+        {
+            Circle(c, c.Ink, 2.8f, 14, 14, 9);
+            Line(c, c.Ink, 3f, 21, 21, 28, 28);
+            Line(c, c.Ink, 2.4f, 10, 14, 18, 14); Line(c, c.Ink, 2.4f, 14, 10, 14, 18);
+        }
+
+        private static void DrawCol(Ctx c)
+        {
+            Rect(c, c.Ink, 2.6f, 4, 6, 24, 20);
+            Line(c, c.Ink, 2.4f, 12, 6, 12, 26); Line(c, c.Ink, 2.4f, 20, 6, 20, 26);
+        }
+
+        private static void DrawCopy(Ctx c)
+        {
+            Rect(c, c.Ink, 2.6f, 10, 10, 17, 18);
+            Poly(c, c.Ink, 2.6f, false, 6, 22, 6, 5, 21, 5);
+        }
+
+        private static void DrawXls(Ctx c)
+        {
+            Poly(c, c.Ink, 2.6f, true, 6, 3, 20, 3, 26, 9, 26, 29, 6, 29);
+            Line(c, c.Ink, 2.6f, 11, 15, 21, 24); Line(c, c.Ink, 2.6f, 21, 15, 11, 24);
+        }
+
+        private static void DrawSheet(Ctx c)
+        {
+            Rect(c, c.Ink, 2.6f, 3, 6, 26, 20);
+            Poly(c, c.Ink, 2.4f, false, 19, 26, 19, 19, 29, 19);
+        }
+
+        private static void DrawArea(Ctx c)
+        {
+            Poly(c, c.Ink, 2.4f, true, 4, 10, 16, 4, 28, 10, 16, 16);
+            Poly(c, c.Ink, 2.4f, false, 4, 10, 4, 22, 16, 28, 28, 22, 28, 10);
+            Line(c, c.Ink, 2.4f, 16, 16, 16, 28);
+        }
+
+        private static void DrawRuler(Ctx c)
+        {
+            Poly(c, c.Ink, 2.4f, true, 4, 22, 22, 4, 28, 10, 10, 28);
+            Line(c, c.Ink, 2f, 9, 17, 12, 20); Line(c, c.Ink, 2f, 13, 13, 16, 16); Line(c, c.Ink, 2f, 17, 9, 20, 12);
+        }
+
+        private static void DrawHash(Ctx c)
+        {
+            Line(c, c.Ink, 2.6f, 6, 12, 28, 12); Line(c, c.Ink, 2.6f, 4, 20, 26, 20);
+            Line(c, c.Ink, 2.6f, 13, 4, 10, 28); Line(c, c.Ink, 2.6f, 22, 4, 19, 28);
+        }
+
+        private static void DrawValve(Ctx c)
+        {
+            Poly(c, c.Ink, 2.4f, true, 4, 10, 4, 24, 16, 17);
+            Poly(c, c.Ink, 2.4f, true, 28, 10, 28, 24, 16, 17);
+            Line(c, c.Ink, 2.4f, 16, 17, 16, 7); Line(c, c.Ink, 2.4f, 11, 7, 21, 7);
         }
 
         private static void DrawMenu(Ctx c)

@@ -3,64 +3,83 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace HDTool
 {
-    public enum HDToolThemeMode { Blueprint, Drafting }
+    /// <summary>Premium = Tối Cao Cấp (mặc định, Sếp Hồ chốt), Drafting = Bản Vẽ Sáng, Blueprint = Kỹ thuật tối.</summary>
+    public enum HDToolThemeMode { Premium, Drafting, Blueprint }
 
     public enum HDToolButtonKind { Primary, Secondary, Ghost, Danger }
 
     /// <summary>
-    /// Bộ màu, font và bộ "khoác áo" giao diện kỹ thuật dùng chung cho toàn bộ Form HDTOOL.
-    /// Nguồn: PreviewStudio/HDTool_ThemeStudio.html (Sếp Hồ chốt chế độ Bản Vẽ Sáng).
+    /// Bộ màu, font và bộ "khoác áo" giao diện dùng chung cho toàn bộ Form HDTOOL.
+    /// Nguồn: PreviewStudio/HDTool_GiaoDienMoi.html (Sếp Hồ chốt phong cách Tối Cao Cấp).
     /// HDToolBaseForm tự gọi ApplyTo(form) khi Form tải, nên mọi Form kế thừa đều đổi giao diện đồng bộ.
     /// </summary>
     public static class HDToolTheme
     {
-        public static HDToolThemeMode Mode = HDToolThemeMode.Drafting;
-        private static bool Dark { get { return Mode == HDToolThemeMode.Blueprint; } }
+        public static HDToolThemeMode Mode = HDToolThemeMode.Premium;
+        public static bool IsDark { get { return Mode != HDToolThemeMode.Drafting; } }
+        public static bool IsPremium { get { return Mode == HDToolThemeMode.Premium; } }
+
+        private static Color Pick(Color premium, Color blueprint, Color drafting)
+        {
+            return Mode == HDToolThemeMode.Premium ? premium : (Mode == HDToolThemeMode.Blueprint ? blueprint : drafting);
+        }
+        private static Color C(int r, int g, int b) { return Color.FromArgb(r, g, b); }
 
         // ===================== MÀU (TOKEN) =====================
-        public static Color Bg           { get { return Dark ? Color.FromArgb(13, 21, 32) : Color.FromArgb(237, 241, 245); } }
-        public static Color Surface      { get { return Dark ? Color.FromArgb(18, 28, 41) : Color.FromArgb(255, 255, 255); } }
-        public static Color Surface2     { get { return Dark ? Color.FromArgb(23, 36, 51) : Color.FromArgb(245, 247, 250); } }
-        public static Color Header       { get { return Dark ? Color.FromArgb(10, 17, 26) : Color.FromArgb(16, 35, 58); } }
-        public static Color HeaderText   { get { return Dark ? Color.FromArgb(232, 241, 250) : Color.FromArgb(242, 246, 250); } }
-        public static Color HeaderSub    { get { return Color.FromArgb(157, 176, 196); } }
-        public static Color HeaderLine   { get { return Dark ? Color.FromArgb(47, 72, 98) : Color.FromArgb(44, 70, 100); } }
-        public static Color HeaderAccent { get { return Color.FromArgb(43, 184, 232); } }
-        public static Color Line         { get { return Dark ? Color.FromArgb(34, 52, 74) : Color.FromArgb(211, 219, 228); } }
-        public static Color LineStrong   { get { return Dark ? Color.FromArgb(47, 72, 98) : Color.FromArgb(183, 195, 208); } }
-        public static Color Text         { get { return Dark ? Color.FromArgb(227, 235, 243) : Color.FromArgb(14, 28, 43); } }
-        public static Color Text2        { get { return Dark ? Color.FromArgb(157, 176, 196) : Color.FromArgb(70, 88, 107); } }
-        public static Color Text3        { get { return Dark ? Color.FromArgb(102, 121, 143) : Color.FromArgb(122, 137, 153); } }
-        public static Color Accent       { get { return Dark ? Color.FromArgb(43, 184, 232) : Color.FromArgb(11, 120, 166); } }
-        public static Color AccentHover  { get { return Dark ? Color.FromArgb(82, 200, 240) : Color.FromArgb(10, 141, 194); } }
-        public static Color AccentDown   { get { return Dark ? Color.FromArgb(30, 150, 192) : Color.FromArgb(8, 96, 133); } }
-        public static Color AccentInk    { get { return Dark ? Color.FromArgb(4, 32, 44) : Color.FromArgb(255, 255, 255); } }
-        public static Color AccentSoft   { get { return Dark ? Color.FromArgb(19, 58, 82) : Color.FromArgb(217, 238, 247); } }
-        public static Color Ok           { get { return Dark ? Color.FromArgb(61, 214, 140) : Color.FromArgb(30, 158, 98); } }
-        public static Color Warn         { get { return Dark ? Color.FromArgb(242, 179, 61) : Color.FromArgb(183, 121, 31); } }
-        public static Color Err          { get { return Dark ? Color.FromArgb(242, 102, 94) : Color.FromArgb(200, 66, 59); } }
-        public static Color OkSoft       { get { return Dark ? Color.FromArgb(18, 52, 40) : Color.FromArgb(226, 244, 235); } }
-        public static Color WarnSoft     { get { return Dark ? Color.FromArgb(56, 44, 18) : Color.FromArgb(252, 243, 224); } }
-        public static Color ErrSoft      { get { return Dark ? Color.FromArgb(60, 26, 26) : Color.FromArgb(251, 231, 229); } }
-        public static Color RowAlt       { get { return Dark ? Color.FromArgb(21, 33, 50) : Color.FromArgb(246, 249, 252); } }
-        public static Color Input        { get { return Dark ? Color.FromArgb(15, 24, 35) : Color.FromArgb(255, 255, 255); } }
-        public static Color GridMinor    { get { return Dark ? Color.FromArgb(13, 43, 184, 232) : Color.FromArgb(10, 11, 120, 166); } }
-        public static Color GridMajor    { get { return Dark ? Color.FromArgb(26, 43, 184, 232) : Color.FromArgb(20, 11, 120, 166); } }
+        public static Color Bg           { get { return Pick(C(14, 16, 22), C(13, 21, 32), C(237, 241, 245)); } }
+        public static Color Surface      { get { return Pick(C(22, 26, 35), C(18, 28, 41), C(255, 255, 255)); } }
+        public static Color Surface2     { get { return Pick(C(27, 32, 48), C(23, 36, 51), C(245, 247, 250)); } }
+        public static Color SurfaceHover { get { return Pick(C(30, 36, 52), C(26, 40, 57), C(240, 244, 249)); } }
+        public static Color Header       { get { return Pick(C(31, 37, 87), C(10, 17, 26), C(16, 35, 58)); } }
+        public static Color HeaderGrad1  { get { return Pick(C(20, 26, 51), C(10, 17, 26), C(16, 35, 58)); } }
+        public static Color HeaderGrad2  { get { return Pick(C(31, 37, 87), C(10, 17, 26), C(16, 35, 58)); } }
+        public static Color HeaderGrad3  { get { return Pick(C(58, 31, 99), C(10, 17, 26), C(16, 35, 58)); } }
+        public static Color HeaderText   { get { return Pick(C(255, 255, 255), C(232, 241, 250), C(242, 246, 250)); } }
+        public static Color HeaderSub    { get { return Pick(C(184, 188, 210), C(157, 176, 196), C(157, 176, 196)); } }
+        public static Color HeaderLine   { get { return Pick(C(70, 74, 120), C(47, 72, 98), C(44, 70, 100)); } }
+        public static Color HeaderAccent { get { return Pick(C(125, 163, 255), C(43, 184, 232), C(43, 184, 232)); } }
+        public static Color Line         { get { return Pick(C(38, 44, 61), C(34, 52, 74), C(211, 219, 228)); } }
+        public static Color LineStrong   { get { return Pick(C(53, 60, 82), C(47, 72, 98), C(183, 195, 208)); } }
+        public static Color Text         { get { return Pick(C(236, 238, 245), C(227, 235, 243), C(14, 28, 43)); } }
+        public static Color Text2        { get { return Pick(C(170, 177, 197), C(157, 176, 196), C(70, 88, 107)); } }
+        public static Color Text3        { get { return Pick(C(113, 122, 147), C(102, 121, 143), C(122, 137, 153)); } }
+        public static Color Accent       { get { return Pick(C(91, 140, 255), C(43, 184, 232), C(11, 120, 166)); } }
+        public static Color AccentHover  { get { return Pick(C(125, 163, 255), C(82, 200, 240), C(10, 141, 194)); } }
+        public static Color AccentDown   { get { return Pick(C(70, 115, 230), C(30, 150, 192), C(8, 96, 133)); } }
+        public static Color AccentInk    { get { return Pick(C(10, 15, 31), C(4, 32, 44), C(255, 255, 255)); } }
+        public static Color AccentSoft   { get { return Pick(C(32, 43, 68), C(19, 58, 82), C(217, 238, 247)); } }
+        public static Color Ok           { get { return Pick(C(52, 211, 153), C(61, 214, 140), C(30, 158, 98)); } }
+        public static Color Warn         { get { return Pick(C(251, 191, 36), C(242, 179, 61), C(183, 121, 31)); } }
+        public static Color Err          { get { return Pick(C(248, 113, 113), C(242, 102, 94), C(200, 66, 59)); } }
+        public static Color OkSoft       { get { return Pick(C(26, 50, 50), C(18, 52, 40), C(226, 244, 235)); } }
+        public static Color WarnSoft     { get { return Pick(C(52, 47, 35), C(56, 44, 18), C(252, 243, 224)); } }
+        public static Color ErrSoft      { get { return Pick(C(51, 37, 45), C(60, 26, 26), C(251, 231, 229)); } }
+        public static Color RowAlt       { get { return Pick(C(24, 28, 39), C(21, 33, 50), C(246, 249, 252)); } }
+        public static Color Input        { get { return Pick(C(18, 22, 32), C(15, 24, 35), C(255, 255, 255)); } }
+        public static Color GridMinor    { get { return Pick(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(13, 43, 184, 232), Color.FromArgb(10, 11, 120, 166)); } }
+        public static Color GridMajor    { get { return Pick(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(26, 43, 184, 232), Color.FromArgb(20, 11, 120, 166)); } }
 
-        // Kích thước bố cục 4 tầng (px @ 96 DPI, tự nhân theo DPI qua AutoScaleMode.Dpi)
+        /// <summary>Bán kính bo góc (px @ 96 DPI). Kiểu Kỹ thuật dùng góc vuông.</summary>
+        public static int Radius { get { return IsPremium ? 10 : 0; } }
+        public static int RadiusSm { get { return IsPremium ? 7 : 0; } }
+
+        // Kích thước bố cục (px @ 96 DPI, tự nhân theo DPI qua AutoScaleMode.Dpi)
         public const int HeaderHeight = 58;
         public const int ToolbarHeight = 46;
         public const int StatusHeight = 52;
-        public const int RowHeight = 26;
-        public const int ColumnHeaderHeight = 30;
+        public const int RowHeight = 28;
+        public const int ColumnHeaderHeight = 32;
 
         // ===================== FONT: chỉ Segoe UI (chữ) và Consolas (số, mã, kích thước) =====================
+        public static readonly Font Hero       = new Font("Segoe UI", 12.5f, FontStyle.Bold);
         public static readonly Font Title      = new Font("Segoe UI", 12f, FontStyle.Bold);
+        public static readonly Font CardTitle  = new Font("Segoe UI", 10f, FontStyle.Bold);
         public static readonly Font Body       = new Font("Segoe UI", 9f, FontStyle.Regular);
         public static readonly Font BodyBold   = new Font("Segoe UI", 9f, FontStyle.Bold);
         public static readonly Font Caption    = new Font("Segoe UI", 8.5f, FontStyle.Regular);
@@ -70,15 +89,36 @@ namespace HDTool
         public static readonly Font MonoSmall  = new Font("Consolas", 8f, FontStyle.Regular);
         public static readonly Font Readout    = new Font("Consolas", 16f, FontStyle.Regular);
 
+        // ===================== MÀU NHẬN DIỆN TỪNG CÔNG CỤ (dùng chung Ribbon, Menu, đầu cửa sổ) =====================
+        public static Color ToolColor(string iconKey)
+        {
+            switch ((iconKey ?? "").ToLowerInvariant())
+            {
+                case "grid": return C(37, 99, 235);
+                case "level": return C(14, 165, 233);
+                case "crop": return C(124, 58, 237);
+                case "align": return C(99, 102, 241);
+                case "pipe": return C(8, 145, 178);
+                case "duct": return C(234, 88, 12);
+                case "cad2duct": return C(219, 39, 119);
+                case "sheetlist": return C(22, 163, 74);
+                case "sheetsync": return C(5, 150, 105);
+                case "layers": return C(217, 119, 6);
+                case "family": return C(192, 38, 211);
+                case "update": return C(100, 116, 139);
+                default: return C(91, 140, 255);
+            }
+        }
+
         // ===================== MÀU HỆ THỐNG ỐNG GIÓ =====================
         public static Color SystemColor(string code)
         {
             switch ((code ?? "").ToUpperInvariant())
             {
-                case "SA": return Dark ? Color.FromArgb(43, 184, 232) : Color.FromArgb(11, 120, 166);
-                case "RA": return Dark ? Color.FromArgb(61, 214, 140) : Color.FromArgb(30, 158, 98);
-                case "EA": return Dark ? Color.FromArgb(242, 179, 61) : Color.FromArgb(183, 121, 31);
-                case "OA": return Dark ? Color.FromArgb(180, 140, 242) : Color.FromArgb(122, 79, 201);
+                case "SA": return Pick(C(91, 140, 255), C(43, 184, 232), C(11, 120, 166));
+                case "RA": return Pick(C(52, 211, 153), C(61, 214, 140), C(30, 158, 98));
+                case "EA": return Pick(C(251, 191, 36), C(242, 179, 61), C(183, 121, 31));
+                case "OA": return Pick(C(167, 139, 250), C(180, 140, 242), C(122, 79, 201));
                 default: return Text2;
             }
         }
@@ -101,12 +141,12 @@ namespace HDTool
         }
 
         // ===================== TIỆN ÍCH MÀU =====================
-        private static double Lum(Color c)
+        public static double Lum(Color c)
         {
             return (0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B) / 255.0;
         }
 
-        private static Color Mix(Color a, Color b, double t)
+        public static Color Mix(Color a, Color b, double t)
         {
             return Color.FromArgb(
                 (int)(a.R + (b.R - a.R) * t),
@@ -128,9 +168,26 @@ namespace HDTool
         private static bool IsToken(Color c)
         {
             int v = c.ToArgb();
-            Color[] tokens = new Color[] { Bg, Surface, Surface2, Header, Accent, AccentSoft, Ok, Warn, Err, OkSoft, WarnSoft, ErrSoft, RowAlt, Input };
+            Color[] tokens = new Color[] { Bg, Surface, Surface2, SurfaceHover, Header, Accent, AccentHover, AccentSoft, Ok, Warn, Err, OkSoft, WarnSoft, ErrSoft, RowAlt, Input, Line, LineStrong };
             foreach (Color t in tokens) if (t.ToArgb() == v) return true;
             return false;
+        }
+
+        private static bool IsForeToken(Color c)
+        {
+            int v = c.ToArgb();
+            Color[] tokens = new Color[] { Text, Text2, Text3, Accent, AccentInk, Ok, Warn, Err, HeaderText, HeaderSub, HeaderAccent };
+            foreach (Color t in tokens) if (t.ToArgb() == v) return true;
+            return false;
+        }
+
+        /// <summary>Màu xám đặt tên (Color.Gray...) được code dùng làm chữ gợi ý và so sánh bằng "==" -> không đổi.</summary>
+        private static bool IsNamedGray(Color c)
+        {
+            if (!c.IsKnownColor) return false;
+            KnownColor k = c.ToKnownColor();
+            return k == KnownColor.Gray || k == KnownColor.DarkGray || k == KnownColor.DimGray || k == KnownColor.Silver ||
+                   k == KnownColor.GrayText || k == KnownColor.LightGray;
         }
 
         private static Role ClassifyBack(Color c)
@@ -166,24 +223,23 @@ namespace HDTool
             }
         }
 
-        /// <summary>Đổi màu chữ cũ sang token tương ứng (nền sáng).</summary>
-        private static Color MapFore(Color c, Color effectiveBack)
+        /// <summary>Đổi màu chữ cũ sang token. onHeader = chữ nằm trên dải tiêu đề.</summary>
+        private static Color MapFore(Color c, bool onHeader, Color effectiveBack)
         {
-            if (c.A == 0) return c;
+            if (c.A == 0 || IsForeToken(c)) return c;
             double lum = Lum(c);
             float sat = c.GetSaturation();
-            bool backDark = Lum(effectiveBack) < 0.45;
-            if (backDark)
+            if (onHeader)
             {
                 if (sat > 0.40f && lum > 0.15 && lum < 0.85) return HeaderAccent;
                 return lum > 0.75 ? HeaderText : HeaderSub;
             }
-            if (lum > 0.85) return Lum(effectiveBack) > 0.6 ? Text : c; // chữ trắng trên nền đã thành sáng -> chữ mực
-            if (sat > 0.40f && lum > 0.12 && lum < 0.85)
+            if (lum > 0.85)
             {
-                Role r = HueRole(c, false);
-                return RoleColor(r, c);
+                // Chữ trắng: giữ trắng nếu nền tối/đậm màu, ngược lại đổi sang chữ thường
+                return Lum(effectiveBack) > 0.6 ? Text : (IsDark ? Text : c);
             }
+            if (sat > 0.40f && lum > 0.12 && lum < 0.85) return RoleColor(HueRole(c, false), c);
             if (lum < 0.30) return Text;
             if (lum < 0.55) return Text2;
             return Text3;
@@ -200,19 +256,31 @@ namespace HDTool
             catch { return true; }
         }
 
-        private static void SetDoubleBuffered(Control c)
+        public static void SetDoubleBuffered(Control c)
         {
             try { if (PiDoubleBuffered != null) PiDoubleBuffered.SetValue(c, true, null); }
             catch { }
         }
 
         private static readonly ConditionalWeakTable<Control, object> Done = new ConditionalWeakTable<Control, object>();
+        private static readonly ConditionalWeakTable<Control, object> HeaderPanels = new ConditionalWeakTable<Control, object>();
         private static readonly object Marker = new object();
+
+        private static bool IsOnHeader(Control c)
+        {
+            object o;
+            for (Control p = c.Parent; p != null; p = p.Parent)
+            {
+                if (HeaderPanels.TryGetValue(p, out o)) return true;
+                if (p is Form) break;
+            }
+            return false;
+        }
 
         // ===================== ÁP GIAO DIỆN CHO FORM =====================
         /// <summary>
-        /// Khoác giao diện kỹ thuật cho toàn bộ Form: chỉ đổi những màu được đặt tường minh, giữ nguyên bố cục, sự kiện và logic.
-        /// Control được thêm sau (động) cũng tự được áp qua sự kiện ControlAdded.
+        /// Khoác giao diện cho toàn bộ Form: chỉ đổi những màu được đặt tường minh (và nền mặc định của ô nhập/bảng khi dùng nền tối),
+        /// giữ nguyên bố cục, sự kiện và logic. Control thêm sau (động) cũng tự được áp qua sự kiện ControlAdded.
         /// </summary>
         public static void ApplyTo(Form form)
         {
@@ -226,10 +294,11 @@ namespace HDTool
                 Color oldBack = form.BackColor;
                 Role role = ClassifyBack(oldBack);
                 form.BackColor = (role == Role.Keep || role == Role.Dark) ? Bg : RoleColor(role, oldBack);
-                if (IsSet(MiShouldFore, form)) form.ForeColor = Text;
+                if (IsSet(MiShouldFore, form) || IsDark) form.ForeColor = Text;
                 if (form.ContextMenuStrip != null) StyleToolStrip(form.ContextMenuStrip);
+                if (IsDark) HDToolNative.UseDarkTitleBar(form);
 
-                foreach (Control child in form.Controls) Skin(child, oldBack);
+                foreach (Control child in form.Controls) SafeSkin(child, oldBack);
                 form.ControlAdded += OnControlAdded;
             }
             catch { }
@@ -253,6 +322,18 @@ namespace HDTool
             catch { }
         }
 
+        /// <summary>Lỗi khi khoác áo từng control (để chẩn đoán; không làm dừng việc khoác áo các control khác).</summary>
+        public static readonly System.Collections.Generic.List<string> SkinErrors = new System.Collections.Generic.List<string>();
+
+        private static void SafeSkin(Control c, Color oldParentBack)
+        {
+            try { Skin(c, oldParentBack); }
+            catch (Exception ex)
+            {
+                if (SkinErrors.Count < 50) SkinErrors.Add((c != null ? c.GetType().Name + " '" + c.Name + "'" : "?") + ": " + ex.GetType().Name + " " + ex.Message);
+            }
+        }
+
         private static void Skin(Control c, Color oldParentBack)
         {
             if (c == null || c.IsDisposed) return;
@@ -269,7 +350,7 @@ namespace HDTool
 
             if (c is HDToolPaintedControl)
             {
-                // Control tự vẽ theo token (Header, Status, ToolRow...), không cần đổi màu
+                // Control tự vẽ theo token, không cần đổi màu
             }
             else if (c is DataGridView)
             {
@@ -279,6 +360,7 @@ namespace HDTool
             {
                 Button b = (Button)c;
                 StyleButton(b, ClassifyButton(b, oldBack, backSet));
+                if (IsDark) b.BackColorChanged += OnButtonBackChanged;
             }
             else if (c is CheckBox || c is RadioButton)
             {
@@ -298,28 +380,36 @@ namespace HDTool
                 else
                 {
                     SkinTextual(c, backSet, foreSet, oldBack, oldFore, oldParentBack);
+                    if (IsDark && !foreSet) c.ForeColor = IsOnHeader(c) ? HeaderText : Text;
                 }
+                if (IsDark) c.ForeColorChanged += OnForeChanged;
             }
             else if (c is TextBoxBase)
             {
                 TextBoxBase tb = (TextBoxBase)c;
                 if (tb.BorderStyle == BorderStyle.Fixed3D) tb.BorderStyle = BorderStyle.FixedSingle;
-                if (backSet && Lum(oldBack) > 0.6) tb.BackColor = tb.ReadOnly ? Surface2 : Input;
-                if (foreSet && Lum(oldFore) < 0.30) tb.ForeColor = Text; // giữ nguyên chữ xám placeholder (Color.Gray)
+                if ((backSet && Lum(oldBack) > 0.6) || (IsDark && !backSet)) tb.BackColor = tb.ReadOnly ? Surface2 : Input;
+                if ((foreSet && Lum(oldFore) < 0.30) || (IsDark && !foreSet)) tb.ForeColor = Text; // giữ chữ xám gợi ý (Color.Gray)
+                if (IsDark)
+                {
+                    tb.ForeColorChanged += OnForeChanged;
+                    HDToolNative.DarkScrollbars(tb);
+                }
             }
             else if (c is UpDownBase)
             {
                 UpDownBase ud = (UpDownBase)c;
                 ud.BorderStyle = BorderStyle.FixedSingle;
-                if (backSet && Lum(oldBack) > 0.6) ud.BackColor = Input;
-                if (foreSet && Lum(oldFore) < 0.30) ud.ForeColor = Text;
+                if ((backSet && Lum(oldBack) > 0.6) || (IsDark && !backSet)) ud.BackColor = Input;
+                if ((foreSet && Lum(oldFore) < 0.30) || (IsDark && !foreSet)) ud.ForeColor = Text;
             }
             else if (c is ComboBox)
             {
                 ComboBox cb = (ComboBox)c;
-                cb.FlatStyle = FlatStyle.Flat;
+                cb.FlatStyle = IsDark ? FlatStyle.Standard : FlatStyle.Flat; // nền tối: kiểu chuẩn + chủ đề DarkMode_CFD của Windows đẹp nhất
                 if (!backSet || Lum(oldBack) > 0.6) cb.BackColor = Input;
                 if (!foreSet || Lum(oldFore) < 0.30) cb.ForeColor = Text;
+                if (IsDark) HDToolNative.DarkComboBox(cb);
             }
             else if (c is ListBox || c is ListView || c is TreeView)
             {
@@ -332,6 +422,7 @@ namespace HDTool
                 }
                 if (!backSet || Lum(oldBack) > 0.6) c.BackColor = Surface;
                 if (!foreSet || Lum(oldFore) < 0.30) c.ForeColor = Text;
+                if (IsDark) HDToolNative.DarkScrollbars(c);
             }
             else if (c is ToolStrip)
             {
@@ -340,6 +431,8 @@ namespace HDTool
             else if (c is Label)
             {
                 SkinTextual(c, backSet, foreSet, oldBack, oldFore, oldParentBack);
+                if (IsDark && !foreSet) c.ForeColor = IsOnHeader(c) ? HeaderText : Text;
+                if (IsDark) c.ForeColorChanged += OnForeChanged;
             }
             else if (c is PictureBox || c is ProgressBar || c is WebBrowser)
             {
@@ -356,11 +449,15 @@ namespace HDTool
             }
             else if (c is TabControl)
             {
-                foreach (TabPage tp in ((TabControl)c).TabPages)
+                TabControl tc = (TabControl)c;
+                if (IsDark) StyleTabControl(tc);
+                foreach (TabPage tp in tc.TabPages)
                 {
                     Color tpOld = IsSet(MiShouldBack, tp) ? tp.BackColor : Color.White;
                     tp.UseVisualStyleBackColor = false;
                     SkinContainerColors(tp, tpOld, true);
+                    if (IsDark && tp.BackColor.ToArgb() == Color.White.ToArgb()) tp.BackColor = Bg;
+                    if (IsDark) tp.ForeColor = Text;
                     MarkAndRecurse(tp, tpOld);
                 }
                 c.ControlAdded += OnControlAdded;
@@ -369,17 +466,20 @@ namespace HDTool
             else if (c is GroupBox)
             {
                 GroupBox gb = (GroupBox)c;
-                if (foreSet) gb.ForeColor = Lum(Effective(gb)) < 0.45 ? HeaderSub : Text2;
+                if (foreSet || IsDark) gb.ForeColor = IsOnHeader(gb) ? HeaderSub : Text2;
                 if (backSet) SkinContainerColors(gb, oldBack, false);
             }
             else
             {
                 // Panel, TableLayoutPanel, FlowLayoutPanel, UserControl... (vùng chứa)
                 if (backSet) SkinContainerColors(c, oldBack, true);
-                if (foreSet) c.ForeColor = MapFore(oldFore, Effective(c));
+                if (foreSet) c.ForeColor = MapFore(oldFore, IsOnHeader(c), Effective(c));
+                else if (IsDark) c.ForeColor = Text;
+                ScrollableControl scr = c as ScrollableControl;
+                if (IsDark && scr != null && scr.AutoScroll) HDToolNative.DarkScrollbars(c);
             }
 
-            foreach (Control child in c.Controls) Skin(child, oldBack);
+            foreach (Control child in c.Controls) SafeSkin(child, oldBack);
             c.ControlAdded += OnControlAdded;
         }
 
@@ -390,7 +490,8 @@ namespace HDTool
             Done.Add(panel, Marker);
             Color old = IsSet(MiShouldBack, panel) ? panel.BackColor : inheritedOld;
             SkinContainerColors(panel, old, true);
-            foreach (Control child in panel.Controls) Skin(child, old);
+            if (IsDark && !IsSet(MiShouldBack, panel)) panel.BackColor = Bg;
+            foreach (Control child in panel.Controls) SafeSkin(child, old);
             panel.ControlAdded += OnControlAdded;
         }
 
@@ -398,7 +499,7 @@ namespace HDTool
         {
             object o;
             if (!Done.TryGetValue(c, out o)) Done.Add(c, Marker);
-            foreach (Control child in c.Controls) Skin(child, oldBack);
+            foreach (Control child in c.Controls) SafeSkin(child, oldBack);
             c.ControlAdded += OnControlAdded;
         }
 
@@ -431,11 +532,14 @@ namespace HDTool
                 bool headerLike = (c.Dock == DockStyle.Top || c.Top <= 4) && c.Height >= 36 && c.Height <= 130;
                 if (headerLike)
                 {
+                    object o;
+                    if (!HeaderPanels.TryGetValue(c, out o)) HeaderPanels.Add(c, Marker);
                     SetDoubleBuffered(c);
-                    c.Paint += PaintHeaderStripe;
+                    c.Paint += PaintHeaderBand;
+                    c.Resize += delegate { c.Invalidate(); };
                 }
             }
-            else if (role == Role.Bg && allowGrid)
+            else if (role == Role.Bg && allowGrid && !IsPremium)
             {
                 ScrollableControl sc = c as ScrollableControl;
                 if (sc == null || !sc.AutoScroll)
@@ -452,6 +556,7 @@ namespace HDTool
 
         private static void SkinTextual(Control c, bool backSet, bool foreSet, Color oldBack, Color oldFore, Color oldParentBack)
         {
+            bool onHeader = IsOnHeader(c);
             if (backSet)
             {
                 if (oldBack.ToArgb() == oldParentBack.ToArgb() || oldBack.A == 0)
@@ -464,10 +569,64 @@ namespace HDTool
                     if (r != Role.Keep) c.BackColor = RoleColor(r, oldBack);
                 }
             }
+            else if (onHeader && IsPremium)
+            {
+                // Dải tiêu đề vẽ chuyển màu: nhãn trong suốt để thấy nền chuyển màu
+                try { c.BackColor = Color.Transparent; } catch { }
+            }
             if (foreSet)
             {
-                c.ForeColor = MapFore(oldFore, Effective(c));
+                c.ForeColor = MapFore(oldFore, onHeader, Effective(c));
             }
+        }
+
+        // ---------- Màu đổi lúc chạy (code cũ tự đặt màu khi bấm nút / cập nhật trạng thái) ----------
+        [ThreadStatic] private static bool _adjusting;
+
+        private static void OnForeChanged(object sender, EventArgs e)
+        {
+            if (_adjusting) return;
+            Control c = sender as Control;
+            if (c == null) return;
+            Color f = c.ForeColor;
+            if (IsForeToken(f) || IsNamedGray(f)) return;
+            Color mapped = MapFore(f, IsOnHeader(c), Effective(c));
+            if (mapped.ToArgb() == f.ToArgb()) return;
+            try { _adjusting = true; c.ForeColor = mapped; }
+            finally { _adjusting = false; }
+        }
+
+        private static void OnButtonBackChanged(object sender, EventArgs e)
+        {
+            if (_adjusting) return;
+            Button b = sender as Button;
+            if (b == null || IsToken(b.BackColor)) return;
+            try { _adjusting = true; StyleButton(b, ClassifyButton(b, b.BackColor, true)); }
+            finally { _adjusting = false; }
+        }
+
+        // ===================== TAB (nền tối) =====================
+        private static void StyleTabControl(TabControl tc)
+        {
+            try
+            {
+                tc.DrawMode = TabDrawMode.OwnerDrawFixed;
+                tc.DrawItem += delegate(object s, DrawItemEventArgs e)
+                {
+                    TabControl t = (TabControl)s;
+                    if (e.Index < 0 || e.Index >= t.TabPages.Count) return;
+                    bool sel = e.Index == t.SelectedIndex;
+                    Rectangle r = e.Bounds;
+                    using (SolidBrush bg = new SolidBrush(sel ? Surface2 : Surface)) e.Graphics.FillRectangle(bg, r);
+                    if (sel)
+                    {
+                        using (SolidBrush acc = new SolidBrush(Accent)) e.Graphics.FillRectangle(acc, r.X, r.Bottom - 3, r.Width, 3);
+                    }
+                    TextRenderer.DrawText(e.Graphics, t.TabPages[e.Index].Text, sel ? BodyBold : Body, r, sel ? Text : Text2,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+                };
+            }
+            catch { }
         }
 
         // ===================== NÚT BẤM =====================
@@ -489,41 +648,47 @@ namespace HDTool
         public static void StyleButton(Button b, HDToolButtonKind kind)
         {
             if (b == null) return;
-            b.FlatStyle = FlatStyle.Flat;
-            b.UseVisualStyleBackColor = false;
-            b.Cursor = Cursors.Hand;
-            b.FlatAppearance.BorderSize = 1;
-            switch (kind)
+            bool prev = _adjusting;
+            _adjusting = true;
+            try
             {
-                case HDToolButtonKind.Primary:
-                    b.BackColor = Accent;
-                    b.ForeColor = AccentInk;
-                    b.FlatAppearance.BorderColor = Accent;
-                    b.FlatAppearance.MouseOverBackColor = AccentHover;
-                    b.FlatAppearance.MouseDownBackColor = AccentDown;
-                    break;
-                case HDToolButtonKind.Danger:
-                    b.BackColor = Surface;
-                    b.ForeColor = Err;
-                    b.FlatAppearance.BorderColor = Err;
-                    b.FlatAppearance.MouseOverBackColor = ErrSoft;
-                    b.FlatAppearance.MouseDownBackColor = Mix(ErrSoft, Err, 0.2);
-                    break;
-                case HDToolButtonKind.Ghost:
-                    b.BackColor = Surface2;
-                    b.ForeColor = Text2;
-                    b.FlatAppearance.BorderSize = 0;
-                    b.FlatAppearance.MouseOverBackColor = AccentSoft;
-                    b.FlatAppearance.MouseDownBackColor = Mix(AccentSoft, Accent, 0.15);
-                    break;
-                default:
-                    b.BackColor = Surface;
-                    b.ForeColor = Text;
-                    b.FlatAppearance.BorderColor = LineStrong;
-                    b.FlatAppearance.MouseOverBackColor = AccentSoft;
-                    b.FlatAppearance.MouseDownBackColor = Mix(AccentSoft, Accent, 0.15);
-                    break;
+                b.FlatStyle = FlatStyle.Flat;
+                b.UseVisualStyleBackColor = false;
+                b.Cursor = Cursors.Hand;
+                b.FlatAppearance.BorderSize = 1;
+                switch (kind)
+                {
+                    case HDToolButtonKind.Primary:
+                        b.BackColor = Accent;
+                        b.ForeColor = AccentInk;
+                        b.FlatAppearance.BorderColor = Accent;
+                        b.FlatAppearance.MouseOverBackColor = AccentHover;
+                        b.FlatAppearance.MouseDownBackColor = AccentDown;
+                        break;
+                    case HDToolButtonKind.Danger:
+                        b.BackColor = Surface;
+                        b.ForeColor = Err;
+                        b.FlatAppearance.BorderColor = Err;
+                        b.FlatAppearance.MouseOverBackColor = ErrSoft;
+                        b.FlatAppearance.MouseDownBackColor = Mix(ErrSoft, Err, 0.2);
+                        break;
+                    case HDToolButtonKind.Ghost:
+                        b.BackColor = Surface2;
+                        b.ForeColor = Text2;
+                        b.FlatAppearance.BorderSize = 0;
+                        b.FlatAppearance.MouseOverBackColor = AccentSoft;
+                        b.FlatAppearance.MouseDownBackColor = Mix(AccentSoft, Accent, 0.15);
+                        break;
+                    default:
+                        b.BackColor = Surface2;
+                        b.ForeColor = Text;
+                        b.FlatAppearance.BorderColor = LineStrong;
+                        b.FlatAppearance.MouseOverBackColor = AccentSoft;
+                        b.FlatAppearance.MouseDownBackColor = Mix(AccentSoft, Accent, 0.15);
+                        break;
+                }
             }
+            finally { _adjusting = prev; }
         }
 
         // ===================== BẢNG DỮ LIỆU =====================
@@ -531,7 +696,7 @@ namespace HDTool
             @"stt|size|quy cách|kích thước|số hiệu|sheet ?number|chiều dài|length|diện tích|area|số lượng|quantity|cao độ|elevation|offset|độ dày|thickness|\(m\)|\(mm\)|\bmm\b|m²|aci",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-        /// <summary>Kiểu bảng kỹ thuật: tiêu đề nền nhạt + vạch nhấn, dòng 26px xen màu, số liệu Consolas, chip mã hệ thống.</summary>
+        /// <summary>Kiểu bảng: tiêu đề nền nhạt + vạch nhấn, dòng 28px xen màu, số liệu Consolas, chip mã hệ thống.</summary>
         public static void StyleGrid(DataGridView g)
         {
             if (g == null) return;
@@ -539,7 +704,8 @@ namespace HDTool
             g.BackgroundColor = Surface;
             g.GridColor = Line;
             if (g.BorderStyle == BorderStyle.Fixed3D) g.BorderStyle = BorderStyle.FixedSingle;
-            g.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            if (IsPremium) g.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            g.ColumnHeadersBorderStyle = IsPremium ? DataGridViewHeaderBorderStyle.None : DataGridViewHeaderBorderStyle.Single;
 
             DataGridViewCellStyle h = g.ColumnHeadersDefaultCellStyle;
             h.BackColor = Surface2;
@@ -590,9 +756,37 @@ namespace HDTool
                 }
                 catch { }
             };
+            if (IsDark) g.CellFormatting += AdaptCellColors;
             g.Paint += PaintGridHeaderAccent;
             g.CellPainting += PaintSystemChip;
             SetDoubleBuffered(g);
+            if (IsDark) HDToolNative.DarkScrollbars(g);
+        }
+
+        /// <summary>Nền tối: màu ô do code cũ đặt (nền sáng, chữ đậm) được chuyển sang màu tối tương ứng khi vẽ — dữ liệu không đổi.</summary>
+        private static void AdaptCellColors(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            try
+            {
+                DataGridViewCellStyle st = e.CellStyle;
+                if (st == null) return;
+                if (st.BackColor.A > 0 && !IsToken(st.BackColor) && Lum(st.BackColor) > 0.5)
+                {
+                    Role r = ClassifyBack(st.BackColor);
+                    if (r == Role.Surface || r == Role.Bg || r == Role.Surface2) st.BackColor = (e.RowIndex % 2 == 1) ? RowAlt : Surface;
+                    else if (r != Role.Keep && r != Role.Dark) st.BackColor = RoleColor(r, st.BackColor);
+                }
+                if (st.ForeColor.A > 0 && !IsForeToken(st.ForeColor) && !IsNamedGray(st.ForeColor))
+                {
+                    st.ForeColor = MapFore(st.ForeColor, false, st.BackColor);
+                }
+                if (st.SelectionBackColor.A > 0 && !IsToken(st.SelectionBackColor) && Lum(st.SelectionBackColor) > 0.5)
+                {
+                    st.SelectionBackColor = AccentSoft;
+                    st.SelectionForeColor = Text;
+                }
+            }
+            catch { }
         }
 
         private static void StyleColumn(DataGridViewColumn col)
@@ -610,7 +804,7 @@ namespace HDTool
                         col.DefaultCellStyle.Font = Mono;
                     }
                 }
-                col.HeaderCell.Style.Padding = new Padding(4, 0, 4, 0);
+                col.HeaderCell.Style.Padding = new Padding(6, 0, 6, 0);
             }
             catch { }
         }
@@ -635,15 +829,25 @@ namespace HDTool
             e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.ContentForeground);
             Color sc = SystemColor(SystemCodeFromName(val));
             Size ts = TextRenderer.MeasureText(e.Graphics, val, MonoSmall, Size.Empty, TextFormatFlags.NoPadding);
-            int chipH = Math.Min(e.CellBounds.Height - 6, ts.Height + 6);
-            int chipW = Math.Min(e.CellBounds.Width - 10, ts.Width + 12);
+            int chipH = Math.Min(e.CellBounds.Height - 8, ts.Height + 6);
+            int chipW = Math.Min(e.CellBounds.Width - 10, ts.Width + 14);
             Rectangle chip = new Rectangle(e.CellBounds.X + 5, e.CellBounds.Y + (e.CellBounds.Height - chipH) / 2, chipW, chipH);
-            using (Pen p = new Pen(sc, 1f))
+            SmoothingMode old = e.Graphics.SmoothingMode;
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            if (IsPremium)
             {
-                e.Graphics.DrawRectangle(p, chip);
+                using (GraphicsPath gp = RoundRect(chip, 5))
+                using (SolidBrush b = new SolidBrush(sc)) e.Graphics.FillPath(b, gp);
+                TextRenderer.DrawText(e.Graphics, val, MonoSmall, chip, Lum(sc) > 0.55 ? C(10, 15, 31) : Color.White,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             }
-            TextRenderer.DrawText(e.Graphics, val, MonoSmall, chip, sc,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+            else
+            {
+                using (Pen p = new Pen(sc, 1f)) e.Graphics.DrawRectangle(p, chip);
+                TextRenderer.DrawText(e.Graphics, val, MonoSmall, chip, sc,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+            }
+            e.Graphics.SmoothingMode = old;
             e.Handled = true;
         }
 
@@ -654,11 +858,28 @@ namespace HDTool
             try
             {
                 ts.RenderMode = ToolStripRenderMode.Professional;
-                ts.Renderer = new ToolStripProfessionalRenderer(new HDToolColorTable());
+                ts.Renderer = new HDToolStripRenderer();
                 if (!(ts is ToolStripDropDown)) ts.BackColor = Surface2;
                 ts.ForeColor = Text;
             }
             catch { }
+        }
+
+        private class HDToolStripRenderer : ToolStripProfessionalRenderer
+        {
+            public HDToolStripRenderer() : base(new HDToolColorTable()) { RoundedEdges = false; }
+
+            protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+            {
+                if (IsDark && (e.TextColor.ToArgb() == SystemColors.ControlText.ToArgb() || Lum(e.TextColor) < 0.3)) e.TextColor = e.Item.Enabled ? Text : Text3;
+                base.OnRenderItemText(e);
+            }
+
+            protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
+            {
+                if (IsDark) e.ArrowColor = Text2;
+                base.OnRenderArrow(e);
+            }
         }
 
         private class HDToolColorTable : ProfessionalColorTable
@@ -686,12 +907,46 @@ namespace HDTool
             public override Color ButtonSelectedBorder { get { return Accent; } }
             public override Color CheckBackground { get { return AccentSoft; } }
             public override Color CheckSelectedBackground { get { return AccentSoft; } }
+            public override Color CheckPressedBackground { get { return AccentSoft; } }
         }
 
         // ===================== HÀM VẼ DÙNG CHUNG =====================
-        /// <summary>Lưới blueprint: ô nhỏ 10px, ô lớn 50px (tự nhân theo DPI).</summary>
+        /// <summary>Hình chữ nhật bo góc (radius tính theo px thực).</summary>
+        public static GraphicsPath RoundRect(RectangleF r, float radius)
+        {
+            GraphicsPath gp = new GraphicsPath();
+            if (radius <= 0.5f)
+            {
+                gp.AddRectangle(r);
+                return gp;
+            }
+            float d = Math.Min(radius * 2f, Math.Min(r.Width, r.Height));
+            gp.AddArc(r.X, r.Y, d, d, 180, 90);
+            gp.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+            gp.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+            gp.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+            gp.CloseFigure();
+            return gp;
+        }
+
+        /// <summary>Nền chuyển màu của dải tiêu đề (Tối Cao Cấp: xanh đêm -> tím).</summary>
+        public static void FillHeaderGradient(Graphics g, Rectangle r)
+        {
+            if (r.Width <= 0 || r.Height <= 0) return;
+            using (LinearGradientBrush b = new LinearGradientBrush(r, HeaderGrad1, HeaderGrad3, LinearGradientMode.Horizontal))
+            {
+                ColorBlend cb = new ColorBlend(3);
+                cb.Colors = new Color[] { HeaderGrad1, HeaderGrad2, HeaderGrad3 };
+                cb.Positions = new float[] { 0f, 0.52f, 1f };
+                b.InterpolationColors = cb;
+                g.FillRectangle(b, r);
+            }
+        }
+
+        /// <summary>Lưới blueprint: ô nhỏ 10px, ô lớn 50px (tự nhân theo DPI). Không vẽ ở Tối Cao Cấp.</summary>
         public static void DrawBlueprintGrid(Graphics g, Rectangle r, float dpiScale)
         {
+            if (GridMinor.A == 0 && GridMajor.A == 0) return;
             int minor = Math.Max(6, (int)Math.Round(10 * dpiScale));
             int major = minor * 5;
             using (Pen pMinor = new Pen(GridMinor, 1f))
@@ -717,22 +972,6 @@ namespace HDTool
             catch { return 1f; }
         }
 
-        /// <summary>Góc ngắm kỹ thuật (2 góc chéo) cho khung thông tin.</summary>
-        public static void DrawCornerTicks(Graphics g, Rectangle r, float dpiScale)
-        {
-            int len = (int)Math.Round(10 * dpiScale);
-            float w = Math.Max(2f, 2f * dpiScale);
-            using (Pen p = new Pen(Accent, w))
-            {
-                p.Alignment = PenAlignment.Inset;
-                float o = w / 2f;
-                g.DrawLine(p, r.Left + o, r.Top + o, r.Left + len, r.Top + o);
-                g.DrawLine(p, r.Left + o, r.Top + o, r.Left + o, r.Top + len);
-                g.DrawLine(p, r.Right - o - 1, r.Bottom - o - 1, r.Right - len - 1, r.Bottom - o - 1);
-                g.DrawLine(p, r.Right - o - 1, r.Bottom - o - 1, r.Right - o - 1, r.Bottom - len - 1);
-            }
-        }
-
         private static void PaintBlueprintGrid(object sender, PaintEventArgs e)
         {
             Control c = sender as Control;
@@ -740,14 +979,22 @@ namespace HDTool
             DrawBlueprintGrid(e.Graphics, e.ClipRectangle, e.Graphics.DpiX / 96f);
         }
 
-        private static void PaintHeaderStripe(object sender, PaintEventArgs e)
+        /// <summary>Dải tiêu đề của Form cũ: Tối Cao Cấp = nền chuyển màu; kiểu khác = vạch nhấn trái.</summary>
+        private static void PaintHeaderBand(object sender, PaintEventArgs e)
         {
             Control c = sender as Control;
             if (c == null) return;
             float s = e.Graphics.DpiX / 96f;
-            using (SolidBrush b = new SolidBrush(HeaderAccent))
+            if (IsPremium)
             {
-                e.Graphics.FillRectangle(b, 0, 0, Math.Max(3, (int)Math.Round(4 * s)), c.Height);
+                FillHeaderGradient(e.Graphics, c.ClientRectangle);
+            }
+            else
+            {
+                using (SolidBrush b = new SolidBrush(HeaderAccent))
+                {
+                    e.Graphics.FillRectangle(b, 0, 0, Math.Max(3, (int)Math.Round(4 * s)), c.Height);
+                }
             }
             using (Pen p = new Pen(HeaderLine))
             {
@@ -780,7 +1027,7 @@ namespace HDTool
             DataGridView g = sender as DataGridView;
             if (g == null || !g.ColumnHeadersVisible) return;
             float s = e.Graphics.DpiX / 96f;
-            int h = Math.Max(2, (int)Math.Round(2 * s));
+            int h = IsPremium ? 1 : Math.Max(2, (int)Math.Round(2 * s));
             int y = g.ColumnHeadersHeight - h;
             int right = 0;
             try
@@ -799,263 +1046,72 @@ namespace HDTool
                 }
             }
             catch { right = g.Width; }
-            using (SolidBrush b = new SolidBrush(Accent))
+            using (SolidBrush b = new SolidBrush(IsPremium ? LineStrong : Accent))
             {
                 e.Graphics.FillRectangle(b, 0, y, right, h);
             }
         }
     }
 
+    /// <summary>Gọi API Windows cho nền tối: thanh tiêu đề tối (Windows 10 20H1+ / 11) và thanh cuộn tối.</summary>
+    public static class HDToolNative
+    {
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
+        private static extern int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string pszSubIdList);
+
+        private static int ColorRef(Color c) { return c.R | (c.G << 8) | (c.B << 16); }
+
+        public static void UseDarkTitleBar(Form f)
+        {
+            if (f == null) return;
+            Action apply = delegate
+            {
+                try
+                {
+                    int on = 1;
+                    if (DwmSetWindowAttribute(f.Handle, 20, ref on, 4) != 0) DwmSetWindowAttribute(f.Handle, 19, ref on, 4);
+                    int cap = ColorRef(HDToolTheme.Surface);
+                    DwmSetWindowAttribute(f.Handle, 35, ref cap, 4); // màu thanh tiêu đề (Windows 11)
+                    int border = ColorRef(HDToolTheme.LineStrong);
+                    DwmSetWindowAttribute(f.Handle, 34, ref border, 4); // màu viền cửa sổ (Windows 11)
+                }
+                catch { }
+            };
+            if (f.IsHandleCreated) apply();
+            else f.HandleCreated += delegate { apply(); };
+        }
+
+        public static void DarkScrollbars(Control c)
+        {
+            if (c == null) return;
+            Action apply = delegate
+            {
+                try
+                {
+                    SetWindowTheme(c.Handle, "DarkMode_Explorer", null);
+                    foreach (Control child in c.Controls)
+                    {
+                        if (child is ScrollBar) SetWindowTheme(child.Handle, "DarkMode_Explorer", null);
+                    }
+                }
+                catch { }
+            };
+            if (c.IsHandleCreated) apply();
+            else c.HandleCreated += delegate { apply(); };
+        }
+
+        public static void DarkComboBox(ComboBox cb)
+        {
+            if (cb == null) return;
+            Action apply = delegate { try { SetWindowTheme(cb.Handle, "DarkMode_CFD", null); } catch { } };
+            if (cb.IsHandleCreated) apply();
+            else cb.HandleCreated += delegate { apply(); };
+        }
+    }
+
     /// <summary>Đánh dấu control tự vẽ theo token HDToolTheme (bộ khoác áo không đổi màu của nó).</summary>
     public interface HDToolPaintedControl { }
-
-    // =====================================================================================
-    // CÁC CONTROL KỸ THUẬT DÙNG CHUNG (tự vẽ, tự co giãn theo DPI)
-    // =====================================================================================
-
-    /// <summary>Dải tiêu đề 58px: vạch nhấn trái, mã công cụ HDT-xx, tiêu đề, mô tả, nhắc phím ESC.</summary>
-    public class HDToolHeader : Control, HDToolPaintedControl
-    {
-        public string Code = "HDT";
-        public string Title = "";
-        public string Subtitle = "";
-        public bool ShowEscHint = true;
-
-        public HDToolHeader()
-        {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
-            Dock = DockStyle.Top;
-            Height = HDToolTheme.HeaderHeight;
-            BackColor = HDToolTheme.Header;
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            float s = g.DpiX / 96f;
-            g.Clear(HDToolTheme.Header);
-            using (SolidBrush b = new SolidBrush(HDToolTheme.HeaderAccent))
-            {
-                g.FillRectangle(b, 0, 0, Math.Max(3, (int)Math.Round(4 * s)), Height);
-            }
-            using (Pen p = new Pen(HDToolTheme.HeaderLine))
-            {
-                g.DrawLine(p, 0, Height - 1, Width, Height - 1);
-            }
-
-            int x = (int)Math.Round(20 * s);
-            int right = Width - (int)Math.Round(16 * s);
-
-            // Nhắc phím ESC (bên phải)
-            if (ShowEscHint)
-            {
-                string esc = "ESC · ĐÓNG";
-                Size es = TextRenderer.MeasureText(g, esc, HDToolTheme.MonoSmall, Size.Empty, TextFormatFlags.NoPadding);
-                Rectangle er = new Rectangle(right - es.Width - (int)(12 * s), (Height - es.Height - (int)(8 * s)) / 2, es.Width + (int)(12 * s), es.Height + (int)(8 * s));
-                using (Pen p = new Pen(HDToolTheme.HeaderLine)) g.DrawRectangle(p, er);
-                TextRenderer.DrawText(g, esc, HDToolTheme.MonoSmall, er, HDToolTheme.HeaderSub, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                right = er.Left - (int)Math.Round(12 * s);
-            }
-
-            // Mã công cụ
-            if (!string.IsNullOrEmpty(Code))
-            {
-                Size cs = TextRenderer.MeasureText(g, Code, HDToolTheme.MonoSmall, Size.Empty, TextFormatFlags.NoPadding);
-                Rectangle cr = new Rectangle(x, (Height - cs.Height - (int)(8 * s)) / 2, cs.Width + (int)(12 * s), cs.Height + (int)(8 * s));
-                using (Pen p = new Pen(HDToolTheme.HeaderAccent)) g.DrawRectangle(p, cr);
-                TextRenderer.DrawText(g, Code, HDToolTheme.MonoSmall, cr, HDToolTheme.HeaderAccent, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-                x = cr.Right + (int)Math.Round(14 * s);
-            }
-
-            int w = Math.Max(10, right - x);
-            Size ts = TextRenderer.MeasureText(g, "Ag", HDToolTheme.Title, Size.Empty, TextFormatFlags.NoPadding);
-            Size ss = TextRenderer.MeasureText(g, "Ag", HDToolTheme.Caption, Size.Empty, TextFormatFlags.NoPadding);
-            int total = ts.Height + (string.IsNullOrEmpty(Subtitle) ? 0 : ss.Height + (int)(2 * s));
-            int y = (Height - total) / 2;
-            TextRenderer.DrawText(g, Title ?? "", HDToolTheme.Title, new Rectangle(x, y, w, ts.Height), HDToolTheme.HeaderText,
-                TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
-            if (!string.IsNullOrEmpty(Subtitle))
-            {
-                TextRenderer.DrawText(g, Subtitle, HDToolTheme.Caption, new Rectangle(x, y + ts.Height + (int)(2 * s), w, ss.Height), HDToolTheme.HeaderSub,
-                    TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
-            }
-        }
-    }
-
-    /// <summary>Nhãn mục kỹ thuật: "01  TIÊU ĐỀ  ───┼────┼───".</summary>
-    public class HDToolSectionLabel : Control, HDToolPaintedControl
-    {
-        public string Number = "01";
-
-        public HDToolSectionLabel()
-        {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
-            BackColor = Color.Transparent;
-            Height = 28;
-        }
-
-        protected override void OnTextChanged(EventArgs e)
-        {
-            base.OnTextChanged(e);
-            Invalidate();
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            float s = g.DpiX / 96f;
-            string caps = (Text ?? "").ToUpperInvariant();
-            Size ns = TextRenderer.MeasureText(g, Number, HDToolTheme.MonoSmall, Size.Empty, TextFormatFlags.NoPadding);
-            Size ts = TextRenderer.MeasureText(g, caps, HDToolTheme.LabelFont, Size.Empty, TextFormatFlags.NoPadding);
-            int cy = Height / 2;
-            TextRenderer.DrawText(g, Number, HDToolTheme.MonoSmall, new Point(0, cy - ns.Height / 2), HDToolTheme.Accent, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-            int tx = ns.Width + (int)Math.Round(8 * s);
-            TextRenderer.DrawText(g, caps, HDToolTheme.LabelFont, new Point(tx, cy - ts.Height / 2), HDToolTheme.Text2, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-            int lx = tx + ts.Width + (int)Math.Round(10 * s);
-            if (lx < Width - 4)
-            {
-                using (Pen p = new Pen(HDToolTheme.Line))
-                using (Pen pt = new Pen(HDToolTheme.LineStrong))
-                {
-                    g.DrawLine(p, lx, cy, Width - 1, cy);
-                    int step = (int)Math.Round(25 * s);
-                    int tick = (int)Math.Round(3 * s);
-                    for (int x = lx; x < Width; x += step) g.DrawLine(pt, x, cy - tick, x, cy);
-                }
-            }
-        }
-    }
-
-    /// <summary>Thanh trạng thái kiểu dòng lệnh CAD: ô trạng thái + chữ Consolas.</summary>
-    public class HDToolStatusText : Control, HDToolPaintedControl
-    {
-        private Color _dot = Color.Empty;
-        public Color DotColor { get { return _dot.IsEmpty ? HDToolTheme.Ok : _dot; } set { _dot = value; Invalidate(); } }
-
-        public HDToolStatusText()
-        {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
-            BackColor = Color.Transparent;
-        }
-
-        protected override void OnTextChanged(EventArgs e)
-        {
-            base.OnTextChanged(e);
-            Invalidate();
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            float s = g.DpiX / 96f;
-            int d = (int)Math.Round(8 * s);
-            using (SolidBrush b = new SolidBrush(DotColor))
-            {
-                g.FillRectangle(b, 0, (Height - d) / 2, d, d);
-            }
-            int x = d + (int)Math.Round(10 * s);
-            string prefix = "▶ ";
-            Size ps = TextRenderer.MeasureText(g, prefix, HDToolTheme.Mono, Size.Empty, TextFormatFlags.NoPadding);
-            TextRenderer.DrawText(g, prefix, HDToolTheme.Mono, new Rectangle(x, 0, ps.Width, Height), HDToolTheme.Accent, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-            TextRenderer.DrawText(g, Text ?? "", HDToolTheme.Mono, new Rectangle(x + ps.Width, 0, Math.Max(1, Width - x - ps.Width), Height), HDToolTheme.Text2,
-                TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
-        }
-    }
-
-    /// <summary>Khung có góc ngắm (corner tick) và viền 1px.</summary>
-    public class HDToolTickPanel : Panel, HDToolPaintedControl
-    {
-        public HDToolTickPanel()
-        {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
-            BackColor = HDToolTheme.Surface;
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-            using (Pen p = new Pen(HDToolTheme.Line))
-            {
-                e.Graphics.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
-            }
-            HDToolTheme.DrawCornerTicks(e.Graphics, ClientRectangle, e.Graphics.DpiX / 96f);
-        }
-    }
-
-    /// <summary>Dòng công cụ trong Menu: icon + mã HDT-xx + tên + mô tả + mũi tên; rê chuột có vạch nhấn.</summary>
-    public class HDToolToolRow : Control, HDToolPaintedControl
-    {
-        public string IconKey = "menu";
-        public string Code = "";
-        public string Title = "";
-        public string Description = "";
-        public bool ShowBottomLine = true;
-        private bool _hover;
-
-        public HDToolToolRow()
-        {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.Selectable, true);
-            Height = 46;
-            Cursor = Cursors.Hand;
-            TabStop = true;
-        }
-
-        protected override void OnMouseEnter(EventArgs e) { _hover = true; Invalidate(); base.OnMouseEnter(e); }
-        protected override void OnMouseLeave(EventArgs e) { _hover = false; Invalidate(); base.OnMouseLeave(e); }
-        protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
-        protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
-
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)
-            {
-                OnClick(EventArgs.Empty);
-                e.Handled = true;
-                return;
-            }
-            base.OnKeyDown(e);
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            float s = g.DpiX / 96f;
-            bool hot = _hover || Focused;
-            g.Clear(hot ? HDToolTheme.AccentSoft : HDToolTheme.Surface);
-            if (hot)
-            {
-                using (SolidBrush b = new SolidBrush(HDToolTheme.Accent)) g.FillRectangle(b, 0, 0, Math.Max(2, (int)Math.Round(3 * s)), Height);
-            }
-            if (ShowBottomLine)
-            {
-                using (Pen p = new Pen(HDToolTheme.Line)) g.DrawLine(p, 0, Height - 1, Width, Height - 1);
-            }
-
-            int pad = (int)Math.Round(12 * s);
-            int icon = (int)Math.Round(24 * s);
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            HDToolIcons.Draw(g, IconKey, new RectangleF(pad, (Height - icon) / 2f, icon, icon), HDToolIcons.InkLight, HDToolTheme.Accent);
-            g.SmoothingMode = SmoothingMode.Default;
-
-            int codeX = pad + icon + (int)Math.Round(10 * s);
-            int codeW = (int)Math.Round(64 * s);
-            TextRenderer.DrawText(g, Code, HDToolTheme.MonoSmall, new Rectangle(codeX, 0, codeW, Height), HDToolTheme.Accent, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-
-            int chev = (int)Math.Round(14 * s);
-            int textX = codeX + codeW + (int)Math.Round(10 * s);
-            int textW = Math.Max(10, Width - textX - chev - pad * 2);
-            Size t1 = TextRenderer.MeasureText(g, "Ag", HDToolTheme.BodyBold, Size.Empty, TextFormatFlags.NoPadding);
-            Size t2 = TextRenderer.MeasureText(g, "Ag", HDToolTheme.Caption, Size.Empty, TextFormatFlags.NoPadding);
-            int y = (Height - t1.Height - t2.Height - (int)(1 * s)) / 2;
-            TextRenderer.DrawText(g, Title, HDToolTheme.BodyBold, new Rectangle(textX, y, textW, t1.Height), HDToolTheme.Text, TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
-            TextRenderer.DrawText(g, Description, HDToolTheme.Caption, new Rectangle(textX, y + t1.Height + (int)(1 * s), textW, t2.Height), HDToolTheme.Text3, TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
-
-            float cx = Width - pad - chev / 2f, cyy = Height / 2f, cw = chev * 0.25f;
-            using (Pen p = new Pen(hot ? HDToolTheme.Accent : HDToolTheme.Text3, Math.Max(1.2f, 1.6f * s)))
-            {
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.DrawLines(p, new PointF[] { new PointF(cx - cw, cyy - cw * 2), new PointF(cx + cw, cyy), new PointF(cx - cw, cyy + cw * 2) });
-            }
-        }
-    }
 }

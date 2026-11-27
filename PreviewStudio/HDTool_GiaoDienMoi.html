@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HDTOOL Giao Diện Mới</title>
+<style>
+/* =====================================================================
+   HDTOOL — XEM TRƯỚC GIAO DIỆN MỚI v2 (3 phong cách để Sếp Hồ chọn)
+   Chỉ dùng font có sẵn trên Windows (Segoe UI, Consolas) để giống 100% khi làm bằng WinForms.
+   9pt WinForms = 12px; 10pt = 13.33px; 12pt = 16px.
+   ===================================================================== */
+
+/* ---------- PHONG CÁCH 1: SÁNG HIỆN ĐẠI (đề xuất) ---------- */
+:root, [data-style="modern"] {
+  --bg:#F3F5FA; --surface:#FFFFFF; --surface2:#F7F9FC; --line:#E3E8F0; --lineStrong:#CBD3DF;
+  --text:#101828; --text2:#475467; --text3:#8790A2;
+  --primary:#2563EB; --primaryHover:#1D4ED8; --primarySoft:#EAF1FE; --onPrimary:#FFFFFF;
+  --ok:#16A34A; --okSoft:#E8F6EE; --warn:#D97706; --warnSoft:#FEF4E4; --err:#DC2626; --errSoft:#FDECEC;
+  --hero:linear-gradient(118deg,#1E3A8A 0%,#2563EB 48%,#7C3AED 100%); --heroText:#FFFFFF; --heroSub:rgba(255,255,255,.80);
+  --heroChip:rgba(255,255,255,.16); --heroLine:rgba(255,255,255,.28);
+  --radius:10px; --radiusSm:7px; --shadow:0 1px 2px rgba(16,24,40,.05),0 6px 16px rgba(16,24,40,.07);
+  --shadowHover:0 2px 4px rgba(16,24,40,.06),0 12px 28px rgba(16,24,40,.12);
+  --tileAlpha:13%; --gridMinor:transparent; --gridMajor:transparent; --rowAlt:#FAFBFD; --input:#FFFFFF;
+}
+/* ---------- PHONG CÁCH 2: TỐI CAO CẤP ---------- */
+[data-style="dark"] {
+  --bg:#0E1016; --surface:#161A23; --surface2:#1B2030; --line:#262C3D; --lineStrong:#353C52;
+  --text:#ECEEF5; --text2:#AAB1C5; --text3:#717A93;
+  --primary:#5B8CFF; --primaryHover:#7DA3FF; --primarySoft:rgba(91,140,255,.15); --onPrimary:#0A0F1F;
+  --ok:#34D399; --okSoft:rgba(52,211,153,.13); --warn:#FBBF24; --warnSoft:rgba(251,191,36,.13); --err:#F87171; --errSoft:rgba(248,113,113,.13);
+  --hero:linear-gradient(118deg,#141A33 0%,#1F2557 52%,#3A1F63 100%); --heroText:#FFFFFF; --heroSub:rgba(255,255,255,.70);
+  --heroChip:rgba(255,255,255,.10); --heroLine:rgba(255,255,255,.18);
+  --radius:10px; --radiusSm:7px; --shadow:0 8px 24px rgba(0,0,0,.35); --shadowHover:0 14px 34px rgba(0,0,0,.5);
+  --tileAlpha:20%; --gridMinor:transparent; --gridMajor:transparent; --rowAlt:#181C27; --input:#121620;
+}
+/* ---------- PHONG CÁCH 3: KỸ THUẬT (Version 109 hiện tại, để so sánh) ---------- */
+[data-style="technical"] {
+  --bg:#EDF1F5; --surface:#FFFFFF; --surface2:#F5F7FA; --line:#D3DBE4; --lineStrong:#B7C3D0;
+  --text:#0E1C2B; --text2:#46586B; --text3:#7A8999;
+  --primary:#0B78A6; --primaryHover:#0A8DC2; --primarySoft:#D9EEF7; --onPrimary:#FFFFFF;
+  --ok:#1E9E62; --okSoft:#E2F4EB; --warn:#B7791F; --warnSoft:#FCF3E0; --err:#C8423B; --errSoft:#FBE7E5;
+  --hero:#10233A; --heroText:#F2F6FA; --heroSub:#9DB0C4; --heroChip:transparent; --heroLine:#2C4664;
+  --radius:0px; --radiusSm:0px; --shadow:none; --shadowHover:none;
+  --tileAlpha:0%; --gridMinor:rgba(11,120,166,.04); --gridMajor:rgba(11,120,166,.08); --rowAlt:#F6F9FC; --input:#FFFFFF;
+}
+
+* { box-sizing:border-box; }
+html, body { margin:0; }
+body { font:12px/1.45 "Segoe UI", system-ui, sans-serif; background:#0B0D11; color:#D5DCE3; }
+.mono { font-family:Consolas,"Cascadia Mono",monospace; }
+button { font:inherit; }
+
+/* ================= THANH STUDIO (cố định) ================= */
+.sbar { position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:14px; align-items:center; padding:10px 20px; background:#12151B; border-bottom:1px solid #232933; }
+.sbrand { display:flex; flex-direction:column; margin-right:auto; }
+.sbrand b { font-size:14px; letter-spacing:.06em; color:#F1F5F9; }
+.sbrand span { font-size:11px; color:#8A97A6; }
+.sl { font-size:10.5px; letter-spacing:.08em; color:#7F8B98; margin-right:6px; }
+.seg { display:inline-flex; border:1px solid #2C3540; border-radius:6px; overflow:hidden; }
+.seg button { background:transparent; color:#A9B4C0; border:0; border-right:1px solid #2C3540; padding:6px 12px; cursor:pointer; }
+.seg button:last-child { border-right:0; }
+.seg button.on { background:#2563EB; color:#fff; }
+.bchot { background:#F2B33D; color:#1B1204; border:0; border-radius:6px; padding:8px 14px; font-weight:700; letter-spacing:.03em; cursor:pointer; }
+.stabs { display:flex; padding:0 20px; background:#0F1216; border-bottom:1px solid #232933; overflow-x:auto; }
+.stabs button { background:transparent; border:0; color:#8A97A6; padding:10px 14px; cursor:pointer; white-space:nowrap; border-bottom:2px solid transparent; }
+.stabs button .n { font-family:Consolas,monospace; color:#5A6776; margin-right:6px; }
+.stabs button.on { color:#F1F5F9; border-bottom-color:#60A5FA; }
+.stage { padding:22px 20px 40px; overflow-x:auto; }
+.view { display:none; } .view.on { display:block; }
+.note { max-width:1180px; margin:14px 0 0; padding:10px 14px; border-left:3px solid #60A5FA; background:#141920; color:#B4BFCA; line-height:1.65; }
+.note b { color:#F1F5F9; } .note code { font-family:Consolas,monospace; color:#93C5FD; }
+.dpi { transform-origin:top left; }
+
+/* ================= CỬA SỔ ================= */
+.win { display:inline-block; vertical-align:top; background:var(--bg); color:var(--text); border:1px solid #3A4552; box-shadow:0 18px 50px rgba(0,0,0,.5); border-radius:8px; overflow:hidden; }
+.wt { height:32px; display:flex; align-items:center; gap:8px; padding-left:12px; background:var(--surface); color:var(--text2); border-bottom:1px solid var(--line); }
+[data-style="technical"] .wt { background:#10233A; color:#9DB0C4; border-bottom-color:#2C4664; }
+.wt .ttl { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wt .wb { width:46px; height:32px; display:grid; place-items:center; }
+.wt .wb.x:hover { background:#C42B1C; color:#fff; }
+.ct { background-color:var(--bg);
+  background-image:linear-gradient(var(--gridMajor) 1px,transparent 1px),linear-gradient(90deg,var(--gridMajor) 1px,transparent 1px),
+    linear-gradient(var(--gridMinor) 1px,transparent 1px),linear-gradient(90deg,var(--gridMinor) 1px,transparent 1px);
+  background-size:50px 50px,50px 50px,10px 10px,10px 10px; }
+
+/* Dải đầu (hero) */
+.hero { position:relative; display:flex; align-items:center; gap:14px; padding:0 18px; background:var(--toolHero, var(--hero)); color:var(--heroText); }
+[data-style="dark"] .hero, [data-style="technical"] .hero { background:var(--hero); }
+.hero .tile { width:42px; height:42px; border-radius:var(--radiusSm); display:grid; place-items:center; background:rgba(255,255,255,.16); border:1px solid var(--heroLine); }
+[data-style="technical"] .hero::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:#2BB8E8; }
+[data-style="technical"] .hero .tile { background:transparent; border-color:#2BB8E8; border-radius:0; }
+.hero .tile svg { width:26px; height:26px; color:#fff; }
+.hero .tt { flex:1; min-width:0; display:flex; flex-direction:column; }
+.hero .tt b { font-size:17px; letter-spacing:.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hero .tt span { font-size:12px; color:var(--heroSub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hchip { font-size:11px; padding:4px 10px; border-radius:999px; background:var(--heroChip); border:1px solid var(--heroLine); color:var(--heroText); white-space:nowrap; }
+[data-style="technical"] .hchip { border-radius:0; font-family:Consolas,monospace; }
+.hchip.k { font-family:Consolas,monospace; }
+
+/* Nút */
+.btn { height:34px; display:inline-flex; align-items:center; gap:8px; padding:0 14px; border-radius:var(--radiusSm); border:1px solid var(--lineStrong);
+  background:var(--surface); color:var(--text); cursor:pointer; white-space:nowrap; font-size:12px; transition:background .15s, border-color .15s, box-shadow .15s, transform .1s; }
+.btn:hover { border-color:var(--primary); background:var(--primarySoft); }
+.btn:active { transform:translateY(1px); }
+.btn svg { width:16px; height:16px; flex:none; }
+.btn.pri { background:var(--primary); border-color:var(--primary); color:var(--onPrimary); font-weight:600; box-shadow:0 1px 2px rgba(37,99,235,.25); }
+.btn.pri:hover { background:var(--primaryHover); border-color:var(--primaryHover); }
+.btn.big { height:40px; padding:0 20px; font-size:13px; }
+.btn.ghost { border-color:transparent; background:transparent; color:var(--text2); }
+.btn.ghost:hover { background:var(--primarySoft); color:var(--text); }
+.btn.icon { width:34px; padding:0; justify-content:center; }
+.btn.dan { color:var(--err); border-color:var(--err); background:transparent; }
+
+/* Ô nhập */
+.inp { height:34px; display:flex; align-items:center; gap:8px; padding:0 10px; border-radius:var(--radiusSm); border:1px solid var(--lineStrong); background:var(--input); min-width:0; }
+.inp:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px var(--primarySoft); }
+.inp input { all:unset; flex:1; min-width:0; font:12.5px "Segoe UI"; color:var(--text); }
+.inp input::placeholder { color:var(--text3); }
+.inp svg { width:16px; height:16px; color:var(--text3); flex:none; }
+.kbd { font:10.5px Consolas,monospace; color:var(--text3); border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:1px 5px; background:var(--surface2); white-space:nowrap; }
+
+/* Thẻ */
+.card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); min-width:0; }
+.card-h { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line); }
+.card-h b { font-size:13px; } .card-h .grow { flex:1; } .card-h .sub { font-size:11.5px; color:var(--text3); }
+.secl { display:flex; align-items:center; gap:8px; margin:16px 0 8px; font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--text3); text-transform:uppercase; }
+.secl::after { content:""; flex:1; height:1px; background:var(--line); }
+.secl .dot { width:8px; height:8px; border-radius:50%; background:var(--c, var(--primary)); }
+[data-style="technical"] .secl .dot { border-radius:0; }
+
+/* Ô màu công cụ (tile) */
+.tl { width:40px; height:40px; flex:none; border-radius:var(--radiusSm); display:grid; place-items:center;
+  background:color-mix(in srgb, var(--tc) var(--tileAlpha), transparent); color:var(--tc); }
+[data-style="technical"] .tl { background:transparent; color:#1E3550; border:1px solid var(--line); }
+.tl svg { width:24px; height:24px; }
+.ic .a { stroke:currentColor; } .ic .af { fill:currentColor; stroke:none; }
+[data-style="technical"] .ic .a { stroke:#0B78A6; } [data-style="technical"] .ic .af { fill:#0B78A6; }
+
+/* ================= MENU ================= */
+.tools { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+.tool { position:relative; display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line);
+  box-shadow:var(--shadow); cursor:pointer; transition:box-shadow .18s, transform .18s, border-color .18s; min-width:0; }
+.tool:hover { box-shadow:var(--shadowHover); transform:translateY(-2px); border-color:color-mix(in srgb, var(--tc) 45%, var(--line)); }
+[data-style="technical"] .tool:hover { transform:none; box-shadow:inset 3px 0 0 #0B78A6; background:var(--primarySoft); border-color:var(--line); }
+.tool .tx { min-width:0; flex:1; }
+.tool .tx b { display:block; font-size:13px; margin-bottom:2px; }
+.tool .tx span { display:block; font-size:11.5px; color:var(--text3); line-height:1.4; }
+.tool .num { position:absolute; right:10px; top:10px; }
+.recent { display:flex; gap:8px; flex-wrap:wrap; }
+.rpill { display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:var(--surface); border:1px solid var(--line); cursor:pointer; box-shadow:var(--shadow); white-space:nowrap; }
+.rpill i { width:8px; height:8px; border-radius:50%; background:var(--tc); }
+[data-style="technical"] .rpill { border-radius:0; } [data-style="technical"] .rpill i { border-radius:0; }
+.rpill:hover { border-color:var(--tc); }
+.vchip { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:10px 12px; border-radius:var(--radius); background:var(--primarySoft); color:var(--text); }
+.vchip b { font-weight:600; } .vchip .mono { color:var(--text2); }
+.empty-s { text-align:center; padding:28px 0; color:var(--text3); display:none; }
+.foot { display:flex; align-items:center; gap:10px; padding:0 16px; background:var(--surface); border-top:1px solid var(--line); color:var(--text3); }
+
+/* ================= ỐNG GIÓ ================= */
+.steps { display:flex; gap:0; align-items:center; padding:10px 16px; background:var(--surface); border-bottom:1px solid var(--line); overflow:hidden; }
+.st { display:flex; align-items:center; gap:8px; white-space:nowrap; color:var(--text3); }
+.st .c { width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font:700 11px Consolas,monospace; border:2px solid var(--lineStrong); color:var(--text3); background:var(--surface); }
+.st.done .c { background:var(--ok); border-color:var(--ok); color:#fff; } .st.done { color:var(--text2); }
+.st.cur .c { background:var(--primary); border-color:var(--primary); color:#fff; box-shadow:0 0 0 4px var(--primarySoft); } .st.cur { color:var(--text); font-weight:600; }
+.st-line { flex:1; min-width:24px; height:2px; background:var(--line); margin:0 10px; }
+.st-line.done { background:var(--ok); }
+[data-style="technical"] .st .c { border-radius:0; }
+.kpis { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; }
+.kpi { display:flex; gap:12px; align-items:center; padding:14px; }
+.kpi .kc { width:42px; height:42px; border-radius:50%; flex:none; display:grid; place-items:center; background:color-mix(in srgb, var(--tc) 14%, transparent); color:var(--tc); }
+[data-style="technical"] .kpi .kc { border-radius:0; background:transparent; border:1px solid var(--line); color:#0B78A6; }
+.kpi .kc svg { width:22px; height:22px; }
+.kpi i { display:block; font-style:normal; font-size:11.5px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kpi b { font:400 22px Consolas,monospace; color:var(--text); }
+.kpi small { font:12px Consolas,monospace; color:var(--tc); margin-left:4px; }
+[data-style="technical"] .kpi small { color:#0B78A6; }
+.fchips { display:flex; gap:6px; flex-wrap:wrap; }
+.fchip { padding:5px 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--text2); cursor:pointer; white-space:nowrap; }
+.fchip .mono { color:var(--text3); margin-left:4px; }
+.fchip.on { background:var(--primary); border-color:var(--primary); color:var(--onPrimary); } .fchip.on .mono { color:var(--onPrimary); opacity:.85; }
+[data-style="technical"] .fchip { border-radius:0; }
+.segc { display:inline-flex; padding:3px; border-radius:var(--radiusSm); background:var(--surface2); border:1px solid var(--line); }
+.segc span { padding:5px 12px; border-radius:calc(var(--radiusSm) - 2px); color:var(--text2); cursor:pointer; white-space:nowrap; }
+.segc span.on { background:var(--surface); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(16,24,40,.12); }
+[data-style="dark"] .segc span.on { background:var(--surface2); box-shadow:inset 0 0 0 1px var(--lineStrong); }
+[data-style="technical"] .segc span.on { box-shadow:inset 0 -2px 0 var(--primary); }
+
+table.dg { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:12px; }
+table.dg th { position:sticky; top:0; z-index:1; height:34px; padding:0 10px; text-align:left; font-weight:600; font-size:11.5px; color:var(--text3); background:var(--surface2); border-bottom:1px solid var(--line); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+[data-style="technical"] table.dg th { border-bottom:2px solid var(--primary); }
+table.dg td { height:36px; padding:0 10px; border-bottom:1px solid var(--line); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+table.dg tbody tr:nth-child(even) td { background:var(--rowAlt); }
+table.dg tbody tr:hover td { background:var(--primarySoft); }
+table.dg tr.sel td { background:var(--primarySoft) !important; }
+table.dg tr.sel td:first-child { box-shadow:inset 3px 0 0 var(--primary); }
+.num { text-align:right; font-family:Consolas,monospace; } .c { text-align:center; } .mut { color:var(--text3); }
+.cat { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:999px; font-size:11px; background:color-mix(in srgb, var(--tc) 12%, transparent); color:var(--tc); white-space:nowrap; }
+.cat::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+[data-style="technical"] .cat { border-radius:0; }
+.sys { display:inline-block; min-width:34px; text-align:center; font:600 10.5px Consolas,monospace; padding:2px 6px; border-radius:5px; color:#fff; background:var(--tc); }
+[data-style="technical"] .sys { border-radius:0; background:transparent; color:var(--tc); border:1px solid var(--tc); }
+.abar { display:flex; align-items:center; gap:10px; padding:0 16px; background:var(--surface); border-top:1px solid var(--line); }
+.abar .info { flex:1; min-width:0; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.abar .info b { color:var(--text); }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--ok); display:inline-block; margin-right:8px; vertical-align:middle; }
+.estate { display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:40px 20px; text-align:center; color:var(--text2); height:100%; }
+.estate .big { width:84px; height:84px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb, #EA580C 12%, transparent); color:#EA580C; }
+[data-style="technical"] .estate .big { border-radius:0; background:transparent; border:1px dashed var(--lineStrong); color:#0B78A6; }
+.estate .big svg { width:44px; height:44px; }
+.estate b { font-size:15px; color:var(--text); }
+.loading { display:none; flex-direction:column; gap:10px; padding:16px; }
+.sk { height:36px; border-radius:6px; background:linear-gradient(90deg,var(--surface2) 0%,var(--line) 50%,var(--surface2) 100%); background-size:200% 100%; animation:sk 1.2s linear infinite; }
+@keyframes sk { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+.pbar { height:6px; border-radius:999px; background:var(--line); overflow:hidden; }
+.pbar i { display:block; height:100%; width:62%; background:var(--primary); border-radius:999px; }
+
+/* ================= GRIDS ================= */
+.ptabs { display:inline-flex; gap:4px; padding:4px; border-radius:var(--radius); background:var(--surface2); border:1px solid var(--line); }
+.ptabs span { padding:7px 14px; border-radius:var(--radiusSm); color:var(--text2); cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:8px; }
+.ptabs span svg { width:16px; height:16px; }
+.ptabs span.on { background:var(--surface); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(16,24,40,.12); }
+[data-style="technical"] .ptabs span.on { box-shadow:inset 0 -2px 0 var(--primary); }
+.fld { display:grid; gap:6px; margin-bottom:16px; }
+.fld > label { font-weight:600; font-size:12.5px; }
+.fld .hint { font-size:11.5px; color:var(--text3); }
+.stepper { display:flex; align-items:stretch; border:1px solid var(--lineStrong); border-radius:var(--radiusSm); overflow:hidden; width:200px; background:var(--input); }
+.stepper button { width:40px; border:0; background:var(--surface2); color:var(--text); font-size:18px; cursor:pointer; }
+.stepper button:hover { background:var(--primarySoft); color:var(--primary); }
+.stepper input { all:unset; flex:1; text-align:center; font:600 16px Consolas,monospace; color:var(--text); min-width:0; }
+.stepper .u { align-self:center; padding-right:10px; color:var(--text3); font:12px Consolas,monospace; }
+.presets { display:flex; gap:6px; flex-wrap:wrap; }
+.presets span { padding:3px 10px; border-radius:999px; border:1px solid var(--line); font:11.5px Consolas,monospace; color:var(--text2); cursor:pointer; background:var(--surface); }
+.presets span.on, .presets span:hover { border-color:var(--primary); color:var(--primary); background:var(--primarySoft); }
+[data-style="technical"] .presets span { border-radius:0; }
+.compass { display:grid; grid-template-columns:repeat(3, 40px); grid-template-rows:repeat(3, 34px); gap:4px; }
+.compass span { display:grid; place-items:center; border-radius:6px; border:1px solid var(--lineStrong); color:var(--text2); cursor:pointer; font-size:11.5px; background:var(--surface); user-select:none; }
+.compass span.on { background:var(--primary); border-color:var(--primary); color:var(--onPrimary); font-weight:600; }
+.compass .mid { border-style:dashed; color:var(--text3); cursor:default; font:10px Consolas,monospace; }
+[data-style="technical"] .compass span { border-radius:0; }
+.sw { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; padding:4px 0; }
+.sw i { width:36px; height:20px; border-radius:999px; background:var(--lineStrong); position:relative; flex:none; transition:background .15s; }
+.sw i::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); transition:left .15s; }
+.sw.on i { background:var(--primary); } .sw.on i::after { left:18px; }
+[data-style="technical"] .sw i, [data-style="technical"] .sw i::after { border-radius:0; }
+
+/* Thông báo (toast) */
+.toast-demo { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadowHover); border-left:4px solid var(--ok); max-width:380px; }
+.toast-demo .ti { width:28px; height:28px; border-radius:50%; background:var(--okSoft); color:var(--ok); display:grid; place-items:center; flex:none; font-weight:700; }
+.toast-demo b { display:block; } .toast-demo span { color:var(--text2); font-size:11.5px; }
+.tip { position:relative; display:inline-block; }
+.tip .bub { position:absolute; left:0; top:40px; width:260px; padding:10px 12px; border-radius:var(--radiusSm); background:#111827; color:#F3F4F6; font-size:11.5px; line-height:1.5; box-shadow:0 10px 24px rgba(0,0,0,.3); }
+.tip .bub b { color:#fff; display:block; margin-bottom:2px; }
+
+/* Modal chốt */
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; place-items:center; z-index:60; padding:16px; }
+.modal.on { display:grid; }
+.mbox { width:min(860px,100%); max-height:88vh; display:flex; flex-direction:column; background:#12151B; border:1px solid #2C3540; border-radius:8px; overflow:hidden; }
+.mbox .mh { display:flex; gap:10px; align-items:center; padding:12px 16px; border-bottom:1px solid #2C3540; color:#F1F5F9; }
+.mbox .mh b { flex:1; }
+.mbox pre { margin:0; padding:14px 16px; overflow:auto; font:12px/1.5 Consolas,monospace; color:#CFE6F2; background:#0B0E12; flex:1; }
+.mbox .mf { display:flex; gap:8px; justify-content:flex-end; padding:10px 16px; border-top:1px solid #2C3540; }
+.sbtn { background:#1A222B; color:#D5DCE3; border:1px solid #2C3540; border-radius:6px; padding:7px 12px; cursor:pointer; }
+.sbtn.y { background:#F2B33D; border-color:#F2B33D; color:#1B1204; font-weight:700; }
+.toast { position:fixed; right:20px; bottom:20px; background:#2563EB; color:#fff; padding:10px 14px; border-radius:6px; display:none; z-index:70; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-align" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="6" r="3.2"/><circle cx="21" cy="6" r="3.2"/><path d="M9 9.2V27M21 9.2V27"/><path d="M3 19H29" stroke-dasharray="3 2"/></g><path fill="currentColor" d="M27 15.5l3 3.5h-6z"/><path stroke="currentColor" d="M5 23h22M5 21.5v3M27 21.5v3" fill="none" stroke-width="1.6"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="6" r="3.4"/><circle cx="22" cy="6" r="3.4"/><path d="M10 9.4V29M22 9.4V29" stroke-dasharray="5 2 1.5 2"/></g><path stroke="currentColor" d="M4 24h24M4 22v4M28 22v4" fill="none" stroke-width="1.7"/></symbol>
+    <symbol id="i-level" viewBox="0 0 32 32"><path d="M3 10l5-3.5v7z" fill="currentColor"/><path d="M8 10h21" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="currentColor" d="M3 22l5-3.5v7z"/><path stroke="currentColor" d="M8 22h21" fill="none" stroke-width="1.8"/><path d="M24 11.5v9M22 11.5h4M22 20.5h4" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+    <symbol id="i-crop" viewBox="0 0 32 32"><rect x="11" y="11" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8"/><g fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 10V4h6M22 4h6v6M28 22v6h-6M10 28H4v-6"/></g><rect x="7" y="7" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/></symbol>
+    <symbol id="i-pipe" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9h12a6 6 0 0 1 6 6v14"/><path d="M3 15h12M15 15v14"/><path d="M3 7v10M13 29h10"/></g><path stroke="currentColor" d="M30 4h-7l3.5 4-3.5 4h7" fill="none" stroke-width="1.9"/></symbol>
+    <symbol id="i-duct" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-5h17l-9 5z"/><path d="M3 12v12h17V12M20 24l9-5V7"/><path d="M8 12v12M14 12v12" stroke-width="1.1"/></g><text x="16" y="31" font-family="Consolas" font-size="7.5" font-weight="700" fill="currentColor" text-anchor="middle">m²</text></symbol>
+    <symbol id="i-cad2duct" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2.5 1.8"><path d="M3 7h11M3 13h11"/></g><path stroke="currentColor" d="M8 16v5h6M12 19l2 2-2 2" fill="none" stroke-width="1.7"/><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 20l5-3h9l-5 3z"/><path d="M16 20v8h9v-8M25 28l5-3v-8"/></g><path d="M17 3h11v8H17z" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="22.5" y="9.3" font-family="Consolas" font-size="5.2" font-weight="700" fill="currentColor" text-anchor="middle">DWG</text></symbol>
+    <symbol id="i-sheetlist" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 3h16v26H4z"/><path d="M4 23h16M12 23v6M8 8h8M8 12h8M8 16h5" stroke-width="1.3"/></g><path stroke="currentColor" d="M20 15h9M25 11l4 4-4 4" fill="none" stroke-width="1.9"/></symbol>
+    <symbol id="i-sheetsync" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 3h16v26H4z"/><path d="M4 23h16M12 23v6M8 8h8M8 12h8" stroke-width="1.3"/></g><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M30 18a6 6 0 0 1-10.5 4"/><path d="M18 20a6 6 0 0 1 10.5-4"/><path d="M28.5 12.5v3.8h-3.8M19.5 25.5v-3.8h3.8"/></g></symbol>
+    <symbol id="i-layers" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4l13 6-13 6-13-6z"/><path d="M3 16l13 6 13-6"/></g><path stroke="currentColor" d="M3 22l13 6 13-6" fill="none" stroke-width="2"/></symbol>
+    <symbol id="i-family" viewBox="0 0 32 32"><path fill="currentColor" d="M16 17l12-7v12l-12 7z" opacity=".3"/><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 3l12 7v12l-12 7-12-7V10z"/><path d="M4 10l12 7 12-7M16 17v12"/></g></symbol>
+    <symbol id="i-update" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M27 16a11 11 0 1 1-3.2-7.8"/><path d="M24 3v5.5h-5.5"/></g><path stroke="currentColor" d="M16 10v10M11.5 16l4.5 4.5 4.5-4.5" fill="none" stroke-width="2"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="10" height="10" rx="2"/><rect x="18" y="18" width="10" height="10" rx="2"/><rect x="4" y="18" width="10" height="10" rx="2"/></g><rect x="18" y="4" width="10" height="10" rx="2" fill="currentColor"/></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></g></symbol>
+    <symbol id="i-pick" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5"/><path d="M8 1v4M8 11v4M1 8h4M11 8h4"/></g></symbol>
+    <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-light" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.5 11h5M6 13.5h4"/><path d="M8 2a4 4 0 0 0-2.5 7.1V11h5V9.1A4 4 0 0 0 8 2z"/></g></symbol>
+    <symbol id="i-zoom" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14M5 7h4M7 5v4"/></g></symbol>
+    <symbol id="i-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="8.5" height="9" rx="1.5"/><path d="M3 11V3.5A1 1 0 0 1 4 2.5h6.5"/></g></symbol>
+    <symbol id="i-xls" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 1.5h7l3 3V14.5H3z"/><path d="M6 8l4 4M10 8l-4 4"/></g></symbol>
+    <symbol id="i-sheet" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M10 9.5h4.5M10 9.5V13"/></g></symbol>
+    <symbol id="i-col" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M6 3v10M10 3v10"/></g></symbol>
+    <symbol id="i-ruler" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></g></symbol>
+    <symbol id="i-hash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 9h15M4 15h15M10 3L8 21M16 3l-2 18"/></g></symbol>
+    <symbol id="i-area" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l9-5 9 5-9 5z"/><path d="M3 8v8l9 5 9-5V8"/></g></symbol>
+    <symbol id="i-valve" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7v10l9-5zM21 7v10l-9-5z"/><path d="M12 12V5M9 5h6"/></g></symbol>
+  </defs>
+</svg>
+
+<!-- ================= THANH STUDIO ================= -->
+<header class="sbar">
+  <div class="sbrand"><b>HDTOOL · GIAO DIỆN MỚI v2</b><span>Chọn phong cách → xem 3 màn hình chính → bấm CHỐT. Sau đó em mới sửa code Add-in.</span></div>
+  <div><span class="sl">PHONG CÁCH</span>
+    <span class="seg" id="segStyle">
+      <button data-v="modern" class="on">Sáng Hiện Đại (đề xuất)</button>
+      <button data-v="dark">Tối Cao Cấp</button>
+      <button data-v="technical">Kỹ Thuật (bản hiện tại)</button>
+    </span>
+  </div>
+  <div><span class="sl">DPI</span>
+    <span class="seg" id="segDpi"><button data-v="1" class="on">100%</button><button data-v="1.25">125%</button><button data-v="1.5">150%</button></span>
+  </div>
+  <button class="bchot" id="btnChot">CHỐT PHONG CÁCH NÀY</button>
+</header>
+<nav class="stabs" id="tabs">
+  <button data-v="menu" class="on"><span class="n">01</span>Menu HDTOOL</button>
+  <button data-v="duct"><span class="n">02</span>Khối Lượng Ống Gió</button>
+  <button data-v="grid"><span class="n">03</span>Căn Chỉnh Grids / Level</button>
+  <button data-v="kit"><span class="n">04</span>Thành phần &amp; trạng thái</button>
+</nav>
+
+<main class="stage" id="stage" data-style="modern">
+
+<!-- ======================= 01 MENU ======================= -->
+<section class="view on" id="v-menu">
+  <div class="dpi">
+  <div class="win" style="width:680px">
+    <div class="wt"><span class="ttl">HDTOOL — Trung Tâm Công Cụ</span><span class="wb">—</span><span class="wb x">✕</span></div>
+    <div style="display:grid; grid-template-rows:84px 1fr 52px; height:800px">
+      <div class="hero">
+        <span class="tile"><svg class="ic"><use href="#i-menu"/></svg></span>
+        <div class="tt"><b>Trung tâm công cụ HDTOOL</b><span>Chọn công cụ để bắt đầu · mọi cửa sổ đều làm việc song song với bản vẽ</span></div>
+        <span class="hchip k">v110</span><span class="hchip k">ESC đóng</span>
+      </div>
+      <div class="ct" style="overflow:auto; padding:16px 18px">
+        <div style="display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center">
+          <label class="inp"><svg><use href="#i-search"/></svg><input id="menuSearch" placeholder="Tìm công cụ… (thử gõ: ống gió, sheet, grid)"><span class="kbd">Ctrl+F</span></label>
+        </div>
+        <div class="vchip" style="margin-top:12px"><span>Đang mở:</span><b>Level 3 - Mechanical</b><span class="mono">FloorPlan · 1:100</span></div>
+
+        <div class="secl" style="--c:#94A3B8">Dùng gần đây</div>
+        <div class="recent">
+          <span class="rpill" style="--tc:#EA580C"><i></i>Khối Lượng Ống Gió</span>
+          <span class="rpill" style="--tc:#2563EB"><i></i>Căn Chỉnh Grids</span>
+          <span class="rpill" style="--tc:#16A34A"><i></i>Xuất Danh Mục Bản Vẽ</span>
+        </div>
+
+        <div id="toolGroups">
+          <div class="secl grp" style="--c:#2563EB">Căn chỉnh đối tượng</div>
+          <div class="tools grp">
+            <div class="tool" style="--tc:#2563EB" data-k="grid truc can chinh grids"><span class="tl"><svg class="ic"><use href="#i-grid"/></svg></span><div class="tx"><b>Căn Chỉnh Grids</b><span>Căn đầu trục theo mm tới mép Crop View hoặc Sheet</span></div><span class="kbd num">1</span></div>
+            <div class="tool" style="--tc:#0EA5E9" data-k="level cao do can chinh"><span class="tl"><svg class="ic"><use href="#i-level"/></svg></span><div class="tx"><b>Căn Chỉnh Level</b><span>Căn 2 đầu cao độ trên Mặt cắt / Mặt đứng</span></div><span class="kbd num">2</span></div>
+            <div class="tool" style="--tc:#7C3AED" data-k="crop view tu dong cat khung"><span class="tl"><svg class="ic"><use href="#i-crop"/></svg></span><div class="tx"><b>Tự Động Crop View</b><span>Khung Crop ôm khít đối tượng · Plan / Section / 3D</span></div><span class="kbd num">3</span></div>
+            <div class="tool" style="--tc:#6366F1" data-k="tu nhan view grids level"><span class="tl"><svg class="ic"><use href="#i-align"/></svg></span><div class="tx"><b>Tự Nhận Theo View</b><span>Plan → Grids, Mặt cắt → Level, tự chọn đúng công cụ</span></div><span class="kbd num">4</span></div>
+          </div>
+          <div class="secl grp" style="--c:#EA580C">Khối lượng MEP</div>
+          <div class="tools grp">
+            <div class="tool" style="--tc:#0891B2" data-k="ong nuoc pipe thong ke phu kien"><span class="tl"><svg class="ic"><use href="#i-pipe"/></svg></span><div class="tx"><b>Thống Kê Ống Nước</b><span>Ống &amp; phụ kiện · soi sáng mô hình · đưa vào Sheet</span></div><span class="kbd num">5</span></div>
+            <div class="tool" style="--tc:#EA580C" data-k="ong gio duct khoi luong ton m2"><span class="tl"><svg class="ic"><use href="#i-duct"/></svg></span><div class="tx"><b>Khối Lượng Ống Gió</b><span>m² tôn theo TCVN 5687:2010 · cút, côn, van, miệng gió</span></div><span class="kbd num">6</span></div>
+            <div class="tool" style="--tc:#DB2777" data-k="cad dung ong gio dwg"><span class="tl"><svg class="ic"><use href="#i-cad2duct"/></svg></span><div class="tx"><b>Dựng Ống Gió Từ CAD</b><span>Nhận diện tuyến, size WxH · dựng mô hình 3D</span></div><span class="kbd num">7</span></div>
+          </div>
+          <div class="secl grp" style="--c:#16A34A">Bản vẽ &amp; Sheet</div>
+          <div class="tools grp">
+            <div class="tool" style="--tc:#16A34A" data-k="danh muc ban ve sheet xuat excel"><span class="tl"><svg class="ic"><use href="#i-sheetlist"/></svg></span><div class="tx"><b>Xuất Danh Mục Bản Vẽ</b><span>Excel / CSV · sửa số hiệu &amp; tên trực tiếp</span></div><span class="kbd num">8</span></div>
+            <div class="tool" style="--tc:#059669" data-k="cap nhat danh muc sheet excel"><span class="tl"><svg class="ic"><use href="#i-sheetsync"/></svg></span><div class="tx"><b>Cập Nhật Danh Mục</b><span>Đối chiếu file Excel → cập nhật Sheet</span></div><span class="kbd num">9</span></div>
+            <div class="tool" style="--tc:#D97706" data-k="xuat cad dwg layer"><span class="tl"><svg class="ic"><use href="#i-layers"/></svg></span><div class="tx"><b>Xuất CAD Quy Đổi Layer</b><span>DWG · Layer &amp; màu ACI theo hệ thống MEP</span></div></div>
+          </div>
+          <div class="secl grp" style="--c:#C026D3">Thư viện &amp; hệ thống</div>
+          <div class="tools grp">
+            <div class="tool" style="--tc:#C026D3" data-k="family thu vien 3d dat"><span class="tl"><svg class="ic"><use href="#i-family"/></svg></span><div class="tx"><b>Tổng Hợp Family 3D</b><span>Xem trước 3D · tìm nhanh · đặt vào bản vẽ</span></div></div>
+            <div class="tool" style="--tc:#64748B" data-k="cap nhat tool hot reload"><span class="tl"><svg class="ic"><use href="#i-update"/></svg></span><div class="tx"><b>Cập Nhật Tool</b><span>Nạp phiên bản mới không cần tắt Revit</span></div></div>
+          </div>
+        </div>
+        <div class="empty-s" id="menuEmpty">Không tìm thấy công cụ phù hợp. Thử từ khóa khác.</div>
+      </div>
+      <div class="foot"><span style="flex:1">Mẹo: nhấn phím <span class="kbd">1</span>–<span class="kbd">9</span> để mở nhanh công cụ</span><span class="btn">Đóng (ESC)</span></div>
+    </div>
+  </div>
+  </div>
+  <p class="note"><b>Khác bản cũ:</b> mỗi công cụ có <b>màu nhận diện riêng</b> (ống gió cam, Grids xanh dương, Sheet xanh lá…) dùng chung trên Ribbon, Menu và đầu từng cửa sổ, nhìn là biết đang ở công cụ nào.
+    Thẻ dạng lưới 2 cột, rê chuột thẻ nổi lên. Có <b>ô tìm công cụ</b> (gõ thử ở trên), <b>"Dùng gần đây"</b>, phím tắt số 1–9.<br>
+    <b>Làm được bằng WinForms:</b> thẻ bo góc + đổ bóng vẽ bằng GDI+ (<code>GraphicsPath</code>), nền chuyển màu bằng <code>LinearGradientBrush</code>, hiệu ứng nổi bằng <code>Timer</code> ngắn.</p>
+</section>
+
+<!-- ======================= 02 ỐNG GIÓ ======================= -->
+<section class="view" id="v-duct">
+  <div class="dpi">
+  <div class="win" style="width:1200px">
+    <div class="wt"><span class="ttl">HDTOOL — Khối Lượng Ống Gió</span><span class="wb">—</span><span class="wb">▢</span><span class="wb x">✕</span></div>
+    <div style="display:grid; grid-template-rows:68px auto 54px 1fr 58px; height:760px">
+      <div class="hero" style="--toolHero:linear-gradient(118deg,#9A3412 0%,#EA580C 55%,#F59E0B 100%)">
+        <span class="tile"><svg class="ic"><use href="#i-duct"/></svg></span>
+        <div class="tt"><b>Khối Lượng Ống Gió &amp; Phụ Kiện</b><span>Tính m² tôn, phân loại cút, côn, lượn, van và miệng gió</span></div>
+        <span class="hchip">TCVN 5687:2010</span><span class="hchip">Level 3 - HVAC</span><span class="hchip k">ESC đóng</span>
+      </div>
+      <div class="steps">
+        <span class="st done"><span class="c">✓</span>Chọn phạm vi</span><span class="st-line done"></span>
+        <span class="st done"><span class="c">✓</span>Quét đối tượng</span><span class="st-line done"></span>
+        <span class="st cur"><span class="c">3</span>Kiểm tra bảng</span><span class="st-line"></span>
+        <span class="st"><span class="c">4</span>Xuất Excel / Đặt vào Sheet</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; padding:0 16px; background:var(--surface); border-bottom:1px solid var(--line)">
+        <span class="segc"><span class="on">View hiện tại</span><span>Vùng đã quét</span><span>Toàn dự án</span></span>
+        <span class="btn pri"><svg><use href="#i-pick"/></svg>Quét vùng mới</span>
+        <span class="btn"><svg><use href="#i-plus"/></svg>Bóc thêm</span>
+        <span style="width:1px; height:24px; background:var(--line); margin:0 4px"></span>
+        <span class="btn icon ghost" title="Làm sáng đối tượng đã bóc"><svg><use href="#i-light"/></svg></span>
+        <span class="btn icon ghost" title="Phóng tới đối tượng"><svg><use href="#i-zoom"/></svg></span>
+        <span class="btn icon ghost" title="Thêm cột Parameter"><svg><use href="#i-col"/></svg></span>
+        <span style="flex:1"></span>
+        <label class="inp" style="width:260px"><svg><use href="#i-search"/></svg><input placeholder="Tìm tên, size, hệ thống…"></label>
+      </div>
+      <div class="ct" style="padding:14px 16px; display:grid; grid-template-rows:auto 1fr; gap:14px; min-height:0">
+        <div class="kpis">
+          <div class="card kpi" style="--tc:#EA580C"><span class="kc"><svg><use href="#i-area"/></svg></span><div><i>Tổng diện tích tôn</i><b>653.54</b><small>m²</small></div></div>
+          <div class="card kpi" style="--tc:#2563EB"><span class="kc"><svg><use href="#i-ruler"/></svg></span><div><i>Chiều dài ống thẳng</i><b>345.15</b><small>m</small></div></div>
+          <div class="card kpi" style="--tc:#7C3AED"><span class="kc"><svg><use href="#i-hash"/></svg></span><div><i>Số đoạn ống</i><b>118</b><small>đoạn</small></div></div>
+          <div class="card kpi" style="--tc:#16A34A"><span class="kc"><svg><use href="#i-valve"/></svg></span><div><i>Phụ kiện, van, miệng gió</i><b>112</b><small>cái</small></div></div>
+        </div>
+        <div class="card" style="display:flex; flex-direction:column; min-height:0; overflow:hidden">
+          <div class="card-h"><b>Bảng khối lượng</b><span class="sub">230 đối tượng · 11 dòng</span><span class="grow"></span>
+            <span class="fchips" id="ductChips"><span class="fchip on">Tất cả<span class="mono">11</span></span><span class="fchip">Ống thẳng<span class="mono">5</span></span><span class="fchip">Cút &amp; côn<span class="mono">3</span></span><span class="fchip">Van &amp; miệng gió<span class="mono">3</span></span></span>
+          </div>
+          <div id="ductData" style="overflow:auto; min-height:0">
+            <table class="dg">
+              <colgroup><col style="width:50px"><col style="width:150px"><col><col style="width:160px"><col style="width:100px"><col style="width:70px"><col style="width:120px"><col style="width:80px"><col style="width:100px"></colgroup>
+              <thead><tr><th class="c">#</th><th>Loại</th><th>Tên cấu kiện</th><th>Quy cách</th><th class="num">Dài (m)</th><th class="num">SL</th><th class="num">Diện tích (m²)</th><th class="c">Hệ</th><th class="num">Tôn dày</th></tr></thead>
+              <tbody>
+                <tr><td class="c mono mut">1</td><td><span class="cat" style="--tc:#2563EB">Ống thẳng</span></td><td>Ống gió chữ nhật</td><td class="mono">1000 × 500</td><td class="num">48.60</td><td class="num">16</td><td class="num"><b>145.80</b></td><td class="c"><span class="sys" style="--tc:#2563EB">SA</span></td><td class="num">0.95 mm</td></tr>
+                <tr class="sel"><td class="c mono mut">2</td><td><span class="cat" style="--tc:#2563EB">Ống thẳng</span></td><td>Ống gió chữ nhật</td><td class="mono">800 × 400</td><td class="num">62.25</td><td class="num">21</td><td class="num"><b>149.40</b></td><td class="c"><span class="sys" style="--tc:#2563EB">SA</span></td><td class="num">0.75 mm</td></tr>
+                <tr><td class="c mono mut">3</td><td><span class="cat" style="--tc:#2563EB">Ống thẳng</span></td><td>Ống gió chữ nhật</td><td class="mono">600 × 300</td><td class="num">85.10</td><td class="num">29</td><td class="num"><b>153.18</b></td><td class="c"><span class="sys" style="--tc:#16A34A">RA</span></td><td class="num">0.75 mm</td></tr>
+                <tr><td class="c mono mut">4</td><td><span class="cat" style="--tc:#2563EB">Ống thẳng</span></td><td>Ống gió chữ nhật</td><td class="mono">400 × 250</td><td class="num">112.40</td><td class="num">38</td><td class="num"><b>146.12</b></td><td class="c"><span class="sys" style="--tc:#D97706">EA</span></td><td class="num">0.58 mm</td></tr>
+                <tr><td class="c mono mut">5</td><td><span class="cat" style="--tc:#2563EB">Ống thẳng</span></td><td>Ống gió tròn</td><td class="mono">Ø250</td><td class="num">36.80</td><td class="num">14</td><td class="num"><b>28.90</b></td><td class="c"><span class="sys" style="--tc:#7C3AED">OA</span></td><td class="num">0.58 mm</td></tr>
+                <tr><td class="c mono mut">6</td><td><span class="cat" style="--tc:#7C3AED">Cút &amp; côn</span></td><td>Cút 90° R150</td><td class="mono">800 × 400</td><td class="num mut">—</td><td class="num">12</td><td class="num"><b>18.62</b></td><td class="c"><span class="sys" style="--tc:#2563EB">SA</span></td><td class="num">0.75 mm</td></tr>
+                <tr><td class="c mono mut">7</td><td><span class="cat" style="--tc:#7C3AED">Cút &amp; côn</span></td><td>Côn thu L=400</td><td class="mono">1000×500 → 800×400</td><td class="num mut">—</td><td class="num">6</td><td class="num"><b>6.48</b></td><td class="c"><span class="sys" style="--tc:#2563EB">SA</span></td><td class="num">0.95 mm</td></tr>
+                <tr><td class="c mono mut">8</td><td><span class="cat" style="--tc:#7C3AED">Cút &amp; côn</span></td><td>Lượn Z (L=600, H=200)</td><td class="mono">600 × 300</td><td class="num mut">—</td><td class="num">4</td><td class="num"><b>5.04</b></td><td class="c"><span class="sys" style="--tc:#16A34A">RA</span></td><td class="num">0.75 mm</td></tr>
+                <tr><td class="c mono mut">9</td><td><span class="cat" style="--tc:#16A34A">Van &amp; miệng gió</span></td><td>Van gió điều chỉnh VCD</td><td class="mono">600 × 300</td><td class="num mut">—</td><td class="num">18</td><td class="num mut">—</td><td class="c"><span class="sys" style="--tc:#2563EB">SA</span></td><td class="num mut">—</td></tr>
+                <tr><td class="c mono mut">10</td><td><span class="cat" style="--tc:#16A34A">Van &amp; miệng gió</span></td><td>Miệng gió khuếch tán 4 hướng</td><td class="mono">600 × 600</td><td class="num mut">—</td><td class="num">64</td><td class="num mut">—</td><td class="c"><span class="sys" style="--tc:#2563EB">SA</span></td><td class="num mut">—</td></tr>
+                <tr><td class="c mono mut">11</td><td><span class="cat" style="--tc:#16A34A">Van &amp; miệng gió</span></td><td>Van chặn lửa MFD</td><td class="mono">400 × 250</td><td class="num mut">—</td><td class="num">8</td><td class="num mut">—</td><td class="c"><span class="sys" style="--tc:#D97706">EA</span></td><td class="num mut">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="estate" id="ductEmpty">
+            <span class="big"><svg class="ic"><use href="#i-duct"/></svg></span>
+            <b>Chưa có dữ liệu ống gió</b>
+            <span>Chọn phạm vi ở trên rồi bấm <b>Quét vùng mới</b> để bắt đầu bóc khối lượng.</span>
+            <span class="btn pri big"><svg><use href="#i-pick"/></svg>Quét vùng mới</span>
+          </div>
+          <div class="loading" id="ductLoad">
+            <div style="display:flex; justify-content:space-between; color:var(--text2)"><span>Đang quét View hiện tại… 142 / 230 đối tượng</span><span class="mono">62%</span></div>
+            <div class="pbar"><i></i></div>
+            <div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>
+          </div>
+        </div>
+      </div>
+      <div class="abar">
+        <span class="info"><span class="dot"></span>Đang chọn <b>dòng 2</b> · 21 đối tượng đang được làm sáng trên Revit</span>
+        <span class="btn"><svg><use href="#i-copy"/></svg>Copy bảng</span>
+        <span class="btn"><svg><use href="#i-xls"/></svg>Xuất Excel</span>
+        <span class="btn pri big"><svg><use href="#i-sheet"/></svg>Đặt vào Sheet</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <p class="note"><b>Xem thử trạng thái:</b>
+    <span class="segc" id="ductState" style="vertical-align:middle"><span class="on" data-s="data">Có dữ liệu</span><span data-s="empty">Chưa có dữ liệu</span><span data-s="load">Đang quét</span></span><br>
+    <b>Khác bản cũ:</b> thanh <b>4 bước</b> cho biết đang ở đâu và bước tiếp theo; 4 ô số liệu lớn có icon màu; bảng có <b>nhãn loại</b> và <b>mã hệ màu</b>, lọc nhanh bằng chip;
+    chỉ <b>1 nút chính</b> "Đặt vào Sheet" ở góc phải dưới. Khi chưa có dữ liệu hiện hướng dẫn thay vì bảng trống; khi quét có thanh tiến trình.<br>
+    <b>Làm được bằng WinForms:</b> bảng vẫn là <code>DataGridView</code> (vẽ nhãn &amp; chip trong <code>CellPainting</code>), ô số liệu &amp; bước là control tự vẽ dùng chung.</p>
+</section>
+
+<!-- ======================= 03 GRIDS ======================= -->
+<section class="view" id="v-grid">
+  <div class="dpi">
+  <div class="win" style="width:960px">
+    <div class="wt"><span class="ttl">HDTOOL — Căn Chỉnh Grids / Level</span><span class="wb">—</span><span class="wb x">✕</span></div>
+    <div style="display:grid; grid-template-rows:68px 60px 1fr 58px; height:640px">
+      <div class="hero" style="--toolHero:linear-gradient(118deg,#1E3A8A 0%,#2563EB 60%,#0EA5E9 100%)">
+        <span class="tile"><svg class="ic"><use href="#i-grid"/></svg></span>
+        <div class="tt"><b>Căn Chỉnh Grids / Level</b><span>Đặt khoảng cách đầu trục tới mép Crop · xem trước ngay bên phải</span></div>
+        <span class="hchip k">ESC đóng</span>
+      </div>
+      <div style="display:flex; align-items:center; padding:0 16px; background:var(--surface); border-bottom:1px solid var(--line)">
+        <span class="ptabs"><span class="on"><svg class="ic"><use href="#i-grid"/></svg>Lưới trục</span><span><svg class="ic"><use href="#i-level"/></svg>Cao độ</span><span><svg class="ic"><use href="#i-crop"/></svg>Crop View</span></span>
+      </div>
+      <div class="ct" style="display:grid; grid-template-columns:340px 1fr; gap:14px; padding:14px 16px; min-height:0">
+        <div class="card" style="padding:16px; overflow:auto">
+          <div class="fld">
+            <label>Khoảng cách đầu trục tới mép Crop</label>
+            <div class="stepper"><button id="stMinus" aria-label="Giảm">−</button><input id="offIn" value="600" inputmode="numeric"><span class="u">mm</span><button id="stPlus" aria-label="Tăng">+</button></div>
+            <div class="presets" id="presets"><span data-v="300">300</span><span data-v="500">500</span><span data-v="600" class="on">600</span><span data-v="800">800</span><span data-v="1000">1000</span></div>
+          </div>
+          <div class="fld">
+            <label>Hướng áp dụng</label>
+            <div class="compass" id="compass">
+              <span style="visibility:hidden"></span><span class="on" data-d="T">Trên</span><span style="visibility:hidden"></span>
+              <span class="on" data-d="L">Trái</span><span class="mid">CROP</span><span class="on" data-d="R">Phải</span>
+              <span style="visibility:hidden"></span><span class="on" data-d="B">Dưới</span><span style="visibility:hidden"></span>
+            </div>
+            <span class="hint">Bấm để bật / tắt từng hướng</span>
+          </div>
+          <div class="fld">
+            <label>Tùy chọn</label>
+            <span class="sw on"><i></i>Hiện đầu trục (bubble) ở cả hai đầu</span>
+            <span class="sw on"><i></i>Chuyển sang 2D trước khi căn</span>
+            <span class="sw"><i></i>Áp dụng cho tất cả View trên Sheet</span>
+          </div>
+        </div>
+        <div class="card" style="display:flex; flex-direction:column; min-height:0">
+          <div class="card-h"><b>Xem trước</b><span class="grow"></span><span class="sub mono" id="diagInfo">600 mm · 4 hướng</span></div>
+          <svg id="diag" viewBox="0 0 500 330" style="flex:1; width:100%; min-height:0"></svg>
+        </div>
+      </div>
+      <div class="abar">
+        <span class="info"><span class="dot"></span><b>14 trục</b> trong View · Crop 42.0 × 27.5 m</span>
+        <span class="btn"><svg><use href="#i-pick"/></svg>Chọn trục trên màn hình</span>
+        <span class="btn pri big">Căn chỉnh 14 trục</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <p class="note"><b>Khác bản cũ:</b> nhập số bằng nút <b>− / +</b> và <b>mức có sẵn</b> (300, 500, 600…), chọn hướng bằng <b>la bàn</b> trực quan, tùy chọn dạng <b>công tắc</b>;
+    sơ đồ bên phải đổi ngay khi chỉnh. Nút chính ghi rõ sẽ làm gì: <b>"Căn chỉnh 14 trục"</b>. Thử bấm − / + và các hướng.</p>
+</section>
+
+<!-- ======================= 04 THÀNH PHẦN ======================= -->
+<section class="view" id="v-kit">
+  <div class="dpi">
+  <div class="win" style="width:960px">
+    <div class="wt"><span class="ttl">HDTOOL — Bộ thành phần dùng chung</span></div>
+    <div class="ct" style="padding:18px; display:grid; gap:18px">
+      <div class="card" style="padding:16px; display:grid; gap:14px">
+        <b>Nút bấm</b>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+          <span class="btn pri big">Nút chính (1 nút / cửa sổ)</span><span class="btn pri">Chính nhỏ</span><span class="btn">Phụ</span><span class="btn ghost">Phẳng</span><span class="btn dan">Xóa dòng đã chọn</span>
+          <span class="btn icon ghost" title="Làm sáng"><svg><use href="#i-light"/></svg></span>
+        </div>
+        <b>Ô nhập &amp; lựa chọn</b>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center">
+          <label class="inp" style="width:220px"><svg><use href="#i-search"/></svg><input placeholder="Tìm kiếm…"></label>
+          <span class="segc"><span class="on">Plan</span><span>Section</span><span>3D</span></span>
+          <span class="sw on"><i></i>Công tắc bật</span><span class="sw"><i></i>Công tắc tắt</span>
+          <span class="fchip on">Chip lọc<span class="mono">12</span></span><span class="fchip">Chip lọc<span class="mono">3</span></span>
+        </div>
+        <b>Nhãn &amp; mã màu</b>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+          <span class="cat" style="--tc:#2563EB">Ống thẳng</span><span class="cat" style="--tc:#7C3AED">Cút &amp; côn</span><span class="cat" style="--tc:#16A34A">Van &amp; miệng gió</span>
+          <span class="sys" style="--tc:#2563EB">SA</span><span class="sys" style="--tc:#16A34A">RA</span><span class="sys" style="--tc:#D97706">EA</span><span class="sys" style="--tc:#7C3AED">OA</span>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px">
+        <div class="card" style="padding:16px; display:grid; gap:12px">
+          <b>Thông báo thành công (tự ẩn sau 4 giây)</b>
+          <div class="toast-demo"><span class="ti">✓</span><div><b>Đã căn chỉnh 14 trục</b><span>View "Level 3 - Mechanical" · có thể Ctrl+Z để hoàn tác</span></div></div>
+          <b>Gợi ý khi rê chuột</b>
+          <div class="tip" style="height:110px"><span class="btn icon ghost"><svg><use href="#i-light"/></svg></span>
+            <div class="bub"><b>Làm sáng đối tượng đã bóc</b>Tô màu cam các đối tượng trong bảng trên bản vẽ Revit. Bấm lần nữa để tắt.</div></div>
+        </div>
+        <div class="card" style="padding:16px; display:grid; gap:12px">
+          <b>Đang xử lý</b>
+          <div style="display:flex; justify-content:space-between; color:var(--text2)"><span>Đang xuất 12 Sheet sang DWG…</span><span class="mono">8 / 12</span></div>
+          <div class="pbar"><i style="width:66%"></i></div>
+          <div class="sk"></div><div class="sk" style="width:80%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+</main>
+
+<div class="modal" id="modal"><div class="mbox" role="dialog" aria-label="Chốt phong cách">
+  <div class="mh"><b id="mTitle">CHỐT PHONG CÁCH</b><button class="sbtn" id="mClose">Đóng</button></div>
+  <pre id="mCode"></pre>
+  <div class="mf"><button class="sbtn y" id="mCopy">Sao chép cấu hình</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+  function $(id) { return document.getElementById(id); }
+  var stage = $("stage");
+  var state = { style: "modern", view: "menu", dpi: 1, offset: 600, dirs: { T: true, B: true, L: true, R: true } };
+  try { var sv = JSON.parse(localStorage.getItem("hdtool-ui-v2") || "null"); if (sv) { state.style = sv.style || state.style; state.view = sv.view || state.view; } } catch (e) {}
+  // Cho phép mở thẳng: HDTool_GiaoDienMoi.html#style=dark&view=duct
+  (location.hash || "").replace(/^#/, "").split("&").forEach(function (kv) {
+    var p = kv.split("=");
+    if (p[0] === "style" && /^(modern|dark|technical)$/.test(p[1])) state.style = p[1];
+    if (p[0] === "view" && /^(menu|duct|grid|kit)$/.test(p[1])) state.view = p[1];
+  });
+  function save() { try { localStorage.setItem("hdtool-ui-v2", JSON.stringify({ style: state.style, view: state.view })); } catch (e) {} }
+  function setOn(box, attr, v) { Array.prototype.forEach.call(box.querySelectorAll("[" + attr + "]"), function (b) { b.classList.toggle("on", b.getAttribute(attr) === String(v)); }); }
+
+  function apply() {
+    stage.setAttribute("data-style", state.style);
+    setOn($("segStyle"), "data-v", state.style);
+    setOn($("tabs"), "data-v", state.view);
+    Array.prototype.forEach.call(document.querySelectorAll(".view"), function (v) { v.classList.toggle("on", v.id === "v-" + state.view); });
+    Array.prototype.forEach.call(document.querySelectorAll(".dpi"), function (d) { d.style.zoom = state.dpi; });
+    setOn($("segDpi"), "data-v", state.dpi);
+    drawDiagram();
+  }
+  $("segStyle").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { state.style = v; save(); apply(); } };
+  $("segDpi").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { state.dpi = parseFloat(v); apply(); } };
+  $("tabs").onclick = function (e) { var b = e.target.closest("button"); if (b) { state.view = b.getAttribute("data-v"); save(); apply(); } };
+
+  /* Menu: tìm công cụ */
+  function norm(s) { return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d"); }
+  $("menuSearch").oninput = function () {
+    var q = norm(this.value.trim()), any = false;
+    var groups = $("toolGroups").querySelectorAll(".tools");
+    Array.prototype.forEach.call(groups, function (g) {
+      var shown = 0;
+      Array.prototype.forEach.call(g.querySelectorAll(".tool"), function (t) {
+        var ok = !q || norm(t.textContent + " " + t.getAttribute("data-k")).indexOf(q) >= 0;
+        t.style.display = ok ? "" : "none"; if (ok) shown++;
+      });
+      g.style.display = shown ? "" : "none";
+      g.previousElementSibling.style.display = shown ? "" : "none";
+      if (shown) any = true;
+    });
+    $("menuEmpty").style.display = any ? "none" : "block";
+  };
+
+  /* Ống gió: trạng thái & chip */
+  $("ductState").onclick = function (e) {
+    var s = e.target.getAttribute("data-s"); if (!s) return;
+    setOn(this, "data-s", s);
+    $("ductData").style.display = s === "data" ? "" : "none";
+    $("ductEmpty").style.display = s === "empty" ? "flex" : "none";
+    $("ductLoad").style.display = s === "load" ? "flex" : "none";
+  };
+  $("ductChips").onclick = function (e) {
+    var c = e.target.closest(".fchip"); if (!c) return;
+    Array.prototype.forEach.call(this.children, function (x) { x.classList.toggle("on", x === c); });
+  };
+  Array.prototype.forEach.call(document.querySelectorAll(".segc:not(#ductState), .ptabs"), function (g) {
+    g.addEventListener("click", function (e) { var s = e.target.closest("span"); if (!s || s.parentNode !== g) return; Array.prototype.forEach.call(g.children, function (x) { x.classList.toggle("on", x === s); }); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".sw"), function (s) { s.onclick = function () { s.classList.toggle("on"); }; });
+
+  /* Grids: stepper, mức có sẵn, la bàn, sơ đồ */
+  function setOffset(v) {
+    state.offset = Math.max(0, Math.min(2000, v | 0));
+    $("offIn").value = state.offset;
+    Array.prototype.forEach.call($("presets").children, function (p) { p.classList.toggle("on", +p.getAttribute("data-v") === state.offset); });
+    drawDiagram();
+  }
+  $("stMinus").onclick = function () { setOffset(state.offset - 50); };
+  $("stPlus").onclick = function () { setOffset(state.offset + 50); };
+  $("offIn").oninput = function () { var n = parseInt(this.value.replace(/\D/g, ""), 10); state.offset = isNaN(n) ? 0 : n; drawDiagram(); };
+  $("presets").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) setOffset(+v); };
+  $("compass").onclick = function (e) { var d = e.target.getAttribute("data-d"); if (!d) return; state.dirs[d] = !state.dirs[d]; e.target.classList.toggle("on", state.dirs[d]); drawDiagram(); };
+
+  function drawDiagram() {
+    var svg = $("diag"); if (!svg) return;
+    var cs = getComputedStyle(stage);
+    var ink = cs.getPropertyValue("--text2").trim(), acc = cs.getPropertyValue("--primary").trim(), dim = "#EA580C", mut = cs.getPropertyValue("--text3").trim(), surf = cs.getPropertyValue("--surface").trim();
+    var crop = { x: 110, y: 70, w: 280, h: 190 }, k = 48 / 1000, off = Math.max(0, Math.min(1600, state.offset)) * k;
+    var gx = [150, 230, 310, 350], gy = [110, 180, 230], s = "";
+    s += '<defs><marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1L9 5L0 9z" fill="' + dim + '"/></marker></defs>';
+    s += '<rect x="' + crop.x + '" y="' + crop.y + '" width="' + crop.w + '" height="' + crop.h + '" fill="' + acc + '" fill-opacity=".06" stroke="' + acc + '" stroke-width="1.6" stroke-dasharray="7 4" rx="' + (state.style === "technical" ? 0 : 6) + '"/>';
+    s += '<text x="' + (crop.x + 8) + '" y="' + (crop.y + crop.h - 8) + '" font-family="Segoe UI" font-size="11" font-weight="600" fill="' + acc + '">Khung Crop View</text>';
+    function bub(cx, cy, t) { return '<circle cx="' + cx + '" cy="' + cy + '" r="10.5" fill="' + surf + '" stroke="' + ink + '" stroke-width="1.4"/><text x="' + cx + '" y="' + (cy + 3.8) + '" font-family="Consolas" font-size="10.5" font-weight="700" fill="' + ink + '" text-anchor="middle">' + t + '</text>'; }
+    var L = ["1", "2", "3", "4"], N = ["A", "B", "C"];
+    gx.forEach(function (x, i) {
+      var y1 = state.dirs.T ? crop.y - off : crop.y - 30, y2 = state.dirs.B ? crop.y + crop.h + off : crop.y + crop.h + 30;
+      s += '<line x1="' + x + '" y1="' + (y1 + 10) + '" x2="' + x + '" y2="' + (y2 - 10) + '" stroke="' + ink + '" stroke-width="1.1" stroke-dasharray="14 3 2 3"/>' + bub(x, y1, L[i]) + bub(x, y2, L[i]);
+    });
+    gy.forEach(function (y, i) {
+      var x1 = state.dirs.L ? crop.x - off : crop.x - 30, x2 = state.dirs.R ? crop.x + crop.w + off : crop.x + crop.w + 30;
+      s += '<line x1="' + (x1 + 10) + '" y1="' + y + '" x2="' + (x2 - 10) + '" y2="' + y + '" stroke="' + ink + '" stroke-width="1.1" stroke-dasharray="14 3 2 3"/>' + bub(x1, y, N[i]) + bub(x2, y, N[i]);
+    });
+    if (state.dirs.T && off > 4) {
+      var dx = 422, yA = crop.y - off, yB = crop.y;
+      s += '<line x1="' + (crop.x + crop.w) + '" y1="' + yB + '" x2="' + (dx + 8) + '" y2="' + yB + '" stroke="' + mut + '" stroke-width=".8"/><line x1="' + (gx[3] + 12) + '" y1="' + yA + '" x2="' + (dx + 8) + '" y2="' + yA + '" stroke="' + mut + '" stroke-width=".8"/>';
+      s += '<line x1="' + dx + '" y1="' + yA + '" x2="' + dx + '" y2="' + yB + '" stroke="' + dim + '" stroke-width="1.4" marker-start="url(#arw)" marker-end="url(#arw)"/>';
+      s += '<rect x="' + (dx + 6) + '" y="' + ((yA + yB) / 2 - 9) + '" width="44" height="18" rx="9" fill="' + dim + '"/><text x="' + (dx + 28) + '" y="' + ((yA + yB) / 2 + 4) + '" font-family="Consolas" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">' + state.offset + '</text>';
+    }
+    if (state.dirs.L && off > 4) {
+      var dy = 298, xA = crop.x - off, xB = crop.x;
+      s += '<line x1="' + xB + '" y1="' + (crop.y + crop.h) + '" x2="' + xB + '" y2="' + (dy + 8) + '" stroke="' + mut + '" stroke-width=".8"/><line x1="' + xA + '" y1="' + (gy[2] + 12) + '" x2="' + xA + '" y2="' + (dy + 8) + '" stroke="' + mut + '" stroke-width=".8"/>';
+      s += '<line x1="' + xA + '" y1="' + dy + '" x2="' + xB + '" y2="' + dy + '" stroke="' + dim + '" stroke-width="1.4" marker-start="url(#arw)" marker-end="url(#arw)"/>';
+      s += '<rect x="' + ((xA + xB) / 2 - 22) + '" y="' + (dy - 24) + '" width="44" height="18" rx="9" fill="' + dim + '"/><text x="' + ((xA + xB) / 2) + '" y="' + (dy - 11) + '" font-family="Consolas" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">' + state.offset + '</text>';
+    }
+    svg.innerHTML = s;
+    var n = Object.keys(state.dirs).filter(function (k2) { return state.dirs[k2]; }).length;
+    $("diagInfo").textContent = state.offset + " mm · " + n + " hướng";
+  }
+
+  /* Chốt */
+  var NAMES = { modern: "Sáng Hiện Đại", dark: "Tối Cao Cấp", technical: "Kỹ Thuật" };
+  var TOOLS = [["Căn Chỉnh Grids", "#2563EB"], ["Căn Chỉnh Level", "#0EA5E9"], ["Tự Động Crop View", "#7C3AED"], ["Tự Nhận Theo View", "#6366F1"], ["Thống Kê Ống Nước", "#0891B2"],
+    ["Khối Lượng Ống Gió", "#EA580C"], ["Dựng Ống Gió Từ CAD", "#DB2777"], ["Xuất Danh Mục Bản Vẽ", "#16A34A"], ["Cập Nhật Danh Mục", "#059669"], ["Xuất CAD Quy Đổi Layer", "#D97706"],
+    ["Tổng Hợp Family 3D", "#C026D3"], ["Cập Nhật Tool", "#64748B"]];
+  $("btnChot").onclick = function () {
+    var cs = getComputedStyle(stage), keys = ["bg", "surface", "surface2", "line", "lineStrong", "text", "text2", "text3", "primary", "primaryHover", "primarySoft", "onPrimary", "ok", "warn", "err", "radius", "radiusSm"];
+    var L = ["PHONG CÁCH ĐÃ CHỌN: " + NAMES[state.style], "", "[Token màu & kích thước]"];
+    keys.forEach(function (k) { L.push("  " + (k + "              ").slice(0, 14) + cs.getPropertyValue("--" + k).trim()); });
+    L.push("  hero          " + cs.getPropertyValue("--hero").trim());
+    L.push("", "[Màu nhận diện từng công cụ]");
+    TOOLS.forEach(function (t) { L.push("  " + (t[0] + "                          ").slice(0, 26) + t[1]); });
+    L.push("", "[Bố cục mỗi cửa sổ]", "  Hero 68px (Menu 84px) · Thanh bước / Toolbar 54-60px · Nội dung co giãn · Thanh hành động 58px",
+      "  1 nút chính / cửa sổ (góc phải dưới) · Trạng thái: có dữ liệu / trống / đang xử lý · Thông báo tự ẩn",
+      "", "Gửi lại nội dung này cho trợ lý, hoặc chỉ cần trả lời: \"Chốt " + NAMES[state.style] + "\".");
+    $("mTitle").textContent = "CHỐT: " + NAMES[state.style].toUpperCase();
+    $("mCode").textContent = L.join("\n");
+    $("modal").classList.add("on");
+  };
+  $("mClose").onclick = function () { $("modal").classList.remove("on"); };
+  $("modal").onclick = function (e) { if (e.target === this) this.classList.remove("on"); };
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") $("modal").classList.remove("on"); });
+  $("mCopy").onclick = function () {
+    var t = $("mCode").textContent, done = function () { var x = $("toast"); x.textContent = "Đã sao chép cấu hình"; x.style.display = "block"; setTimeout(function () { x.style.display = "none"; }, 2500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () {}); else done();
+  };
+
+  apply();
+})();
+</script>
+</body>
+</html>

@@ -391,13 +391,10 @@ namespace HDTool
         private bool _isUpdatingGrid = false;
         private bool _isUpdatingScope = false;
 
-        // Controls
-        private System.Windows.Forms.Panel pnlHeader;
-        private Label lblTitle;
-        private Label lblSubtitle;
-        private PictureBox picLogo;
-
-        private GroupBox grpFilter;
+        // Controls — giao diện v2 (Tối Cao Cấp) do DuctQuantityView dựng; các biến dưới đây trỏ vào control của View để giữ nguyên logic cũ
+        private DuctQuantityView _view;
+        private System.Windows.Forms.Panel pnlScopeHidden; // giữ 3 RadioButton phạm vi của logic cũ, hiển thị bằng nút phân đoạn
+        private bool _syncingScope = false;
         private RadioButton radCurrentView;
         private RadioButton radSelection;
         private RadioButton radAllProject;
@@ -414,7 +411,6 @@ namespace HDTool
         private ComboBox cboSystem;
         private TextBox txtSearch;
 
-        private System.Windows.Forms.Panel pnlActionToolbar;
         private CheckBox chkAutoHighlight;
         private Button btnHighlightAll;
         private Button btnClearHighlight;
@@ -423,9 +419,8 @@ namespace HDTool
         private Button btnRemoveParamCol;
 
         private DataGridView dgvItems;
-        private Label lblSummary;
+        private Label lblSummary; // giữ chuỗi tổng kết (không hiển thị; số liệu hiện ở 4 ô số liệu)
 
-        private System.Windows.Forms.Panel pnlBottom;
         private Button btnPlaceSheet;
         private Button btnExportExcel;
         private Button btnCopyClipboard;
@@ -747,408 +742,161 @@ namespace HDTool
         {
             this.SuspendLayout();
 
-            this.Text = "HDTOOL - THỐNG KÊ KHỐI LƯỢNG ỐNG GIÓ & PHỤ KIỆN HVAC (TCVN 5687:2010 / SMACNA)";
-            this.Size = new Size(1300, 800);
-            this.MinimumSize = new Size(1160, 680);
+            this.Text = "HDTOOL — Khối Lượng Ống Gió & Phụ Kiện HVAC (TCVN 5687:2010 / SMACNA)";
+            this.Size = new Size(1300, 820);
+            this.MinimumSize = new Size(1180, 720);
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.FromArgb(248, 250, 252);
-            this.Font = new Font("Segoe UI", 9.0f, FontStyle.Regular);
+            this.BackColor = HDToolTheme.Bg;
+            this.Font = HDToolTheme.Body;
             this.KeyPreview = true;
             this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) this.Close(); };
 
-            ToolTip toolTip = new ToolTip();
-            toolTip.AutoPopDelay = 5000;
-            toolTip.InitialDelay = 500;
-            toolTip.ReshowDelay = 200;
-            toolTip.ShowAlways = true;
+            string viewName = _activeView != null ? _activeView.Name : "View hiện tại";
+            _view = new DuctQuantityView();
+            _view.Build(this, viewName);
 
-            // ================= 1. HEADER BANNER HADOMEE =================
-            pnlHeader = new System.Windows.Forms.Panel();
-            pnlHeader.Dock = DockStyle.Top;
-            pnlHeader.Height = 72;
-            pnlHeader.BackColor = Color.FromArgb(24, 43, 73);
+            // ================= PHẠM VI: 3 RadioButton của logic cũ (ẩn) <-> nút phân đoạn =================
+            pnlScopeHidden = new System.Windows.Forms.Panel();
+            pnlScopeHidden.Visible = false;
+            pnlScopeHidden.Size = new Size(1, 1);
 
-            lblTitle = new Label();
-            lblTitle.Text = "HDTOOL — THỐNG KÊ KHỐI LƯỢNG ỐNG GIÓ & PHỤ KIỆN HVAC (M² TÔN & PHỤ KIỆN)";
-            lblTitle.ForeColor = Color.White;
-            lblTitle.Font = new Font("Segoe UI", 11.5f, FontStyle.Bold);
-            lblTitle.Location = new Point(16, 12);
-            lblTitle.AutoSize = true;
-
-            lblSubtitle = new Label();
-            lblSubtitle.Text = "Tự động tính diện tích tôn m² theo TCVN 5687:2010 / SMACNA  |  Phân loại cút, côn, van VCD, miệng gió  |  Thêm cột Parameter dự án";
-            lblSubtitle.ForeColor = Color.FromArgb(203, 213, 225);
-            lblSubtitle.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
-            lblSubtitle.Location = new Point(16, 42);
-            lblSubtitle.AutoSize = true;
-
-            picLogo = new PictureBox();
-            picLogo.Size = new Size(130, 42);
-            picLogo.Location = new Point(this.ClientSize.Width - 145, 15);
-            picLogo.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            picLogo.SizeMode = PictureBoxSizeMode.Zoom;
-            picLogo.BackColor = Color.White;
-            try
-            {
-                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("hadomee_logo.png"))
-                {
-                    if (stream != null) picLogo.Image = Image.FromStream(stream);
-                }
-            }
-            catch { }
-
-            pnlHeader.Controls.Add(lblTitle);
-            pnlHeader.Controls.Add(lblSubtitle);
-            pnlHeader.Controls.Add(picLogo);
-
-            // ================= 2. FILTER PANEL =================
-            grpFilter = new GroupBox();
-            grpFilter.Text = "Bộ Lọc & Phạm Vi Bóc Khối Lượng Ống Gió";
-            grpFilter.Location = new Point(12, 78);
-            grpFilter.Size = new Size(this.ClientSize.Width - 24, 115);
-            grpFilter.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            grpFilter.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            grpFilter.ForeColor = Color.FromArgb(30, 41, 59);
-
-            // Cụm 1: Phạm vi
-            string viewName = _activeView != null ? _activeView.Name : "View Hiện Tại";
             radCurrentView = new RadioButton();
             radCurrentView.Text = string.Format("Khung Nhìn Hiện Hành ({0})", TruncateString(viewName, 18));
-            radCurrentView.Location = new Point(12, 22);
-            radCurrentView.Size = new Size(245, 22);
             radCurrentView.Checked = (_customSelectionIds.Count == 0);
-            radCurrentView.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
-            radCurrentView.Cursor = Cursors.Hand;
-            radCurrentView.CheckedChanged += (s, e) => {
-                if (radCurrentView.Checked && !_isUpdatingScope) LoadDataAndRefreshUi();
-            };
 
             radSelection = new RadioButton();
             radSelection.Text = _customSelectionIds.Count > 0
                 ? string.Format("Vùng Quét Cục Bộ ({0} đ.tượng)", _customSelectionIds.Count)
                 : "Vùng Quét Cục Bộ (Chưa quét)";
-            radSelection.Location = new Point(12, 48);
-            radSelection.Size = new Size(245, 22);
             radSelection.Checked = (_customSelectionIds.Count > 0);
-            radSelection.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            radSelection.ForeColor = Color.FromArgb(217, 119, 6);
-            radSelection.Cursor = Cursors.Hand;
-            radSelection.CheckedChanged += (s, e) => {
-                if (radSelection.Checked && !_isUpdatingScope) LoadDataAndRefreshUi();
-            };
 
             radAllProject = new RadioButton();
             radAllProject.Text = "Toàn Bộ Dự Án (All Document)";
-            radAllProject.Location = new Point(12, 74);
-            radAllProject.Size = new Size(245, 22);
-            radAllProject.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
-            radAllProject.Cursor = Cursors.Hand;
-            radAllProject.CheckedChanged += (s, e) => {
-                if (radAllProject.Checked && !_isUpdatingScope) LoadDataAndRefreshUi();
+
+            radCurrentView.CheckedChanged += (s, e) => { if (radCurrentView.Checked && !_isUpdatingScope) LoadDataAndRefreshUi(); SyncScopeView(); };
+            radSelection.CheckedChanged += (s, e) => { if (radSelection.Checked && !_isUpdatingScope) LoadDataAndRefreshUi(); SyncScopeView(); };
+            radAllProject.CheckedChanged += (s, e) => { if (radAllProject.Checked && !_isUpdatingScope) LoadDataAndRefreshUi(); SyncScopeView(); };
+            radSelection.TextChanged += (s, e) => SyncScopeView();
+            pnlScopeHidden.Controls.Add(radCurrentView);
+            pnlScopeHidden.Controls.Add(radSelection);
+            pnlScopeHidden.Controls.Add(radAllProject);
+            this.Controls.Add(pnlScopeHidden);
+
+            _view.Scope.SelectedIndexChanged += (s, e) =>
+            {
+                if (_syncingScope) return;
+                int i = _view.Scope.SelectedIndex;
+                if (i == 0) { radSelection.Checked = false; radAllProject.Checked = false; radCurrentView.Checked = true; }
+                else if (i == 1) { radCurrentView.Checked = false; radAllProject.Checked = false; radSelection.Checked = true; }
+                else { radCurrentView.Checked = false; radSelection.Checked = false; radAllProject.Checked = true; }
             };
 
-            // Cụm 2: Nút quét chuột siêu mượt
-            btnPickArea = new Button();
-            btnPickArea.Text = "■ QUÉT VÙNG MỚI\r\n(Kéo quét hoặc Click View)";
-            btnPickArea.Location = new Point(265, 20);
-            btnPickArea.Size = new Size(160, 42);
-            btnPickArea.BackColor = Color.FromArgb(217, 83, 79);
-            btnPickArea.ForeColor = Color.White;
-            btnPickArea.FlatStyle = FlatStyle.Flat;
-            btnPickArea.FlatAppearance.BorderSize = 0;
-            btnPickArea.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            btnPickArea.Cursor = Cursors.Hand;
+            // ================= THANH CÔNG CỤ =================
+            btnPickArea = _view.BtnPick;
             btnPickArea.Click += BtnPickArea_Click;
-            toolTip.SetToolTip(btnPickArea, "Trên Sheet: Click chọn trực tiếp vào khung nhìn Viewport để lấy toàn bộ ống gió của View!\nTrong View mô hình: Kéo quét một khung chữ nhật cực nhanh không lag.");
-
-            btnPickAppendArea = new Button();
-            btnPickAppendArea.Text = "Bóc Thêm (Cộng Dồn)";
-            btnPickAppendArea.Location = new Point(265, 66);
-            btnPickAppendArea.Size = new Size(160, 34);
-            btnPickAppendArea.BackColor = Color.FromArgb(13, 148, 136);
-            btnPickAppendArea.ForeColor = Color.White;
-            btnPickAppendArea.FlatStyle = FlatStyle.Flat;
-            btnPickAppendArea.FlatAppearance.BorderSize = 0;
-            btnPickAppendArea.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            btnPickAppendArea.Cursor = Cursors.Hand;
+            btnPickAppendArea = _view.BtnAppend;
             btnPickAppendArea.Click += BtnPickAppendArea_Click;
-            toolTip.SetToolTip(btnPickAppendArea, "Quét thêm vùng mới hoặc click thêm Viewport để cộng dồn vào bảng");
+            _view.Empty.ActionButton.Click += BtnPickArea_Click;
+            _view.BtnRefresh.Click += (s, e) =>
+            {
+                CheckInitialSelection();
+                if (_customSelectionIds != null && _customSelectionIds.Count > 0)
+                {
+                    _isUpdatingScope = true;
+                    radSelection.Text = string.Format("Vùng Quét Cục Bộ ({0} đ.tượng)", _customSelectionIds.Count);
+                    radCurrentView.Checked = false;
+                    radAllProject.Checked = false;
+                    radSelection.Checked = true;
+                    _isUpdatingScope = false;
+                }
+                LoadDataAndRefreshUi();
+            };
+            btnHighlightAll = _view.BtnLight;
+            btnHighlightAll.Click += BtnHighlightAll_Click;
+            btnClearHighlight = _view.BtnLightOff;
+            btnClearHighlight.Click += BtnClearHighlight_Click;
+            btnZoom = _view.BtnZoom;
+            btnZoom.Click += BtnZoom_Click;
+            txtSearch = _view.Search.Box;
+            txtSearch.TextChanged += (s, e) => FilterAndDisplayItems();
 
-            // Cụm 3: Hạng mục HVAC Checkbox
-            System.Windows.Forms.Panel pnlCategories = new System.Windows.Forms.Panel();
-            pnlCategories.Location = new Point(435, 18);
-            pnlCategories.Size = new Size(280, 84);
-            pnlCategories.BackColor = Color.FromArgb(241, 245, 249);
-            pnlCategories.BorderStyle = BorderStyle.FixedSingle;
-
-            chkDuct = new CheckBox { Text = "Ống Gió Thẳng (m² Tôn)", Checked = true, Location = new Point(8, 6), AutoSize = true, Font = new Font("Segoe UI", 8.0f, FontStyle.Bold), ForeColor = Color.FromArgb(2, 132, 199) };
-            chkFitting = new CheckBox { Text = "Phụ Kiện Cút/Côn/Tê/Lượn", Checked = true, Location = new Point(8, 28), AutoSize = true, Font = new Font("Segoe UI", 8.0f, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129) };
-            chkDamper = new CheckBox { Text = "Van Gió VCD / FD / NRD", Checked = true, Location = new Point(8, 50), AutoSize = true, Font = new Font("Segoe UI", 8.0f, FontStyle.Bold), ForeColor = Color.FromArgb(217, 119, 6) };
-            chkDiffuser = new CheckBox { Text = "Miệng Gió (Diffuser, Slot)", Checked = true, Location = new Point(155, 6), AutoSize = true, Font = new Font("Segoe UI", 8.0f, FontStyle.Bold), ForeColor = Color.FromArgb(147, 51, 234) };
-            chkFlex = new CheckBox { Text = "Ống Gió Mềm", Checked = true, Location = new Point(155, 28), AutoSize = true, Font = new Font("Segoe UI", 8.0f, FontStyle.Regular), ForeColor = Color.FromArgb(71, 85, 105) };
-
+            // ================= CHIP LOẠI CẤU KIỆN =================
+            chkDuct = _view.ChkDuct;
+            chkFitting = _view.ChkFitting;
+            chkDamper = _view.ChkDamper;
+            chkDiffuser = _view.ChkDiffuser;
+            chkFlex = _view.ChkFlex;
             chkDuct.CheckedChanged += (s, e) => LoadDataAndRefreshUi();
             chkFitting.CheckedChanged += (s, e) => LoadDataAndRefreshUi();
             chkDamper.CheckedChanged += (s, e) => LoadDataAndRefreshUi();
             chkDiffuser.CheckedChanged += (s, e) => LoadDataAndRefreshUi();
             chkFlex.CheckedChanged += (s, e) => LoadDataAndRefreshUi();
 
-            pnlCategories.Controls.Add(chkDuct);
-            pnlCategories.Controls.Add(chkFitting);
-            pnlCategories.Controls.Add(chkDamper);
-            pnlCategories.Controls.Add(chkDiffuser);
-            pnlCategories.Controls.Add(chkFlex);
-
-            // Cụm 4: Bộ lọc Tầng, Hệ Thống, Tìm kiếm
-            Label lblLvl = new Label { Text = "Tầng:", Location = new Point(725, 24), Size = new Size(42, 20), Font = new Font("Segoe UI", 8.5f, FontStyle.Regular) };
-            cboLevel = new ComboBox { Location = new Point(770, 21), Size = new Size(110, 24), DropDownStyle = ComboBoxStyle.DropDownList };
+            // ================= THẺ BẢNG =================
+            cboLevel = _view.CboLevel;
             cboLevel.SelectedIndexChanged += (s, e) => FilterAndDisplayItems();
-
-            Label lblSys = new Label { Text = "Hệ Thống:", Location = new Point(890, 24), Size = new Size(62, 20), Font = new Font("Segoe UI", 8.5f, FontStyle.Regular) };
-            cboSystem = new ComboBox { Location = new Point(955, 21), Size = new Size(125, 24), DropDownStyle = ComboBoxStyle.DropDownList };
+            cboSystem = _view.CboSystem;
             cboSystem.SelectedIndexChanged += (s, e) => FilterAndDisplayItems();
-
-            Label lblSrch = new Label { Text = "Tìm:", Location = new Point(725, 60), Size = new Size(42, 20), Font = new Font("Segoe UI", 8.5f, FontStyle.Regular) };
-            txtSearch = new TextBox { Location = new Point(770, 57), Size = new Size(180, 24), Text = "Tìm tên, size, hệ thống..." };
-            txtSearch.ForeColor = Color.Gray;
-            txtSearch.Enter += (s, e) => { if (txtSearch.ForeColor == Color.Gray) { txtSearch.Text = ""; txtSearch.ForeColor = Color.Black; } };
-            txtSearch.Leave += (s, e) => { if (string.IsNullOrWhiteSpace(txtSearch.Text)) { txtSearch.Text = "Tìm tên, size, hệ thống..."; txtSearch.ForeColor = Color.Gray; } };
-            txtSearch.TextChanged += (s, e) => { if (txtSearch.ForeColor != Color.Gray) FilterAndDisplayItems(); };
-
-            // Cụm 5: Nút Quét Lại Dữ Liệu
-            Button btnRefresh = new Button();
-            btnRefresh.Text = "Quét Lại\r\nDữ Liệu";
-            btnRefresh.Location = new Point(grpFilter.Width - 135, 20);
-            btnRefresh.Size = new Size(120, 80);
-            btnRefresh.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnRefresh.BackColor = Color.FromArgb(52, 73, 94);
-            btnRefresh.ForeColor = Color.White;
-            btnRefresh.FlatStyle = FlatStyle.Flat;
-            btnRefresh.FlatAppearance.BorderSize = 0;
-            btnRefresh.Cursor = Cursors.Hand;
-            btnRefresh.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnRefresh.Click += (s, e) => {
-                CheckInitialSelection();
-                if (_customSelectionIds != null && _customSelectionIds.Count > 0)
-                {
-                    _isUpdatingScope = true;
-                    radSelection.Text = string.Format("Vùng Quét Cục Bộ ({0} đ.tượng)", _customSelectionIds.Count);
-                    radSelection.Checked = true;
-                    radCurrentView.Checked = false;
-                    _isUpdatingScope = false;
-                }
-                LoadDataAndRefreshUi();
-            };
-
-            grpFilter.Controls.Add(radCurrentView);
-            grpFilter.Controls.Add(radSelection);
-            grpFilter.Controls.Add(radAllProject);
-            grpFilter.Controls.Add(btnPickArea);
-            grpFilter.Controls.Add(btnPickAppendArea);
-            grpFilter.Controls.Add(pnlCategories);
-            grpFilter.Controls.Add(lblLvl);
-            grpFilter.Controls.Add(cboLevel);
-            grpFilter.Controls.Add(lblSys);
-            grpFilter.Controls.Add(cboSystem);
-            grpFilter.Controls.Add(lblSrch);
-            grpFilter.Controls.Add(txtSearch);
-            grpFilter.Controls.Add(btnRefresh);
-
-            // ================= 3. ACTION TOOLBAR & QUẢN LÝ CỘT PARAMETER =================
-            pnlActionToolbar = new System.Windows.Forms.Panel();
-            pnlActionToolbar.Location = new Point(12, 200);
-            pnlActionToolbar.Size = new Size(this.ClientSize.Width - 24, 40);
-            pnlActionToolbar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            pnlActionToolbar.BackColor = Color.FromArgb(241, 245, 249);
-            pnlActionToolbar.BorderStyle = BorderStyle.FixedSingle;
-
-            chkAutoHighlight = new CheckBox();
-            chkAutoHighlight.Text = "Tự động Highlight khi click dòng";
-            chkAutoHighlight.Checked = true;
-            chkAutoHighlight.Location = new Point(10, 9);
-            chkAutoHighlight.AutoSize = true;
-            chkAutoHighlight.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            chkAutoHighlight.ForeColor = Color.FromArgb(3, 105, 161);
-
-            btnHighlightAll = new Button();
-            btnHighlightAll.Text = "Sáng Đã Bóc";
-            btnHighlightAll.Location = new Point(230, 6);
-            btnHighlightAll.Size = new Size(110, 26);
-            btnHighlightAll.BackColor = Color.FromArgb(217, 119, 6);
-            btnHighlightAll.ForeColor = Color.White;
-            btnHighlightAll.FlatStyle = FlatStyle.Flat;
-            btnHighlightAll.FlatAppearance.BorderSize = 0;
-            btnHighlightAll.Font = new Font("Segoe UI", 8.0f, FontStyle.Bold);
-            btnHighlightAll.Cursor = Cursors.Hand;
-            btnHighlightAll.Click += BtnHighlightAll_Click;
-
-            btnClearHighlight = new Button();
-            btnClearHighlight.Text = "Tắt Sáng";
-            btnClearHighlight.Location = new Point(345, 6);
-            btnClearHighlight.Size = new Size(80, 26);
-            btnClearHighlight.BackColor = Color.FromArgb(100, 116, 139);
-            btnClearHighlight.ForeColor = Color.White;
-            btnClearHighlight.FlatStyle = FlatStyle.Flat;
-            btnClearHighlight.FlatAppearance.BorderSize = 0;
-            btnClearHighlight.Font = new Font("Segoe UI", 8.0f, FontStyle.Regular);
-            btnClearHighlight.Cursor = Cursors.Hand;
-            btnClearHighlight.Click += BtnClearHighlight_Click;
-
-            btnZoom = new Button();
-            btnZoom.Text = "Zoom Gần";
-            btnZoom.Location = new Point(430, 6);
-            btnZoom.Size = new Size(95, 26);
-            btnZoom.BackColor = Color.FromArgb(2, 132, 199);
-            btnZoom.ForeColor = Color.White;
-            btnZoom.FlatStyle = FlatStyle.Flat;
-            btnZoom.FlatAppearance.BorderSize = 0;
-            btnZoom.Font = new Font("Segoe UI", 8.0f, FontStyle.Bold);
-            btnZoom.Cursor = Cursors.Hand;
-            btnZoom.Click += BtnZoom_Click;
-
-            // NÚT THÊM CỘT PARAMETER DỰ ÁN & HỆ ỐNG GIÓ
-            btnAddParamCol = new Button();
-            btnAddParamCol.Text = "Thêm Cột Parameter";
-            btnAddParamCol.Location = new Point(pnlActionToolbar.Width - 280, 6);
-            btnAddParamCol.Size = new Size(165, 26);
-            btnAddParamCol.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnAddParamCol.BackColor = Color.FromArgb(14, 116, 144);
-            btnAddParamCol.ForeColor = Color.White;
-            btnAddParamCol.FlatStyle = FlatStyle.Flat;
-            btnAddParamCol.FlatAppearance.BorderSize = 0;
-            btnAddParamCol.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            btnAddParamCol.Cursor = Cursors.Hand;
+            btnAddParamCol = _view.BtnAddCol;
             btnAddParamCol.Click += BtnAddParamCol_Click;
-            toolTip.SetToolTip(btnAddParamCol, "Bổ sung bất kỳ tham số nào của Dự án hoặc Hệ ống gió vào bảng (Comments, Mark, Loại Bảo Ôn...)");
-
-            btnRemoveParamCol = new Button();
-            btnRemoveParamCol.Text = "Xóa Cột";
-            btnRemoveParamCol.Location = new Point(pnlActionToolbar.Width - 105, 6);
-            btnRemoveParamCol.Size = new Size(95, 26);
-            btnRemoveParamCol.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnRemoveParamCol.BackColor = Color.FromArgb(185, 28, 28);
-            btnRemoveParamCol.ForeColor = Color.White;
-            btnRemoveParamCol.FlatStyle = FlatStyle.Flat;
-            btnRemoveParamCol.FlatAppearance.BorderSize = 0;
-            btnRemoveParamCol.Font = new Font("Segoe UI", 8.0f, FontStyle.Bold);
-            btnRemoveParamCol.Cursor = Cursors.Hand;
+            btnRemoveParamCol = _view.BtnRemoveCol;
             btnRemoveParamCol.Click += BtnRemoveParamCol_Click;
-            toolTip.SetToolTip(btnRemoveParamCol, "Xóa một cột tham số tùy chọn đã thêm khỏi bảng");
 
-            chkLiveSync = new CheckBox();
-            chkLiveSync.Text = "Tự bóc khi chọn trên Revit";
-            chkLiveSync.Checked = false;
-            chkLiveSync.Location = new Point(540, 9);
-            chkLiveSync.AutoSize = true;
-            chkLiveSync.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-            chkLiveSync.ForeColor = Color.FromArgb(220, 38, 38);
-            chkLiveSync.Cursor = Cursors.Hand;
-            toolTip.SetToolTip(chkLiveSync, "Khi bật: Chỉ cần click hoặc quét chọn bất kỳ ống gió nào trên bản vẽ Revit, HDTOOL sẽ tự động nhận diện và tính toán khối lượng ngay lập tức!");
-            pnlActionToolbar.Controls.Add(chkLiveSync);
-
-            pnlActionToolbar.Controls.Add(chkAutoHighlight);
-            pnlActionToolbar.Controls.Add(btnHighlightAll);
-            pnlActionToolbar.Controls.Add(btnClearHighlight);
-            pnlActionToolbar.Controls.Add(btnZoom);
-            pnlActionToolbar.Controls.Add(btnAddParamCol);
-            pnlActionToolbar.Controls.Add(btnRemoveParamCol);
-
-            // ================= 4. DATA GRID VIEW TABLE (DOUBLE BUFFERED) =================
-            dgvItems = new DataGridView();
-            dgvItems.Location = new Point(12, 246);
-            dgvItems.Size = new Size(this.ClientSize.Width - 24, this.ClientSize.Height - 365);
-            dgvItems.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            dgvItems.BackgroundColor = Color.White;
-            dgvItems.AllowUserToAddRows = false;
-            dgvItems.RowHeadersVisible = false;
-            dgvItems.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvItems.ColumnHeadersHeight = 34;
-            dgvItems.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(24, 43, 73);
-            dgvItems.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            dgvItems.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            dgvItems.EnableHeadersVisualStyles = false;
+            dgvItems = _view.Grid;
             dgvItems.CellEndEdit += DgvItems_CellEndEdit;
             dgvItems.SelectionChanged += DgvItems_SelectionChanged;
-
+            dgvItems.SelectionChanged += (s, e) => UpdateInfoBar();
             EnableDoubleBuffered(dgvItems);
             BuildGridColumns();
 
-            // ================= 5. SUMMARY BAR =================
             lblSummary = new Label();
             lblSummary.Text = "Đang tính toán dữ liệu khối lượng ống gió...";
-            lblSummary.Location = new Point(14, this.ClientSize.Height - 110);
-            lblSummary.Size = new Size(this.ClientSize.Width - 28, 24);
-            lblSummary.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            lblSummary.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
-            lblSummary.ForeColor = Color.FromArgb(22, 101, 52);
 
-            // ================= 6. BOTTOM ACTION BAR =================
-            pnlBottom = new System.Windows.Forms.Panel();
-            pnlBottom.Dock = DockStyle.Bottom;
-            pnlBottom.Height = 54;
-            pnlBottom.BackColor = Color.FromArgb(241, 245, 249);
-            pnlBottom.BorderStyle = BorderStyle.FixedSingle;
-
-            btnPlaceSheet = new Button();
-            btnPlaceSheet.Text = "ĐẶT / CẬP NHẬT VÀO SHEET MONG MUỐN...";
-            btnPlaceSheet.Location = new Point(12, 9);
-            btnPlaceSheet.Size = new Size(340, 36);
-            btnPlaceSheet.BackColor = Color.FromArgb(16, 185, 129);
-            btnPlaceSheet.ForeColor = Color.White;
-            btnPlaceSheet.FlatStyle = FlatStyle.Flat;
-            btnPlaceSheet.FlatAppearance.BorderSize = 0;
-            btnPlaceSheet.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnPlaceSheet.Cursor = Cursors.Hand;
-            btnPlaceSheet.Click += BtnPlaceSheet_Click;
-
-            btnExportExcel = new Button();
-            btnExportExcel.Text = "Xuất Excel (.csv / .xlsx)";
-            btnExportExcel.Location = new Point(360, 9);
-            btnExportExcel.Size = new Size(180, 36);
-            btnExportExcel.BackColor = Color.FromArgb(13, 148, 136);
-            btnExportExcel.ForeColor = Color.White;
-            btnExportExcel.FlatStyle = FlatStyle.Flat;
-            btnExportExcel.FlatAppearance.BorderSize = 0;
-            btnExportExcel.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnExportExcel.Cursor = Cursors.Hand;
-            btnExportExcel.Click += BtnExportExcel_Click;
-
-            btnCopyClipboard = new Button();
-            btnCopyClipboard.Text = "Copy Bảng";
-            btnCopyClipboard.Location = new Point(548, 9);
-            btnCopyClipboard.Size = new Size(110, 36);
-            btnCopyClipboard.BackColor = Color.FromArgb(71, 85, 105);
-            btnCopyClipboard.ForeColor = Color.White;
-            btnCopyClipboard.FlatStyle = FlatStyle.Flat;
-            btnCopyClipboard.FlatAppearance.BorderSize = 0;
-            btnCopyClipboard.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnCopyClipboard.Cursor = Cursors.Hand;
+            // ================= THANH HÀNH ĐỘNG =================
+            chkAutoHighlight = _view.SwAutoHighlight;
+            chkLiveSync = _view.SwLiveSync;
+            btnCopyClipboard = _view.BtnCopy;
             btnCopyClipboard.Click += BtnCopyClipboard_Click;
-
-            btnClose = new Button();
-            btnClose.Text = "Đóng (ESC)";
-            btnClose.Location = new Point(pnlBottom.Width - 130, 9);
-            btnClose.Size = new Size(115, 36);
-            btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnClose.BackColor = Color.White;
-            btnClose.FlatStyle = FlatStyle.Flat;
-            btnClose.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
-            btnClose.Cursor = Cursors.Hand;
+            btnExportExcel = _view.BtnExcel;
+            btnExportExcel.Click += (s, e) => { _view.Steps.Current = 3; };
+            btnExportExcel.Click += BtnExportExcel_Click;
+            btnPlaceSheet = _view.BtnPlace;
+            btnPlaceSheet.Click += (s, e) => { _view.Steps.Current = 3; };
+            btnPlaceSheet.Click += BtnPlaceSheet_Click;
+            btnClose = _view.BtnClose;
             btnClose.Click += (s, e) => this.Close();
 
-            pnlBottom.Controls.Add(btnPlaceSheet);
-            pnlBottom.Controls.Add(btnExportExcel);
-            pnlBottom.Controls.Add(btnCopyClipboard);
-            pnlBottom.Controls.Add(btnClose);
-
-            this.Controls.Add(dgvItems);
-            this.Controls.Add(lblSummary);
-            this.Controls.Add(pnlActionToolbar);
-            this.Controls.Add(grpFilter);
-            this.Controls.Add(pnlHeader);
-            this.Controls.Add(pnlBottom);
-
+            SyncScopeView();
             this.ResumeLayout(false);
+        }
+
+        /// <summary>Đồng bộ nút phân đoạn phạm vi với 3 RadioButton của logic cũ (kèm số đối tượng đã quét).</summary>
+        private void SyncScopeView()
+        {
+            if (_view == null || radSelection == null || radAllProject == null) return;
+            _syncingScope = true;
+            try
+            {
+                int idx = radSelection.Checked ? 1 : (radAllProject.Checked ? 2 : 0);
+                _view.SetScope(idx, _customSelectionIds != null ? _customSelectionIds.Count : 0);
+            }
+            finally { _syncingScope = false; }
+        }
+
+        /// <summary>Dòng thông tin ở thanh hành động: số đối tượng, số dòng, số dòng đang chọn.</summary>
+        private void UpdateInfoBar()
+        {
+            if (_view == null || dgvItems == null) return;
+            if (_allItems == null || _allItems.Count == 0)
+            {
+                _view.Info.Text = "● Chưa có dữ liệu — chọn phạm vi rồi bấm Quét vùng mới";
+                return;
+            }
+            int objects = 0;
+            foreach (DuctQuantityItem it in _allItems) objects += it.ElementIds != null ? it.ElementIds.Count : 0;
+            int sel = dgvItems.SelectedRows.Count;
+            _view.Info.Text = string.Format("● {0:#,##0} đối tượng · {1:#,##0} dòng{2}", objects, dgvItems.Rows.Count,
+                sel > 0 ? string.Format(" · đang chọn {0} dòng", sel) : "");
         }
 
         private static void EnableDoubleBuffered(System.Windows.Forms.Control control)
@@ -1452,11 +1200,16 @@ namespace HDTool
                     "TỔNG CỘNG DIỆN TÍCH TÔN: {0:0.00} m² tôn mạ kẽm  |  {1:0.00} mét dài ống ({2} đoạn)  |  {3} phụ kiện & van/miệng gió  |  {4} dòng thống kê",
                     totalAreaM2, totalLengthM, ductSections, fittingsCount, displayList.Count
                 );
+                if (_view != null)
+                {
+                    _view.SetTotals(totalAreaM2, totalLengthM, ductSections, fittingsCount, displayList.Count, _allItems != null && _allItems.Count > 0);
+                }
             }
             finally
             {
                 dgvItems.ResumeLayout();
                 _isUpdatingGrid = false;
+                UpdateInfoBar();
             }
         }
 
