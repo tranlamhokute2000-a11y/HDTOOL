@@ -3,7 +3,7 @@
 - **Thời gian cập nhật**: 2026-11-27
 - **Phiên bản hiện tại**: **Version 114** (`HDTOOL_Setup_Version_114.exe`)
 - **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_113.exe` và `HDTOOL_Setup_Version_114.exe` (0 file trên Desktop)
-- **Git**: Version 112 đã commit (`f3390e3`, chưa push). Version 113 (Mac Sáng) và 114 (Menu cột trái) CHƯA commit.
+- **Git**: Version 112 đã commit (`f3390e3`), Version 113–114 (Mac Sáng + Menu cột trái) đã commit (`97ccf1a`). Tất cả CHƯA push.
 
 ## 0. Vừa xong — Menu HDTOOL cột trái kiểu Mac (Version 114)
 - `HDToolMainForm` dựng lại: cột trái (ô tìm + `HDToolSidebar`: Tất cả / nhóm kèm số lượng / Gần đây) + khung phải (tiêu đề nhóm, dòng View đang mở, danh sách hàng trong khung trắng bo góc). Cửa sổ 860x640, đổi kích thước được.
