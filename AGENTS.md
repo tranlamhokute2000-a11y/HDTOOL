@@ -133,15 +133,3 @@ Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong
     2. **Tầng 2 - `ProcessCmdKey` & `OnKeyDown`**: Bắt `(keyData & Keys.KeyCode) == Keys.Escape`, lập tức dọn dẹp và gọi `this.Close()` / `DialogResult = DialogResult.Cancel`.
     3. **Tầng 3 - Tự động Focus (`OnShown` & `ShowModeless`)**: Tự động gọi `this.Activate()` và `this.Focus()` để Form luôn nhận Keyboard Focus sẵn sàng bắt phím ESC.
   - **TUYỆT ĐỐI CẤM VIẾT LOGIC CHẶN ĐÓNG FORM KHI ẤN ESC**: Kể cả khi ô DataGridView đang ở chế độ gõ chữ (Editing Mode) hay đang có highlight, ấn phím ESC là hủy chỉnh sửa và THOÁT/ĐÓNG FORM NGAY LẬP TỨC!
-
----
-
-## 9. PHỐI HỢP VỚI CLAUDE — CLAUDE CHỈ ĐẠO KỸ THUẬT, ANTIGRAVITY THỰC THI (BẮT BUỘC THEO LỆNH SẾP HỒ)
-
-- **Trước mọi nhiệm vụ**, Antigravity PHẢI đọc `.agents/CHI_DAO.md` và làm đúng nhiệm vụ có trạng thái `ĐANG GIAO`, đúng quy trình và quy tắc kỹ thuật trong file đó.
-- **Làm trên nhánh `anti/<mã-nv>`**, không commit thẳng `main`, không merge, không push.
-- **Tự kiểm tra** bằng `powershell -ExecutionPolicy Bypass -File .\.agents\tools\KiemTra.ps1` (phải ra `KET QUA: DAT`) trước khi báo cáo.
-- **Báo cáo** vào `.agents/BAO_CAO.md` theo mẫu, rồi DỪNG và nhắn Sếp Hồ: *"Xong NV-xx, nhờ Sếp bảo Claude kiểm tra."*
-- **Kết luận kiểm tra của Claude** (mục 5 của `.agents/CHI_DAO.md`) là bắt buộc: `CẦN SỬA` thì sửa đúng các mục được nêu; `ĐẠT` thì chờ Sếp Hồ duyệt gộp.
-- Antigravity **không sửa** `.agents/CHI_DAO.md`. Nếu chỉ đạo mâu thuẫn với lệnh trực tiếp của Sếp Hồ → làm theo Sếp Hồ và ghi rõ trong báo cáo.
-- **Hộp thư lệnh của Sếp Hồ** `.agents/LENH_SEP.md` (gửi từ Điều Phối Studio — `MoDieuPhoiStudio.bat`): trước khi làm việc, đọc các lệnh `Trạng thái: MỚI` gửi `ANTIGRAVITY` hoặc `CẢ HAI`, thực hiện rồi đổi thành `ĐÃ NHẬN (Antigravity)`. Lệnh của Sếp có hiệu lực cao hơn `CHI_DAO.md`.

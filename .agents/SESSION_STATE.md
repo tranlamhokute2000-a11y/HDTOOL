@@ -1,9 +1,9 @@
 # TRẠNG THÁI LÀM VIỆC GẦN NHẤT (SESSION STATE)
 
-- **Thời gian cập nhật**: 2026-11-21 16:05
+- **Thời gian cập nhật**: 2026-11-27
 - **Phiên bản hiện tại**: **Version 109** (`HDTOOL_Setup_Version_109.exe`)
 - **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_108.exe` và `HDTOOL_Setup_Version_109.exe` (0 file trên Desktop)
-- **Git**: Version 108 đã commit + push lên `main`. Version 109 (giao diện kỹ thuật) CHƯA commit.
+- **Git**: Version 109 đã commit + push lên `main`.
 
 ## 1. Công việc vừa hoàn thành — Giao diện kỹ thuật "Bản Vẽ Sáng" (Version 109)
 1. **Preview trước**: `PreviewStudio/HDTool_ThemeStudio.html` (nút "THEME KỸ THUẬT (MỚI)" trong `HDTool_PreviewStudio.html`). Sếp Hồ chốt chế độ **Bản Vẽ Sáng**.
@@ -20,13 +20,10 @@
 7. **Kiểm tra**: build 0 lỗi 0 cảnh báo; chụp thử ngoài Revit 5 Form + Menu dựng bằng control mới + bảng icon (nền sáng & tối).
    Form cần RevitAPIUI (Menu thật, Ống gió, Cập nhật tool...) không chụp được ngoài Revit -> **cần Sếp mở Revit kiểm tra**.
 
-## 1b. Quy trình phối hợp Antigravity (thực thi) + Claude (kiểm soát) — 2026-11-21
-- `.agents/CHI_DAO.md` (Claude giao NV + tiêu chí + kết luận ĐẠT/CẦN SỬA), `.agents/BAO_CAO.md` (Antigravity báo cáo),
-  `.agents/LENH_SEP.md` (hộp thư lệnh của Sếp), `.agents/tools/KiemTra.ps1` (biên dịch thử + quét quy tắc cấm, không tăng Version).
-- **Điều Phối Studio**: `MoDieuPhoiStudio.bat` -> `node .agents/studio/server.mjs` -> http://localhost:4870 (chỉ nghe 127.0.0.1).
-  Hiển thị hoạt động thật của Antigravity (`~/.gemini/antigravity/brain/*/.system_generated/logs/transcript.jsonl`) và Claude
-  (`~/.claude/projects/<dự án>/*.jsonl`), bảng NV, quy trình 6 bước, dòng hoạt động, git; nút: chép lệnh, gửi lệnh, chạy KiemTra, gộp main, push.
-- Nhiệm vụ đang giao: **NV-01** (sửa tràn mép phải BatchEditSheetNumberForm).
+## 1b. Công cụ kiểm tra nhanh
+- `.agents/tools/KiemTra.ps1`: biên dịch thử ra TEMP (không tăng Version, không deploy) + quét lỗi cấm (IntegerValue, emoji, mojibake,
+  đường dẫn cứng, Form không kế thừa `HDToolBaseForm`...) trên file .cs thay đổi so với `main`; thêm `-All` để quét toàn bộ.
+- (2026-11-27) Sếp Hồ đã BỎ quy trình phối hợp 2 AI và Điều Phối Studio — đã xóa CHI_DAO / BAO_CAO / LENH_SEP / studio và quy tắc tương ứng.
 
 ## 2. Việc còn tồn
 - Chưa thử trong Revit thật: Menu (đặc biệt mục HDT-04 Ống gió qua PostCommand), các Form lớn ở DPI 125/150%.

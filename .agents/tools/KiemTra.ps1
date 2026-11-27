@@ -1,7 +1,7 @@
 # =====================================================================
-# KiemTra.ps1 - Kiem tra tu dong HDTOOL (dung chung cho Antigravity & Claude)
+# KiemTra.ps1 - Kiem tra nhanh HDTOOL truoc khi build
 # - Bien dich thu ra thu muc TEMP (KHONG tang Version, KHONG deploy)
-# - Quet cac loi cam theo .agents/CHI_DAO.md tren cac file .cs da thay doi so voi main
+# - Quet cac loi cam (IntegerValue, emoji, mojibake, duong dan cung, Form khong ke thua HDToolBaseForm...) tren file .cs thay doi so voi main
 # Cach chay:  powershell -ExecutionPolicy Bypass -File .\.agents\tools\KiemTra.ps1
 #             them -All de quet toan bo Source
 # =====================================================================
