@@ -35,32 +35,8 @@ namespace HDTool
 
             try
             {
-                // 1. Đếm số lượng thực thể FamilyInstance đang được đặt trong mô hình theo từng TypeId (chạy 1 pass O(N) siêu nhanh)
+                // Chỉ tổng hợp những gì đã load vào dự án, KHÔNG đếm số lượng trên bản vẽ (lệnh Sếp Hồ)
                 Dictionary<ElementId, int> instanceCounts = new Dictionary<ElementId, int>();
-                try
-                {
-                    FilteredElementCollector instanceCol = new FilteredElementCollector(doc)
-                        .OfClass(typeof(FamilyInstance))
-                        .WhereElementIsNotElementType();
-
-                    foreach (Element e in instanceCol)
-                    {
-                        ElementId typeId = e.GetTypeId();
-                        if (typeId != null && typeId != ElementId.InvalidElementId)
-                        {
-                            int c;
-                            if (instanceCounts.TryGetValue(typeId, out c))
-                            {
-                                instanceCounts[typeId] = c + 1;
-                            }
-                            else
-                            {
-                                instanceCounts[typeId] = 1;
-                            }
-                        }
-                    }
-                }
-                catch { }
 
                 // 2. Thu thập toàn bộ FamilySymbol (Type) trong dự án
                 FilteredElementCollector symbolCol = new FilteredElementCollector(doc)
@@ -213,6 +189,100 @@ namespace HDTool
             catch { }
 
             return CreatePlaceholderPreview(familyName, categoryName, size.Width, size.Height);
+        }
+
+        /// <summary>
+        /// Lấy lưới tam giác 3D của Type (9 số / tam giác, đơn vị feet) cho khung xem trước xoay được.
+        /// Ưu tiên hình khối của chính FamilySymbol; nếu rỗng thì lấy từ 1 đối tượng đã đặt của Type đó.
+        /// BẮT BUỘC gọi trong API context (ExternalEvent). Trả về null nếu Family không có hình 3D.
+        /// </summary>
+        public static float[] GetSymbolMesh(Document doc, ElementId symbolId, int maxTriangles)
+        {
+            if (doc == null || symbolId == null || symbolId == ElementId.InvalidElementId) return null;
+            List<float> buf = new List<float>(9 * 2048);
+            try
+            {
+                Options opt = new Options();
+                opt.DetailLevel = ViewDetailLevel.Fine;
+                opt.ComputeReferences = false;
+                opt.IncludeNonVisibleObjects = false;
+
+                FamilySymbol symbol = doc.GetElement(symbolId) as FamilySymbol;
+                if (symbol != null)
+                {
+                    CollectTriangles(symbol.get_Geometry(opt), buf, maxTriangles);
+                }
+
+                if (buf.Count == 0)
+                {
+                    Element inst = new FilteredElementCollector(doc)
+                        .WherePasses(new FamilyInstanceFilter(doc, symbolId))
+                        .FirstElement();
+                    if (inst != null)
+                    {
+                        CollectTriangles(inst.get_Geometry(opt), buf, maxTriangles);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Lỗi lấy hình 3D: " + ex.Message);
+            }
+            return buf.Count > 0 ? buf.ToArray() : null;
+        }
+
+        private static void CollectTriangles(GeometryElement geo, List<float> buf, int maxTriangles)
+        {
+            if (geo == null) return;
+            foreach (GeometryObject obj in geo)
+            {
+                if (buf.Count / 9 >= maxTriangles) return;
+
+                Solid solid = obj as Solid;
+                if (solid != null)
+                {
+                    if (solid.Faces.Size == 0) continue;
+                    foreach (Face face in solid.Faces)
+                    {
+                        Mesh fm = null;
+                        try { fm = face.Triangulate(); } catch { }
+                        AddMesh(fm, buf, maxTriangles);
+                        if (buf.Count / 9 >= maxTriangles) return;
+                    }
+                    continue;
+                }
+
+                Mesh mesh = obj as Mesh;
+                if (mesh != null)
+                {
+                    AddMesh(mesh, buf, maxTriangles);
+                    continue;
+                }
+
+                GeometryInstance gi = obj as GeometryInstance;
+                if (gi != null)
+                {
+                    CollectTriangles(gi.GetInstanceGeometry(), buf, maxTriangles);
+                }
+            }
+        }
+
+        private static void AddMesh(Mesh mesh, List<float> buf, int maxTriangles)
+        {
+            if (mesh == null) return;
+            int n = mesh.NumTriangles;
+            for (int i = 0; i < n; i++)
+            {
+                if (buf.Count / 9 >= maxTriangles) return;
+                MeshTriangle tri = mesh.get_Triangle(i);
+                for (int k = 0; k < 3; k++)
+                {
+                    XYZ p = tri.get_Vertex(k);
+                    buf.Add((float)p.X);
+                    buf.Add((float)p.Y);
+                    buf.Add((float)p.Z);
+                }
+            }
         }
 
         /// <summary>

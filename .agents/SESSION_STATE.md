@@ -1,11 +1,18 @@
 # TRẠNG THÁI LÀM VIỆC GẦN NHẤT (SESSION STATE)
 
 - **Thời gian cập nhật**: 2026-11-27
-- **Phiên bản hiện tại**: **Version 111** (`HDTOOL_Setup_Version_111.exe`)
-- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_110.exe` và `HDTOOL_Setup_Version_111.exe` (0 file trên Desktop)
-- **Git**: Version 109 đã commit + push lên `main`. Version 110 (Tối Cao Cấp đợt 1) và 111 (đợt 2 Ống Gió) CHƯA commit.
+- **Phiên bản hiện tại**: **Version 112** (`HDTOOL_Setup_Version_112.exe`)
+- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_111.exe` và `HDTOOL_Setup_Version_112.exe` (0 file trên Desktop)
+- **Git**: Version 111 đã commit + push (`32b5f30`). Version 112 (Tổng Hợp Family) CHƯA commit.
 
-## 0. Vừa xong — Đợt 2: cửa sổ Khối Lượng Ống Gió (Version 111)
+## 0. Vừa xong — Tổng Hợp Family đã load + xem trước 3D xoay được (Version 112)
+- Sếp duyệt bản xem trước `PreviewStudio/HDTool_FamilyPalette_v2.html`.
+- Bảng: mỗi dòng = 1 Family; cột `Số Type`; bỏ hẳn đếm số lượng trên bản vẽ (cột Đã Vẽ, ô lọc, vòng đếm FamilyInstance). Chọn Type ở `cboTypes` khung phải.
+- `Source/FamilyMeshViewer.cs` (mới): khung 3D tự vẽ, xoay/phóng/dời bằng chuột; lưới lấy bằng `FamilyPaletteService.GetSymbolMesh` trong ExternalEvent; Family không có hình khối -> ảnh `GetPreviewImage`.
+- Kiểm tra: biên dịch 0 lỗi; dựng thử khối hộp ngoài Revit đúng hướng Z lên. CHƯA thử trong Revit thật (hình khối Family thật, tốc độ với Family nặng).
+
+
+## 0b. Đợt 2: cửa sổ Khối Lượng Ống Gió (Version 111)
 - `Source/DuctQuantityView.cs` (mới): toàn bộ giao diện v2, không phụ thuộc Revit; `DuctQuantityForm.InitializeComponent` viết lại chỉ để gắn sự kiện vào control của View
   (logic quét / lọc / làm sáng / đặt Sheet giữ nguyên; 3 RadioButton phạm vi giữ ẩn, đồng bộ với nút phân đoạn qua `SyncScopeView`).
 - Số liệu 4 ô cập nhật trong `FilterAndDisplayItems` (`_view.SetTotals`), dòng thông tin `UpdateInfoBar()`.

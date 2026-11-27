@@ -1,10 +1,10 @@
 ﻿---
 name: hdtool
 description: >-
-  HDTOOL (Revit 2024–2027): Auto Crop (Vertex-Exact + Liang-Barsky), căn Grids/Level; CAD-to-Duct BIM (trích DWG accoreconsole, lọc giả 4 tầng, tách tuyến giao chéo, ống chính + Transition + Tap ưu tiên Family sẵn, chuẩn WxH); Khối lượng Ống gió TCVN/SMACNA & Ống nước (Live Tracking); Quản lý Sheet & Xuất CAD Quy Đổi Layer MEP (View đang vẽ / Sheet / View dự án; tự động chuyển đổi đối tượng sang đúng Layer & Màu sắc ACI qua AutoLISP entmake/entmod; tự động lưu và nạp cấu hình mặc định); Tổng Hợp Family 3D (Palette Bảng Ô Cột Siêu Mượt, Toolbar Khoa Học Dropdown, Lazy Load 3D Preview, Click/Double-Click Đặt Vào Bản Vẽ); 100% Modeless, ESC thoát lệnh & Hot Reload.
+  HDTOOL (Revit 2024–2027): Auto Crop (Vertex-Exact + Liang-Barsky), căn Grids/Level; CAD-to-Duct BIM (trích DWG accoreconsole, lọc giả 4 tầng, tách tuyến giao chéo, ống chính + Transition + Tap ưu tiên Family sẵn, chuẩn WxH); Khối lượng Ống gió TCVN/SMACNA & Ống nước (Live Tracking); Quản lý Sheet & Xuất CAD Quy Đổi Layer MEP (View đang vẽ / Sheet / View dự án; tự động chuyển đổi đối tượng sang đúng Layer & Màu sắc ACI qua AutoLISP entmake/entmod; tự động lưu và nạp cấu hình mặc định); Tổng Hợp Family Đã Load (mỗi dòng 1 Family, không đếm số lượng, xem trước 3D xoay được, Đặt Vào Bản Vẽ); 100% Modeless, ESC thoát lệnh & Hot Reload.
 ---
 
-# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 111)
+# Skill: HDTOOL — Bộ Công Cụ Autodesk Revit (Version 112)
 
 ## 1. Kiến Trúc & Quy Chuẩn Bắt Buộc
 - **Build & Đóng gói**: Biên dịch thuần bằng `csc.exe` (C# 5, `.NET Framework 4.8`) qua `Build.ps1` -> `Build/HDTOOL.dll` và bộ cài độc lập `HDTOOL_Setup_Version_{N}.exe` (không dùng MSBuild/`.csproj`).
@@ -80,24 +80,13 @@ description: >-
 ---
 
 ### Panel 4 — Thư Viện & Family
-1. **Tổng Hợp Family 3D (Palette Bảng Ô Cột Siêu Mượt & Toolbar Khoa Học) (`FamilyPaletteCommand`, `FamilyPaletteForm`, `FamilyPaletteService`, `FamilyPaletteModels`)**:
-   - **Triệt tiêu 100% hiện tượng đơ giật lag**: Tối ưu quét metadata O(N) hoàn tất trong < 30ms, không gọi `GetPreviewImage` đồng bộ trong vòng lặp quét ban đầu; mở form lên ngay lập tức.
-   - **Thanh Toolbar thiết kế KHOA HỌC, không che khuất**:
-     * Khối 1: Ô tìm kiếm nhanh `Tìm kiếm: [TextBox]` lọc tức thì.
-     * Khối 2: Hộp chọn chuyên ngành dạng `ComboBox Dropdown` màu xanh ngọc, hiển thị rõ ràng tất cả các chuyên ngành MEP / Kiến trúc, triệt tiêu 100% thanh cuộn ngang màu trắng.
-     * Khối 3: Bộ lọc thông minh `☑ Chỉ hiện Family đã vẽ (> 0)` màu vàng cam.
-     * Khối 4: Thống kê kết quả `Hiển thị: X / Y Types` màu xanh Sky.
-     * Khối 5: Nút `Làm Mới (F5)` neo góc phải.
-   - **Giao diện Bảng Lưới Ô Cột (DataGridView) rõ ràng, rành mạch**:
-     * Cột `STT` (46px, Center).
-     * Cột `Tên Family (Họ)` (Font đậm trắng, Fill).
-     * Cột `Type (Kích Thước)` (190px, màu xanh lục sáng).
-     * Cột `Chuyên Ngành (Category)` (160px, màu xanh Sky).
-     * Cột `Đã Vẽ` (90px, Center, màu cam nổi bật).
-     * Cột `Thao Tác` (Nút bấm `Đặt Vào Bản Vẽ` xanh Emerald, 130px).
-     * Bật `DoubleBuffered = true` cuộn 60 FPS mượt mà.
-   - **On-Demand 3D Preview (Lazy Loading & Cache)**: Khi click chọn dòng trên bảng, khung Inspector bên phải tự động nạp ảnh 3D Isometric to nét của Family Type đó (kèm bộ nhớ đệm Cache `_previewCache`), hiển thị bảng thông số kỹ thuật (Parameters) và nút đặt to rõ.
-   - **Thao tác vẽ tức thì**: Nhấp đúp dòng trên bảng hoặc bấm nút `Đặt Vào Bản Vẽ` hoặc bấm Enter -> Kích hoạt lệnh `uidoc.PromptForFamilyInstancePlacement(symbol)` qua `ExternalEvent` (Modeless), rê chuột đặt liên tục vào bản vẽ Revit (Space để xoay góc, ESC để kết thúc).
+1. **Tổng Hợp Family Đã Load (`FamilyPaletteCommand`, `FamilyPaletteForm`, `FamilyPaletteService`, `FamilyPaletteModels`, `FamilyMeshViewer`)**:
+   - **Chỉ tổng hợp những gì đã load, KHÔNG đếm số lượng trên bản vẽ** (lệnh Sếp Hồ, Version 112): quét `FamilySymbol` gom theo Family; **mỗi dòng bảng = 1 Family** (load 1 Type thì 1 dòng 1 Type). Đã bỏ cột `Đã Vẽ`, ô "Chỉ hiện Family đã vẽ", dòng "Đã đặt trong mô hình" và vòng đếm `FamilyInstance`.
+   - **Toolbar**: ô Tìm (bỏ dấu; khớp tên Family / chuyên ngành / tên Type — khớp Type thì chọn sẵn Type đó), ComboBox chuyên ngành, nhãn `Hiển thị: X / Y Family`, nút `Làm Mới (F5)`.
+   - **Bảng**: `STT` | `Tên Family (Họ)` (Fill) | `Số Type` (90px, giữa) | `Chuyên Ngành (Category)` | nút `Đặt Vào Bản Vẽ` (cột 4). Sắp theo nhóm chuyên ngành rồi tên Family.
+   - **Khung bên phải**: chip chuyên ngành, tên Family, `cboTypes` chọn Type (đổi Type -> đổi hình 3D + bảng thông số + Type sẽ đặt), "Số Type đã load: N", bảng thông số Type, nút `ĐẶT VÀO BẢN VẼ REVIT`.
+   - **Xem trước 3D xoay được (`FamilyMeshViewer`, không phụ thuộc Revit)**: `FamilyPaletteService.GetSymbolMesh(doc, symbolId, 30000)` chạy trong `HDToolModelessHost.Run` (API context) — `symbol.get_Geometry(Options Fine)`, rỗng thì lấy 1 đối tượng đã đặt qua `FamilyInstanceFilter`; `Solid.Faces -> Face.Triangulate()`, `Mesh`, `GeometryInstance.GetInstanceGeometry()` đệ quy; trả `float[]` 9 số/tam giác. Viewer tự canh giữa/vừa khung, tô phẳng 64 mức sáng, vẽ xa trước gần sau (painter). Kéo chuột trái xoay, lăn phóng to, chuột phải/giữa dời, nhấp đúp về góc nhìn ban đầu. Không có hình khối (Tag, chú thích) -> hiện ảnh `GetPreviewImage`. Cache `_meshCache` / `_previewCache`; bỏ kết quả cũ nếu người dùng đã chọn Type khác (`_viewerSymbolId`).
+   - **Thao tác vẽ tức thì**: Nhấp đúp dòng, bấm nút `Đặt Vào Bản Vẽ` hoặc Enter -> `uidoc.PromptForFamilyInstancePlacement(symbol)` qua `ExternalEvent` với Type đang chọn ở `cboTypes` (Space xoay, ESC kết thúc).
    - **100% Modeless & Phím ESC**: Vừa mở bảng tra cứu vừa Pan, Zoom, vẽ Revit bình thường; ấn ESC đóng Form ngay lập tức.
 
 ---
@@ -113,5 +102,5 @@ description: >-
 - Thư mục gốc: `c:\Users\Nguye\Desktop\ADDIN REVIT`
 - **File cài đặt chính thức**: `HDTOOL_Setup_Version_111.exe`
 - **Bộ cài & Lưu trữ**: Chỉ lưu các bản mới nhất trong thư mục dự án.
-- **Core Files Palette Family**: `Source/FamilyPaletteCommand.cs`, `Source/FamilyPaletteForm.cs`, `Source/FamilyPaletteService.cs`, `Source/FamilyPaletteModels.cs`.
+- **Core Files Palette Family**: `Source/FamilyPaletteCommand.cs`, `Source/FamilyPaletteForm.cs`, `Source/FamilyPaletteService.cs`, `Source/FamilyPaletteModels.cs`, `Source/FamilyMeshViewer.cs`.
 - **Core Files Xuất CAD & Layer**: `Source/ExportCadCommand.cs`, `Source/ExportCadOptionsForm.cs`, `Source/CadExportMepService.cs`, `Source/CadLayerMappingModels.cs`.
