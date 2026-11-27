@@ -15,20 +15,22 @@ namespace HDTool
         private Document _doc;
         private Autodesk.Revit.DB.View _activeView;
 
-        // UI Controls (giao diện v2 — Tối Cao Cấp, mẫu PreviewStudio/HDTool_GiaoDienMoi.html)
-        private HDToolHeader hdrMain;
+        // UI Controls (giao diện Mac: cột trái chọn nhóm + danh sách, mẫu PreviewStudio/HDTool_GiaoDienMac.html)
+        private HDToolSidebar sideNav;
+        private System.Windows.Forms.Panel pnlSide;
         private System.Windows.Forms.Panel pnlContent;
         private System.Windows.Forms.Panel pnlFoot;
         private Label lblTip;
         private HDToolButton btnClose;
         private HDToolSearchBox txtSearch;
-        private HDToolInfoBar barView;
-        private HDToolSectionLabel secRecent;
-        private System.Windows.Forms.Panel pnlRecent;
+        private Label lblHeading;
+        private Label lblSub;
         private Label lblEmpty;
+        private string _selGroup = "all";
         private readonly List<System.Windows.Forms.Control> _flow = new List<System.Windows.Forms.Control>();
         private readonly Dictionary<System.Windows.Forms.Control, int> _gapAfter = new Dictionary<System.Windows.Forms.Control, int>();
         private readonly List<KeyValuePair<HDToolSectionLabel, HDToolCardGrid>> _groups = new List<KeyValuePair<HDToolSectionLabel, HDToolCardGrid>>();
+        private readonly List<string> _groupKeys = new List<string>();
         private readonly List<HDToolToolCard> _cards = new List<HDToolToolCard>();
         private readonly Dictionary<string, EventHandler> _actions = new Dictionary<string, EventHandler>();
 
@@ -58,67 +60,95 @@ namespace HDTool
         {
             this.SuspendLayout();
 
-            this.Text = "HDTOOL — Trung Tâm Công Cụ";
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
+            string ver = ReadVersion();
+            this.Text = "HDTOOL — Trung Tâm Công Cụ" + (string.IsNullOrEmpty(ver) ? "" : " · Version " + ver);
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.MaximizeBox = true;
+            this.MinimizeBox = true;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.TopMost = true;
             this.BackColor = HDToolTheme.Bg;
             this.Font = HDToolTheme.Body;
-            this.ClientSize = new Size(680, 800);
+            this.ClientSize = new Size(860, 640);
+            this.MinimumSize = new Size(640, 460);
 
-            // TẦNG 1: Dải đầu chuyển màu
-            string ver = ReadVersion();
-            hdrMain = new HDToolHeader();
-            hdrMain.Height = 84;
-            hdrMain.IconKey = "menu";
-            hdrMain.Title = "Trung tâm công cụ HDTOOL";
-            hdrMain.Subtitle = "Chọn công cụ để bắt đầu · mọi cửa sổ làm việc song song với bản vẽ";
-            hdrMain.Chips = string.IsNullOrEmpty(ver) ? new string[] { "ESC đóng" } : new string[] { "v" + ver, "ESC đóng" };
-
-            // TẦNG 3: Chân trang (mẹo + nút Đóng)
+            // CHÂN TRANG: mẹo + nút Đóng
             pnlFoot = new System.Windows.Forms.Panel();
             pnlFoot.Dock = DockStyle.Bottom;
-            pnlFoot.Height = 56;
-            pnlFoot.BackColor = HDToolTheme.Surface;
+            pnlFoot.Height = 48;
+            pnlFoot.BackColor = HDToolTheme.Header;
             pnlFoot.Paint += (s, e) => { using (Pen p = new Pen(HDToolTheme.Line)) e.Graphics.DrawLine(p, 0, 0, pnlFoot.Width, 0); };
             lblTip = new Label();
-            lblTip.Text = "Mẹo: nhấn phím 1–9 để mở nhanh công cụ · Ctrl+F để tìm · Enter mở kết quả đầu tiên";
+            lblTip.Text = "● Sẵn sàng · Phím 1–9 mở nhanh · Ctrl+F tìm · Enter mở kết quả đầu tiên · vẫn thao tác trên bản vẽ được";
             lblTip.ForeColor = HDToolTheme.Text3;
             lblTip.BackColor = Color.Transparent;
             lblTip.AutoSize = false;
             lblTip.AutoEllipsis = true;
+            lblTip.UseMnemonic = false;
             lblTip.TextAlign = ContentAlignment.MiddleLeft;
             btnClose = new HDToolButton();
             btnClose.Text = "Đóng (ESC)";
             btnClose.Kind = HDToolButtonKind.Secondary;
-            btnClose.Size = new Size(110, 34);
+            btnClose.Size = new Size(110, 32);
             btnClose.Click += (s, e) => this.Close();
             this.CancelButton = btnClose;
             pnlFoot.Controls.Add(lblTip);
             pnlFoot.Controls.Add(btnClose);
             pnlFoot.Resize += (s, e) => LayoutFoot();
 
-            // TẦNG 2: Nội dung (cuộn được)
+            // CỘT TRÁI: ô tìm kiếm + danh mục nhóm
+            pnlSide = new System.Windows.Forms.Panel();
+            pnlSide.Dock = DockStyle.Left;
+            pnlSide.Width = 220;
+            pnlSide.BackColor = HDToolTheme.Surface2;
+            pnlSide.Padding = new Padding(10, 12, 11, 0);
+            txtSearch = new HDToolSearchBox();
+            txtSearch.Placeholder = "Tìm công cụ…";
+            txtSearch.KeyHint = "";
+            txtSearch.Dock = DockStyle.Top;
+            txtSearch.Height = 34;
+            txtSearch.Box.TextChanged += (s, e) => ApplyFilter();
+            txtSearch.Box.KeyDown += SearchBox_KeyDown;
+            sideNav = new HDToolSidebar();
+            sideNav.Dock = DockStyle.Fill;
+            sideNav.ItemClick += SideNav_ItemClick;
+            pnlSide.Controls.Add(sideNav);
+            pnlSide.Controls.Add(txtSearch);
+            pnlSide.Paint += (s, e) => { using (Pen p = new Pen(HDToolTheme.Line)) e.Graphics.DrawLine(p, pnlSide.Width - 1, 0, pnlSide.Width - 1, pnlSide.Height); };
+
+            // NỘI DUNG: tiêu đề nhóm + danh sách công cụ (cuộn được)
             pnlContent = new System.Windows.Forms.Panel();
             pnlContent.Dock = DockStyle.Fill;
             pnlContent.AutoScroll = true;
             pnlContent.BackColor = HDToolTheme.Bg;
-            pnlContent.Padding = new Padding(18, 16, 18, 16);
+            pnlContent.Padding = new Padding(24, 18, 24, 18);
 
-            txtSearch = new HDToolSearchBox();
-            txtSearch.Placeholder = "Tìm công cụ… (thử gõ: ống gió, sheet, grid)";
-            txtSearch.Height = 38;
-            txtSearch.Box.TextChanged += (s, e) => ApplyFilter();
-            txtSearch.Box.KeyDown += SearchBox_KeyDown;
-            AddFlow(txtSearch, 10);
+            lblHeading = new Label();
+            lblHeading.Font = new Font("Segoe UI", 15f, FontStyle.Bold);
+            lblHeading.ForeColor = HDToolTheme.Text;
+            lblHeading.BackColor = Color.Transparent;
+            lblHeading.AutoSize = false;
+            lblHeading.AutoEllipsis = true;
+            lblHeading.UseMnemonic = false;
+            lblHeading.Height = 34;
+            lblHeading.Text = "Tất cả công cụ";
+            AddFlow(lblHeading, 0);
 
-            barView = new HDToolInfoBar();
-            barView.Height = 40;
-            barView.Value = _activeView != null ? _activeView.Name : "Chưa mở View";
-            barView.Detail = _activeView != null ? (_activeView.ViewType.ToString() + (_activeView.Scale > 0 ? " · 1:" + _activeView.Scale : "")) : "";
-            AddFlow(barView, 8);
+            lblSub = new Label();
+            lblSub.ForeColor = HDToolTheme.Text3;
+            lblSub.BackColor = Color.Transparent;
+            lblSub.AutoSize = false;
+            lblSub.AutoEllipsis = true;
+            lblSub.UseMnemonic = false;
+            lblSub.Height = 24;
+            lblSub.Text = "Đang mở: " + (_activeView != null
+                ? _activeView.Name + " · " + _activeView.ViewType.ToString() + (_activeView.Scale > 0 ? " · 1:" + _activeView.Scale : "")
+                : "Chưa mở View");
+            AddFlow(lblSub, 12);
+
+            sideNav.Add("all", "Tất cả", "menu", "");
+            sideNav.SelectedKey = "all";
+            sideNav.AddHeader("NHÓM CÔNG CỤ");
 
             // Các nhóm công cụ (màu nhận diện lấy theo HDToolTheme.ToolColor)
             AddGroup("Căn chỉnh đối tượng", "grid", new string[][] {
@@ -147,11 +177,12 @@ namespace HDTool
             lblEmpty.ForeColor = HDToolTheme.Text3;
             lblEmpty.BackColor = Color.Transparent;
             lblEmpty.TextAlign = ContentAlignment.MiddleCenter;
+            lblEmpty.UseMnemonic = false;
             lblEmpty.Height = 60;
             lblEmpty.Visible = false;
             AddFlow(lblEmpty, 0);
 
-            // Dùng gần đây (chèn ngay sau thanh thông tin View)
+            // Dùng gần đây (cuối cột trái)
             BuildRecent();
 
             _actions["grid"] = BtnGrids_Click;
@@ -170,8 +201,8 @@ namespace HDTool
             pnlContent.Resize += (s, e) => LayoutFlow();
 
             this.Controls.Add(pnlContent);
+            this.Controls.Add(pnlSide);
             this.Controls.Add(pnlFoot);
-            this.Controls.Add(hdrMain);
 
             this.ResumeLayout(false);
             this.Shown += (s, e) => { LayoutFlow(); LayoutFoot(); };
@@ -190,63 +221,62 @@ namespace HDTool
             HDToolSectionLabel sec = new HDToolSectionLabel();
             sec.Text = title;
             sec.DotColor = HDToolTheme.ToolColor(colorKey);
-            sec.Height = 30;
-            AddFlow(sec, 4);
+            sec.Height = 28;
+            AddFlow(sec, 2);
 
             HDToolCardGrid grid = new HDToolCardGrid();
-            grid.Columns = 2;
+            grid.ListStyle = true;
+            grid.Columns = 1;
             foreach (string[] t in tools)
             {
                 HDToolToolCard card = new HDToolToolCard();
+                card.RowStyle = true;
                 card.IconKey = t[0];
                 card.Title = t[1];
                 card.Description = t[2];
                 card.Keywords = t[3];
-                card.Height = 76;
+                card.Height = 54;
                 if (_cards.Count < 9) card.Shortcut = (_cards.Count + 1).ToString();
                 card.Click += Card_Click;
                 _cards.Add(card);
                 grid.Controls.Add(card);
             }
-            AddFlow(grid, 10);
+            AddFlow(grid, 18);
             _groups.Add(new KeyValuePair<HDToolSectionLabel, HDToolCardGrid>(sec, grid));
+            _groupKeys.Add(colorKey);
+            sideNav.Add(colorKey, title, colorKey, tools.Length.ToString());
         }
 
         private void BuildRecent()
         {
             List<string> keys = HDToolRecent.Load();
-            List<HDToolToolCard> recent = new List<HDToolToolCard>();
+            bool header = false;
+            int n = 0;
             foreach (string k in keys)
             {
                 HDToolToolCard c = _cards.Find(x => x.IconKey == k);
-                if (c != null) recent.Add(c);
-                if (recent.Count >= 3) break;
+                if (c == null) continue;
+                if (!header) { sideNav.AddHeader("GẦN ĐÂY"); header = true; }
+                sideNav.Add("recent:" + k, c.Title, k, "");
+                if (++n >= 3) break;
             }
-            if (recent.Count == 0) return;
+        }
 
-            secRecent = new HDToolSectionLabel();
-            secRecent.Text = "Dùng gần đây";
-            secRecent.DotColor = HDToolTheme.Text3;
-            secRecent.Height = 30;
-            pnlRecent = new System.Windows.Forms.Panel();
-            pnlRecent.BackColor = HDToolTheme.Bg;
-            pnlRecent.Height = 34;
-            foreach (HDToolToolCard c in recent)
+        private void SideNav_ItemClick(object sender, HDToolSidebarEventArgs e)
+        {
+            string key = e.Item.Key;
+            if (key.StartsWith("recent:"))
             {
-                HDToolPill pill = new HDToolPill();
-                pill.IconKey = c.IconKey;
-                pill.Text = c.Title;
-                pill.Height = 32;
-                HDToolToolCard target = c;
-                pill.Click += (s, e) => Card_Click(target, EventArgs.Empty);
-                pnlRecent.Controls.Add(pill);
+                HDToolToolCard c = _cards.Find(x => x.IconKey == key.Substring(7));
+                if (c != null) Card_Click(c, EventArgs.Empty);
+                return;
             }
-            // Chèn sau thanh thông tin View
-            int idx = _flow.IndexOf(barView) + 1;
-            pnlContent.Controls.Add(secRecent);
-            pnlContent.Controls.Add(pnlRecent);
-            _flow.Insert(idx, secRecent); _gapAfter[secRecent] = 4;
-            _flow.Insert(idx + 1, pnlRecent); _gapAfter[pnlRecent] = 8;
+            _selGroup = key;
+            sideNav.SelectedKey = key;
+            sideNav.Invalidate();
+            pnlContent.AutoScrollPosition = new Point(0, 0);
+            if (txtSearch.Box.Text.Length > 0) txtSearch.Box.Text = ""; // tự gọi ApplyFilter
+            else ApplyFilter();
         }
 
         private float UiScale()
@@ -268,19 +298,6 @@ namespace HDTool
                 if (!c.Visible) continue;
                 HDToolCardGrid grid = c as HDToolCardGrid;
                 if (grid != null) grid.Relayout(w);
-                if (c == pnlRecent)
-                {
-                    int px = 0;
-                    foreach (System.Windows.Forms.Control p in pnlRecent.Controls)
-                    {
-                        HDToolPill pill = p as HDToolPill;
-                        int pw = pill != null ? pill.PreferredWidth : 140;
-                        if (px + pw > w) { p.Visible = false; continue; }
-                        p.Visible = true;
-                        p.SetBounds(px, 0, pw, pnlRecent.Height - 2);
-                        px += pw + (int)Math.Round(8 * sc);
-                    }
-                }
                 c.SetBounds(x, y, w, c.Height);
                 y += c.Height + (int)Math.Round(_gapAfter[c] * sc);
             }
@@ -308,17 +325,28 @@ namespace HDTool
             return sb.ToString();
         }
 
+        /// <summary>Lọc theo nhóm chọn ở cột trái; khi gõ tìm kiếm thì tìm trên tất cả nhóm.</summary>
         private void ApplyFilter()
         {
             string q = Norm(txtSearch.Box.Text.Trim());
-            bool any = false;
-            foreach (KeyValuePair<HDToolSectionLabel, HDToolCardGrid> g in _groups)
+            if (q.Length > 0 && _selGroup != "all")
             {
+                _selGroup = "all";
+                sideNav.SelectedKey = "all";
+                sideNav.Invalidate();
+            }
+            bool any = false;
+            string heading = "Tất cả công cụ";
+            for (int i = 0; i < _groups.Count; i++)
+            {
+                KeyValuePair<HDToolSectionLabel, HDToolCardGrid> g = _groups[i];
+                bool inGroup = _selGroup == "all" || _selGroup == _groupKeys[i];
+                if (inGroup && _selGroup != "all") heading = g.Key.Text;
                 int shown = 0;
                 foreach (System.Windows.Forms.Control c in g.Value.Controls)
                 {
                     HDToolToolCard card = (HDToolToolCard)c;
-                    bool ok = q.Length == 0 || Norm(card.Title + " " + card.Description + " " + card.Keywords).Contains(q);
+                    bool ok = inGroup && (q.Length == 0 || Norm(card.Title + " " + card.Description + " " + card.Keywords).Contains(q));
                     card.Visible = ok;
                     if (ok) shown++;
                 }
@@ -326,7 +354,7 @@ namespace HDTool
                 g.Value.Visible = shown > 0;
                 if (shown > 0) any = true;
             }
-            if (secRecent != null) { secRecent.Visible = q.Length == 0; pnlRecent.Visible = q.Length == 0; }
+            lblHeading.Text = q.Length > 0 ? "Kết quả tìm kiếm" : heading;
             lblEmpty.Visible = !any;
             LayoutFlow();
         }

@@ -64,7 +64,7 @@ foreach ($f in $files) {
     if ($l -match $moji) { Fail "$at chuoi bi loi ma hoa (mojibake)" }
     if ($l -match '(?i)c:\\\\?users\\\\?nguye') { Fail "$at duong dan cung toi may Sep Ho" }
     if ($l -match 'ActiveUIDocument\.Document\s*:\s*_doc|ActiveUIDocument\s*!=\s*null\s*\?\s*\w+\.ActiveUIDocument\.Document') { Fail "$at ghi vao ActiveUIDocument thay vi du an goc -> dung HDToolModelessHost.ResolveOwnerDocument(_doc)" }
-    if ($l -match 'class\s+\w+\s*:\s*(System\.Windows\.Forms\.)?Form\b') { Fail "$at Form khong ke thua HDToolBaseForm" }
+    if ($l -match 'class\s+\w+\s*:\s*(System\.Windows\.Forms\.)?Form\b' -and $l -notmatch 'class\s+HDToolBaseForm\b') { Fail "$at Form khong ke thua HDToolBaseForm" }
     if ($l -match 'action\(null\)') { Fail "$at goi Revit API voi UIApplication null" }
     if ($l -match 'TextRenderer\.DrawText' -and ($l + $lines[[Math]::Min($i+1,$lines.Length-1)]) -notmatch 'NoPrefix') { Warn "$at TextRenderer.DrawText thieu TextFormatFlags.NoPrefix" }
     if ($l -match '\.HeaderText\s*=\s*[^;]*ToUpper') { Fail "$at doi HeaderText (MepQuantityInspector dung HeaderText lam ten Parameter)" }

@@ -250,9 +250,59 @@ namespace HDTool
             base.OnKeyDown(e);
         }
 
+        /// <summary>Kiểu hàng danh sách (Mac): nằm trong HDToolCardGrid.ListStyle, không tự vẽ khung thẻ.</summary>
+        public bool RowStyle;
+        /// <summary>Hàng đầu tiên đang hiện trong nhóm (không vẽ đường kẻ phía trên).</summary>
+        public bool FirstRow;
+
+        private void PaintRow(Graphics g)
+        {
+            HDDraw.ClearParent(g, this);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            bool hot = _hover || Focused;
+            Color tc = ToolColor;
+            int pad = HDDraw.S(g, 12);
+            int tile = HDDraw.S(g, 30);
+            if (!FirstRow)
+            {
+                using (Pen p = new Pen(HDToolTheme.Line)) g.DrawLine(p, pad + tile + HDDraw.S(g, 12), 0, Width - pad, 0);
+            }
+            if (hot)
+            {
+                HDDraw.FillRound(g, new Rectangle(HDDraw.S(g, 4), HDDraw.S(g, 2), Width - HDDraw.S(g, 8), Height - HDDraw.S(g, 4)),
+                    HDDraw.S(g, 7), HDToolTheme.SurfaceHover);
+            }
+            Rectangle tr = new Rectangle(pad, (Height - tile) / 2, tile, tile);
+            HDDraw.FillRound(g, tr, HDDraw.S(g, 7), tc);
+            int ic = HDDraw.S(g, 20);
+            HDToolIcons.Draw(g, IconKey, new RectangleF(tr.X + (tile - ic) / 2f, tr.Y + (tile - ic) / 2f, ic, ic), Color.White, Color.White);
+
+            int x = tr.Right + HDDraw.S(g, 12);
+            int right = Width - pad;
+            Size ch = HDDraw.Measure(g, "›", HDToolTheme.Title);
+            TextRenderer.DrawText(g, "›", HDToolTheme.Title, new Rectangle(right - ch.Width, 0, ch.Width, Height), HDToolTheme.Text3,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+            right -= ch.Width + HDDraw.S(g, 10);
+            if (!string.IsNullOrEmpty(Shortcut))
+            {
+                Size ks = HDDraw.Measure(g, Shortcut, HDToolTheme.MonoSmall);
+                Rectangle kr = new Rectangle(right - ks.Width - HDDraw.S(g, 10), (Height - ks.Height - HDDraw.S(g, 4)) / 2, ks.Width + HDDraw.S(g, 10), ks.Height + HDDraw.S(g, 4));
+                HDDraw.StrokeRound(g, kr, HDDraw.S(g, 4), HDToolTheme.LineStrong, 1f);
+                TextRenderer.DrawText(g, Shortcut, HDToolTheme.MonoSmall, kr, HDToolTheme.Text3, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | HDDraw.One);
+                right = kr.Left - HDDraw.S(g, 10);
+            }
+            int w = Math.Max(10, right - x);
+            Size t1 = HDDraw.Measure(g, "Ag", HDToolTheme.BodyBold);
+            Size t2 = HDDraw.Measure(g, "Ag", HDToolTheme.Caption);
+            int top = (Height - t1.Height - t2.Height - HDDraw.S(g, 2)) / 2;
+            TextRenderer.DrawText(g, Title, HDToolTheme.BodyBold, new Rectangle(x, top, w, t1.Height), HDToolTheme.Text, HDDraw.One);
+            TextRenderer.DrawText(g, Description, HDToolTheme.Caption, new Rectangle(x, top + t1.Height + HDDraw.S(g, 2), w, t2.Height), HDToolTheme.Text3, HDDraw.One);
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             Graphics g = e.Graphics;
+            if (RowStyle) { PaintRow(g); return; }
             HDDraw.ClearParent(g, this);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             bool hot = _hover || Focused;
@@ -310,9 +360,41 @@ namespace HDTool
         }
 
         /// <summary>Sắp xếp lại và trả về chiều cao cần thiết.</summary>
+        /// <summary>Kiểu danh sách Mac: 1 cột, khung trắng bo góc, các hàng HDToolToolCard.RowStyle.</summary>
+        public bool ListStyle;
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            if (!ListStyle) { base.OnPaint(e); return; }
+            Graphics g = e.Graphics;
+            HDDraw.ClearParent(g, this);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
+            HDDraw.FillRound(g, r, HDDraw.S(g, 10), HDToolTheme.Surface);
+            HDDraw.StrokeRound(g, new Rectangle(0, 0, Width, Height), HDDraw.S(g, 10), HDToolTheme.Line, 1f);
+        }
+
         public int Relayout(int width)
         {
             float s = DeviceScale();
+            if (ListStyle)
+            {
+                BackColor = HDToolTheme.Surface;
+                int pv = (int)Math.Round(6 * s), ly = pv;
+                bool first = true;
+                foreach (Control c in Controls)
+                {
+                    if (!c.Visible) continue;
+                    HDToolToolCard card = c as HDToolToolCard;
+                    if (card != null) { card.FirstRow = first; card.Invalidate(); }
+                    first = false;
+                    c.SetBounds(1, ly, Math.Max(60, width - 2), c.Height);
+                    ly += c.Height;
+                }
+                Height = first ? 0 : ly + pv;
+                Invalidate();
+                return Height;
+            }
             int gap = (int)Math.Round(Gap * s);
             int colW = Math.Max(60, (width - gap * (Columns - 1)) / Columns);
             int i = 0, y = 0, rowH = 0;
@@ -909,5 +991,121 @@ namespace HDTool
             }
             catch { }
         }
+    }
+
+    /// <summary>Cột trái kiểu Mac: mục chọn nhóm (ô icon màu + tên + số lượng) và tiêu đề mục nhỏ in hoa.</summary>
+    public class HDToolSidebar : Control, HDToolPaintedControl
+    {
+        public class Item
+        {
+            public string Key = "";
+            public string Text = "";
+            public string IconKey = "";
+            public string Count = "";
+            public bool Header;
+            public Rectangle Bounds;
+        }
+
+        public readonly List<Item> Items = new List<Item>();
+        public string SelectedKey = "";
+        public event EventHandler<HDToolSidebarEventArgs> ItemClick;
+        private Item _hover;
+
+        public HDToolSidebar()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
+            BackColor = HDToolTheme.Surface2;
+        }
+
+        public Item Add(string key, string text, string iconKey, string count)
+        {
+            Item it = new Item(); it.Key = key; it.Text = text; it.IconKey = iconKey ?? ""; it.Count = count ?? "";
+            Items.Add(it); Invalidate(); return it;
+        }
+
+        public void AddHeader(string text)
+        {
+            Item it = new Item(); it.Text = text; it.Header = true;
+            Items.Add(it); Invalidate();
+        }
+
+        private Item HitTest(Point p)
+        {
+            foreach (Item it in Items) if (!it.Header && it.Bounds.Contains(p)) return it;
+            return null;
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            Item h = HitTest(e.Location);
+            if (h != _hover) { _hover = h; Cursor = h != null ? Cursors.Hand : Cursors.Default; Invalidate(); }
+        }
+
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hover = null; Invalidate(); }
+
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+            if (e.Button != MouseButtons.Left) return;
+            Item it = HitTest(e.Location);
+            if (it != null && ItemClick != null) ItemClick(this, new HDToolSidebarEventArgs(it));
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.Clear(HDToolTheme.Surface2);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            int y = HDDraw.S(g, 4);
+            int pad = HDDraw.S(g, 8);
+            int rowH = HDDraw.S(g, 32);
+            int hdrH = HDDraw.S(g, 30);
+            int tile = HDDraw.S(g, 22);
+            foreach (Item it in Items)
+            {
+                if (it.Header)
+                {
+                    it.Bounds = new Rectangle(pad, y, Width - pad * 2, hdrH);
+                    TextRenderer.DrawText(g, it.Text, HDToolTheme.LabelFont, new Rectangle(pad + HDDraw.S(g, 8), y + HDDraw.S(g, 12), Width - pad * 3, hdrH - HDDraw.S(g, 12)),
+                        HDToolTheme.Text3, HDDraw.One);
+                    y += hdrH;
+                    continue;
+                }
+                it.Bounds = new Rectangle(pad, y, Width - pad * 2, rowH);
+                bool sel = it.Key == SelectedKey;
+                if (sel) HDDraw.FillRound(g, it.Bounds, HDDraw.S(g, 7), HDToolTheme.Accent);
+                else if (it == _hover) HDDraw.FillRound(g, it.Bounds, HDDraw.S(g, 7), HDToolTheme.SurfaceHover);
+
+                int x = it.Bounds.X + HDDraw.S(g, 8);
+                if (it.IconKey.Length > 0)
+                {
+                    Rectangle tr = new Rectangle(x, y + (rowH - tile) / 2, tile, tile);
+                    Color tc = it.IconKey == "menu" ? HDToolTheme.Text3 : HDToolTheme.ToolColor(it.IconKey);
+                    HDDraw.FillRound(g, tr, HDDraw.S(g, 6), tc);
+                    int ic = HDDraw.S(g, 15);
+                    HDToolIcons.Draw(g, it.IconKey, new RectangleF(tr.X + (tile - ic) / 2f, tr.Y + (tile - ic) / 2f, ic, ic), Color.White, Color.White);
+                    x = tr.Right + HDDraw.S(g, 9);
+                }
+                int right = it.Bounds.Right - HDDraw.S(g, 8);
+                if (it.Count.Length > 0)
+                {
+                    Size cs = HDDraw.Measure(g, it.Count, HDToolTheme.Caption);
+                    TextRenderer.DrawText(g, it.Count, HDToolTheme.Caption, new Rectangle(right - cs.Width, y, cs.Width, rowH),
+                        sel ? HDToolTheme.Mix(HDToolTheme.AccentInk, HDToolTheme.Accent, 0.2) : HDToolTheme.Text3, TextFormatFlags.VerticalCenter | HDDraw.One);
+                    right -= cs.Width + HDDraw.S(g, 6);
+                }
+                TextRenderer.DrawText(g, it.Text, HDToolTheme.Body, new Rectangle(x, y, Math.Max(10, right - x), rowH),
+                    sel ? HDToolTheme.AccentInk : HDToolTheme.Text, TextFormatFlags.VerticalCenter | HDDraw.One);
+                y += rowH + HDDraw.S(g, 2);
+            }
+            using (Pen p = new Pen(HDToolTheme.Line)) g.DrawLine(p, Width - 1, 0, Width - 1, Height);
+        }
+    }
+
+    public class HDToolSidebarEventArgs : EventArgs
+    {
+        public readonly HDToolSidebar.Item Item;
+        public HDToolSidebarEventArgs(HDToolSidebar.Item item) { Item = item; }
     }
 }

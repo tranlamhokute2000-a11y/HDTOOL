@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><title>Giao Diện Mac</title>
+<style>
+:root{--win:#f5f5f7;--bar:#ececee;--side:#e8e8ec;--card:#fff;--line:#d9d9de;--ink:#1d1d1f;--mute:#6e6e73;--acc:#007aff;--sel:#007aff;--selink:#fff;--row:#f7f7f9;--sh:0 20px 60px rgba(0,0,0,.25)}
+.dark{--win:#1e1e20;--bar:#2a2a2d;--side:#252528;--card:#2c2c2f;--line:#3a3a3e;--ink:#f5f5f7;--mute:#98989d;--acc:#0a84ff;--sel:#0a84ff;--row:#262629;--sh:0 20px 60px rgba(0,0,0,.6)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font:13px "Segoe UI Variable Text","Segoe UI",-apple-system,sans-serif;color:var(--ink);
+background:linear-gradient(135deg,#7f9cc7,#c9a7d8 50%,#f2c4a8);padding:20px 16px}
+.dark body,body.dark{background:linear-gradient(135deg,#1b2440,#3b2a4f 50%,#4b3226)}
+.top{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.seg{display:inline-flex;background:rgba(255,255,255,.55);backdrop-filter:blur(20px);border-radius:8px;padding:2px}
+.seg button{border:0;background:none;padding:5px 14px;border-radius:6px;font:inherit;color:#1d1d1f;cursor:pointer}.seg button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.win{margin:0 auto;background:var(--win);border-radius:12px;box-shadow:var(--sh);overflow:hidden;border:1px solid rgba(0,0,0,.15);display:none}
+.win.on{display:block}
+.tb{height:52px;background:var(--bar);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:12px}
+.lights{display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%;display:block}
+.lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+.tt{font-weight:600;font-size:13px}.tt small{display:block;font-weight:400;color:var(--mute);font-size:11px}
+.search{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:5px 9px;width:220px;color:var(--mute)}
+.body{display:flex;min-height:520px}
+.side{width:200px;background:var(--side);border-right:1px solid var(--line);padding:10px 8px}
+.side h6{margin:12px 8px 4px;font-size:11px;color:var(--mute);font-weight:600}
+.si{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer}.si.on{background:var(--sel);color:var(--selink)}
+.si .n{margin-left:auto;color:var(--mute);font-size:11px}.si.on .n{color:#dbe9ff}
+.ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;flex:none}
+.main{flex:1;padding:18px 22px;overflow:auto}
+.main h2{margin:0 0 4px;font-size:20px}.sub{color:var(--mute);margin-bottom:14px}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line)}.row:first-child{border-top:0}
+.row:hover{background:var(--row)}.row b{font-weight:600}.row small{display:block;color:var(--mute)}
+.chev{margin-left:auto;color:var(--mute)}.kbd{font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-left:auto}
+.gl{font-size:12px;color:var(--mute);margin:0 0 6px 4px;font-weight:600}
+/* family */
+table{width:100%;border-collapse:collapse}th{font-weight:600;font-size:11px;color:var(--mute);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
+td{padding:7px 10px}tr:nth-child(even) td{background:var(--row)}tr.sel td{background:var(--sel);color:#fff}
+.tag{font-size:11px;padding:1px 8px;border-radius:10px;background:rgba(0,122,255,.12);color:var(--acc)}tr.sel .tag{background:rgba(255,255,255,.25);color:#fff}
+.insp{width:300px;border-left:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--win)}
+.view3d{height:200px;border-radius:10px;background:radial-gradient(circle at 50% 40%,var(--card),var(--side));border:1px solid var(--line);display:grid;place-items:center}
+.pop{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:5px 9px;display:flex}.pop:after{content:"⌄";margin-left:auto;color:var(--mute)}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:7px;padding:9px;font:600 13px inherit;font-family:inherit}
+.btn2{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 12px;font-family:inherit}
+.kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font-size:12px}.kv span{color:var(--mute)}
+.foot{height:34px;border-top:1px solid var(--line);background:var(--bar);display:flex;align-items:center;padding:0 14px;color:var(--mute);font-size:11px;gap:10px}
+.note{max-width:1100px;margin:14px auto 0;background:rgba(255,255,255,.7);border-radius:10px;padding:10px 14px;color:#1d1d1f;font-size:12px}
+@media(max-width:800px){.side,.insp{display:none}}
+</style></head><body>
+<div class="top"><div class="seg" id="scr"><button class="on" data-v="menu">Menu HDTOOL</button><button data-v="fam">Tổng Hợp Family</button></div>
+<div class="seg" id="mode"><button class="on" data-m="">Sáng</button><button data-m="dark">Tối</button></div></div>
+
+<div class="win on" id="menu" style="max-width:760px">
+ <div class="tb"><div class="lights"><i></i><i></i><i></i></div><div class="tt">HDTOOL<small>Version 112 · ESC để đóng</small></div><div class="search">⌕ Tìm công cụ…</div></div>
+ <div class="body"><div class="side">
+  <div class="si on"><span class="ic" style="background:#8e8e93">★</span>Tất cả</div>
+  <h6>NHÓM</h6>
+  <div class="si"><span class="ic" style="background:#2563eb">G</span>Căn chỉnh<span class="n">4</span></div>
+  <div class="si"><span class="ic" style="background:#ea580c">M</span>Khối lượng MEP<span class="n">3</span></div>
+  <div class="si"><span class="ic" style="background:#16a34a">S</span>Bản vẽ & Sheet<span class="n">3</span></div>
+  <div class="si"><span class="ic" style="background:#c026d3">F</span>Thư viện<span class="n">2</span></div>
+  <h6>GẦN ĐÂY</h6><div class="si">Khối lượng ống gió</div><div class="si">Tổng hợp Family</div>
+ </div><div class="main"><h2>Công cụ</h2><div class="sub">Đang mở: Tầng 3 - MEP · Mặt bằng · 1:100</div>
+  <div class="gl">Căn chỉnh</div><div class="grp">
+   <div class="row"><span class="ic" style="background:#2563eb">G</span><div><b>Căn chỉnh Grids</b><small>Đầu trục, bong bóng, khoảng cách</small></div><span class="kbd">1</span></div>
+   <div class="row"><span class="ic" style="background:#0ea5e9">L</span><div><b>Căn chỉnh Level</b><small>Đồng bộ đầu Level giữa các View</small></div><span class="kbd">2</span></div>
+   <div class="row"><span class="ic" style="background:#7c3aed">C</span><div><b>Tự động Crop View</b><small>Cắt khung nhìn theo vùng đối tượng</small></div><span class="kbd">3</span></div></div>
+  <div class="gl">Khối lượng MEP</div><div class="grp">
+   <div class="row"><span class="ic" style="background:#0891b2">P</span><div><b>Thống kê ống nước</b><small>Chiều dài, phụ kiện theo hệ</small></div><span class="kbd">4</span></div>
+   <div class="row"><span class="ic" style="background:#ea580c">D</span><div><b>Khối lượng ống gió</b><small>Diện tích tôn TCVN / SMACNA</small></div><span class="kbd">5</span></div>
+   <div class="row"><span class="ic" style="background:#db2777">A</span><div><b>CAD → Ống gió</b><small>Dựng ống từ bản vẽ DWG</small></div><span class="kbd">6</span></div></div>
+ </div></div>
+ <div class="foot">● Sẵn sàng · Modeless: vẫn thao tác trên bản vẽ được</div>
+</div>
+
+<div class="win" id="fam" style="max-width:1100px">
+ <div class="tb"><div class="lights"><i></i><i></i><i></i></div><div class="tt">Tổng Hợp Family<small>58 Family · 313 Type đã load</small></div><div class="search">⌕ Tìm Family, Type…</div><button class="btn2">Làm mới</button></div>
+ <div class="body"><div class="side"><h6>CHUYÊN NGÀNH</h6>
+  <div class="si on">Tất cả<span class="n">58</span></div><div class="si">Thiết bị cơ<span class="n">12</span></div><div class="si">Miệng gió<span class="n">9</span></div>
+  <div class="si">Phụ kiện ống gió<span class="n">14</span></div><div class="si">Thiết bị điện<span class="n">8</span></div><div class="si">Ống nước<span class="n">15</span></div></div>
+  <div class="main" style="padding:0"><table><thead><tr><th>#</th><th>Tên Family</th><th>Số Type</th><th>Chuyên ngành</th></tr></thead><tbody>
+  <tr><td>1</td><td>CEN-AT-Grille</td><td>14</td><td><span class="tag">Miệng gió</span></td></tr>
+  <tr class="sel"><td>2</td><td>CEN-Quạt hút gió</td><td>1</td><td><span class="tag">Thiết bị cơ</span></td></tr>
+  <tr><td>3</td><td>CEN-Điều hòa cassette</td><td>1</td><td><span class="tag">Thiết bị cơ</span></td></tr>
+  <tr><td>4</td><td>CEN-SAND FILTER</td><td>1</td><td><span class="tag">Thiết bị cơ</span></td></tr>
+  <tr><td>5</td><td>CEN-Khớp nối mềm tròn</td><td>1</td><td><span class="tag">Phụ kiện ống gió</span></td></tr>
+  <tr><td>6</td><td>CEN-Tủ điện</td><td>3</td><td><span class="tag">Thiết bị điện</span></td></tr></tbody></table></div>
+  <div class="insp"><div class="view3d"><svg width="120" height="110" viewBox="0 0 120 110"><path d="M60 10 105 32 60 54 15 32Z" fill="#c7cbd6"/><path d="M15 32 60 54 60 100 15 78Z" fill="#9aa0ad"/><path d="M105 32 60 54 60 100 105 78Z" fill="#7d8391"/></svg></div>
+   <div style="color:var(--mute);font-size:11px;text-align:center">Kéo để xoay · Lăn để phóng to</div>
+   <div><span class="tag">Thiết bị cơ</span><div style="font-weight:600;font-size:15px;margin-top:4px">CEN-Quạt hút gió</div></div>
+   <div class="pop">Type 1</div>
+   <div><div class="kv"><span>Lưu lượng</span>1200 m³/h</div><div class="kv"><span>Công suất</span>0.37 kW</div><div class="kv"><span>Category</span>Mechanical Equipment</div></div>
+   <button class="btn" style="margin-top:auto">Đặt vào bản vẽ</button></div></div>
+ <div class="foot">● Đã nạp 58 Family trong 42 ms</div>
+</div>
+
+<div class="note"><b>Phong cách Mac:</b> 3 nút tròn đỏ-vàng-xanh, góc bo tròn, thanh tiêu đề liền thanh công cụ, cột trái (sidebar) chọn nhóm, danh sách dạng thẻ bo góc, màu nhấn xanh Apple, nút xanh đặc. Có 2 chế độ Sáng / Tối. Áp cho mọi cửa sổ HDTOOL.</div>
+<script>
+document.querySelectorAll('#scr button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#scr button').forEach(x=>x.classList.toggle('on',x==b));
+document.querySelectorAll('.win').forEach(w=>w.classList.toggle('on',w.id==b.dataset.v));});
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('on',x==b));
+document.body.classList.toggle('dark',b.dataset.m=='dark');});
+</script></body></html>

@@ -9,8 +9,8 @@ using System.Windows.Forms;
 
 namespace HDTool
 {
-    /// <summary>Premium = Tối Cao Cấp (mặc định, Sếp Hồ chốt), Drafting = Bản Vẽ Sáng, Blueprint = Kỹ thuật tối.</summary>
-    public enum HDToolThemeMode { Premium, Drafting, Blueprint }
+    /// <summary>Mac = Mac Sáng (mặc định, Sếp Hồ chốt 2026-11-27), Premium = Tối Cao Cấp, Drafting = Bản Vẽ Sáng, Blueprint = Kỹ thuật tối.</summary>
+    public enum HDToolThemeMode { Premium, Drafting, Blueprint, Mac }
 
     public enum HDToolButtonKind { Primary, Secondary, Ghost, Danger }
 
@@ -21,49 +21,55 @@ namespace HDTool
     /// </summary>
     public static class HDToolTheme
     {
-        public static HDToolThemeMode Mode = HDToolThemeMode.Premium;
-        public static bool IsDark { get { return Mode != HDToolThemeMode.Drafting; } }
-        public static bool IsPremium { get { return Mode == HDToolThemeMode.Premium; } }
+        public static HDToolThemeMode Mode = HDToolThemeMode.Mac;
+        public static bool IsMac { get { return Mode == HDToolThemeMode.Mac; } }
+        public static bool IsDark { get { return Mode != HDToolThemeMode.Drafting && Mode != HDToolThemeMode.Mac; } }
+        // IsPremium = kiểu hiện đại bo góc (Tối Cao Cấp hoặc Mac Sáng)
+        public static bool IsPremium { get { return Mode == HDToolThemeMode.Premium || Mode == HDToolThemeMode.Mac; } }
 
         private static Color Pick(Color premium, Color blueprint, Color drafting)
         {
             return Mode == HDToolThemeMode.Premium ? premium : (Mode == HDToolThemeMode.Blueprint ? blueprint : drafting);
         }
         private static Color C(int r, int g, int b) { return Color.FromArgb(r, g, b); }
+        private static Color Pm(Color mac, Color premium, Color blueprint, Color drafting)
+        {
+            return Mode == HDToolThemeMode.Mac ? mac : Pick(premium, blueprint, drafting);
+        }
 
         // ===================== MÀU (TOKEN) =====================
-        public static Color Bg           { get { return Pick(C(14, 16, 22), C(13, 21, 32), C(237, 241, 245)); } }
-        public static Color Surface      { get { return Pick(C(22, 26, 35), C(18, 28, 41), C(255, 255, 255)); } }
-        public static Color Surface2     { get { return Pick(C(27, 32, 48), C(23, 36, 51), C(245, 247, 250)); } }
-        public static Color SurfaceHover { get { return Pick(C(30, 36, 52), C(26, 40, 57), C(240, 244, 249)); } }
-        public static Color Header       { get { return Pick(C(31, 37, 87), C(10, 17, 26), C(16, 35, 58)); } }
-        public static Color HeaderGrad1  { get { return Pick(C(20, 26, 51), C(10, 17, 26), C(16, 35, 58)); } }
-        public static Color HeaderGrad2  { get { return Pick(C(31, 37, 87), C(10, 17, 26), C(16, 35, 58)); } }
-        public static Color HeaderGrad3  { get { return Pick(C(58, 31, 99), C(10, 17, 26), C(16, 35, 58)); } }
-        public static Color HeaderText   { get { return Pick(C(255, 255, 255), C(232, 241, 250), C(242, 246, 250)); } }
-        public static Color HeaderSub    { get { return Pick(C(184, 188, 210), C(157, 176, 196), C(157, 176, 196)); } }
-        public static Color HeaderLine   { get { return Pick(C(70, 74, 120), C(47, 72, 98), C(44, 70, 100)); } }
-        public static Color HeaderAccent { get { return Pick(C(125, 163, 255), C(43, 184, 232), C(43, 184, 232)); } }
-        public static Color Line         { get { return Pick(C(38, 44, 61), C(34, 52, 74), C(211, 219, 228)); } }
-        public static Color LineStrong   { get { return Pick(C(53, 60, 82), C(47, 72, 98), C(183, 195, 208)); } }
-        public static Color Text         { get { return Pick(C(236, 238, 245), C(227, 235, 243), C(14, 28, 43)); } }
-        public static Color Text2        { get { return Pick(C(170, 177, 197), C(157, 176, 196), C(70, 88, 107)); } }
-        public static Color Text3        { get { return Pick(C(113, 122, 147), C(102, 121, 143), C(122, 137, 153)); } }
-        public static Color Accent       { get { return Pick(C(91, 140, 255), C(43, 184, 232), C(11, 120, 166)); } }
-        public static Color AccentHover  { get { return Pick(C(125, 163, 255), C(82, 200, 240), C(10, 141, 194)); } }
-        public static Color AccentDown   { get { return Pick(C(70, 115, 230), C(30, 150, 192), C(8, 96, 133)); } }
-        public static Color AccentInk    { get { return Pick(C(10, 15, 31), C(4, 32, 44), C(255, 255, 255)); } }
-        public static Color AccentSoft   { get { return Pick(C(32, 43, 68), C(19, 58, 82), C(217, 238, 247)); } }
-        public static Color Ok           { get { return Pick(C(52, 211, 153), C(61, 214, 140), C(30, 158, 98)); } }
-        public static Color Warn         { get { return Pick(C(251, 191, 36), C(242, 179, 61), C(183, 121, 31)); } }
-        public static Color Err          { get { return Pick(C(248, 113, 113), C(242, 102, 94), C(200, 66, 59)); } }
-        public static Color OkSoft       { get { return Pick(C(26, 50, 50), C(18, 52, 40), C(226, 244, 235)); } }
-        public static Color WarnSoft     { get { return Pick(C(52, 47, 35), C(56, 44, 18), C(252, 243, 224)); } }
-        public static Color ErrSoft      { get { return Pick(C(51, 37, 45), C(60, 26, 26), C(251, 231, 229)); } }
-        public static Color RowAlt       { get { return Pick(C(24, 28, 39), C(21, 33, 50), C(246, 249, 252)); } }
-        public static Color Input        { get { return Pick(C(18, 22, 32), C(15, 24, 35), C(255, 255, 255)); } }
-        public static Color GridMinor    { get { return Pick(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(13, 43, 184, 232), Color.FromArgb(10, 11, 120, 166)); } }
-        public static Color GridMajor    { get { return Pick(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(26, 43, 184, 232), Color.FromArgb(20, 11, 120, 166)); } }
+        public static Color Bg           { get { return Pm(C(245, 245, 247), C(14, 16, 22), C(13, 21, 32), C(237, 241, 245)); } }
+        public static Color Surface      { get { return Pm(C(255, 255, 255), C(22, 26, 35), C(18, 28, 41), C(255, 255, 255)); } }
+        public static Color Surface2     { get { return Pm(C(242, 242, 245), C(27, 32, 48), C(23, 36, 51), C(245, 247, 250)); } }
+        public static Color SurfaceHover { get { return Pm(C(236, 236, 240), C(30, 36, 52), C(26, 40, 57), C(240, 244, 249)); } }
+        public static Color Header       { get { return Pm(C(236, 236, 238), C(31, 37, 87), C(10, 17, 26), C(16, 35, 58)); } }
+        public static Color HeaderGrad1  { get { return Pm(C(240, 240, 242), C(20, 26, 51), C(10, 17, 26), C(16, 35, 58)); } }
+        public static Color HeaderGrad2  { get { return Pm(C(236, 236, 238), C(31, 37, 87), C(10, 17, 26), C(16, 35, 58)); } }
+        public static Color HeaderGrad3  { get { return Pm(C(232, 232, 236), C(58, 31, 99), C(10, 17, 26), C(16, 35, 58)); } }
+        public static Color HeaderText   { get { return Pm(C(29, 29, 31), C(255, 255, 255), C(232, 241, 250), C(242, 246, 250)); } }
+        public static Color HeaderSub    { get { return Pm(C(110, 110, 115), C(184, 188, 210), C(157, 176, 196), C(157, 176, 196)); } }
+        public static Color HeaderLine   { get { return Pm(C(214, 214, 219), C(70, 74, 120), C(47, 72, 98), C(44, 70, 100)); } }
+        public static Color HeaderAccent { get { return Pm(C(0, 122, 255), C(125, 163, 255), C(43, 184, 232), C(43, 184, 232)); } }
+        public static Color Line         { get { return Pm(C(224, 224, 229), C(38, 44, 61), C(34, 52, 74), C(211, 219, 228)); } }
+        public static Color LineStrong   { get { return Pm(C(200, 200, 206), C(53, 60, 82), C(47, 72, 98), C(183, 195, 208)); } }
+        public static Color Text         { get { return Pm(C(29, 29, 31), C(236, 238, 245), C(227, 235, 243), C(14, 28, 43)); } }
+        public static Color Text2        { get { return Pm(C(72, 72, 78), C(170, 177, 197), C(157, 176, 196), C(70, 88, 107)); } }
+        public static Color Text3        { get { return Pm(C(134, 134, 139), C(113, 122, 147), C(102, 121, 143), C(122, 137, 153)); } }
+        public static Color Accent       { get { return Pm(C(0, 122, 255), C(91, 140, 255), C(43, 184, 232), C(11, 120, 166)); } }
+        public static Color AccentHover  { get { return Pm(C(30, 138, 255), C(125, 163, 255), C(82, 200, 240), C(10, 141, 194)); } }
+        public static Color AccentDown   { get { return Pm(C(0, 100, 215), C(70, 115, 230), C(30, 150, 192), C(8, 96, 133)); } }
+        public static Color AccentInk    { get { return Pm(C(255, 255, 255), C(10, 15, 31), C(4, 32, 44), C(255, 255, 255)); } }
+        public static Color AccentSoft   { get { return Pm(C(229, 240, 255), C(32, 43, 68), C(19, 58, 82), C(217, 238, 247)); } }
+        public static Color Ok           { get { return Pm(C(40, 167, 69), C(52, 211, 153), C(61, 214, 140), C(30, 158, 98)); } }
+        public static Color Warn         { get { return Pm(C(214, 122, 0), C(251, 191, 36), C(242, 179, 61), C(183, 121, 31)); } }
+        public static Color Err          { get { return Pm(C(230, 50, 40), C(248, 113, 113), C(242, 102, 94), C(200, 66, 59)); } }
+        public static Color OkSoft       { get { return Pm(C(230, 247, 235), C(26, 50, 50), C(18, 52, 40), C(226, 244, 235)); } }
+        public static Color WarnSoft     { get { return Pm(C(255, 244, 226), C(52, 47, 35), C(56, 44, 18), C(252, 243, 224)); } }
+        public static Color ErrSoft      { get { return Pm(C(255, 235, 233), C(51, 37, 45), C(60, 26, 26), C(251, 231, 229)); } }
+        public static Color RowAlt       { get { return Pm(C(248, 248, 250), C(24, 28, 39), C(21, 33, 50), C(246, 249, 252)); } }
+        public static Color Input        { get { return Pm(C(255, 255, 255), C(18, 22, 32), C(15, 24, 35), C(255, 255, 255)); } }
+        public static Color GridMinor    { get { return Pm(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(0, 0, 0, 0), Color.FromArgb(13, 43, 184, 232), Color.FromArgb(10, 11, 120, 166)); } }
+        public static Color GridMajor    { get { return Pm(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(0, 0, 0, 0), Color.FromArgb(26, 43, 184, 232), Color.FromArgb(20, 11, 120, 166)); } }
 
         /// <summary>Bán kính bo góc (px @ 96 DPI). Kiểu Kỹ thuật dùng góc vuông.</summary>
         public static int Radius { get { return IsPremium ? 10 : 0; } }

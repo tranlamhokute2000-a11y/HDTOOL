@@ -1,11 +1,24 @@
 # TRẠNG THÁI LÀM VIỆC GẦN NHẤT (SESSION STATE)
 
 - **Thời gian cập nhật**: 2026-11-27
-- **Phiên bản hiện tại**: **Version 112** (`HDTOOL_Setup_Version_112.exe`)
-- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_111.exe` và `HDTOOL_Setup_Version_112.exe` (0 file trên Desktop)
-- **Git**: Version 111 đã commit + push (`32b5f30`). Version 112 (Tổng Hợp Family) CHƯA commit.
+- **Phiên bản hiện tại**: **Version 114** (`HDTOOL_Setup_Version_114.exe`)
+- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_113.exe` và `HDTOOL_Setup_Version_114.exe` (0 file trên Desktop)
+- **Git**: Version 112 đã commit (`f3390e3`, chưa push). Version 113 (Mac Sáng) và 114 (Menu cột trái) CHƯA commit.
 
-## 0. Vừa xong — Tổng Hợp Family đã load + xem trước 3D xoay được (Version 112)
+## 0. Vừa xong — Menu HDTOOL cột trái kiểu Mac (Version 114)
+- `HDToolMainForm` dựng lại: cột trái (ô tìm + `HDToolSidebar`: Tất cả / nhóm kèm số lượng / Gần đây) + khung phải (tiêu đề nhóm, dòng View đang mở, danh sách hàng trong khung trắng bo góc). Cửa sổ 860x640, đổi kích thước được.
+- Thêm trong `HDToolControls.cs`: `HDToolSidebar` + `HDToolSidebarEventArgs`, `HDToolToolCard.RowStyle/FirstRow`, `HDToolCardGrid.ListStyle`.
+- Kiểm tra: KiemTra ĐẠT, build Version 114 0 lỗi; chụp bản dựng lại bằng control thật khớp bản xem trước (Menu thật cần RevitAPIUI nên không mở được ngoài Revit). CHƯA thử trong Revit.
+
+## 0a0. Giao diện MAC SÁNG cho toàn bộ HDTOOL (Version 113)
+- Sếp chọn "Mac Sáng" từ `PreviewStudio/HDTool_GiaoDienMac.html`.
+- `HDToolTheme`: thêm `HDToolThemeMode.Mac` (mặc định), token Mac qua `Pm(...)`, `IsMac`.
+- `HDToolBaseForm.ApplyMacChrome()`: cửa sổ không viền + thanh tiêu đề tự vẽ 3 nút tròn, kéo/phóng to/đổi kích thước, bo góc Win11.
+- `.agents/tools/KiemTra.ps1`: bỏ báo nhầm "Form không kế thừa HDToolBaseForm" ở chính lớp HDToolBaseForm.
+- Kiểm tra: build 0 lỗi; chụp PrintWindow (Ống Gió, Menu, hộp thoại nhỏ) đúng. CHƯA thử trong Revit thật (kéo cửa sổ, đổi kích thước, các form tự vẽ màu tối cứng như Tổng Hợp Family).
+
+
+## 0a. Tổng Hợp Family đã load + xem trước 3D xoay được (Version 112)
 - Sếp duyệt bản xem trước `PreviewStudio/HDTool_FamilyPalette_v2.html`.
 - Bảng: mỗi dòng = 1 Family; cột `Số Type`; bỏ hẳn đếm số lượng trên bản vẽ (cột Đã Vẽ, ô lọc, vòng đếm FamilyInstance). Chọn Type ở `cboTypes` khung phải.
 - `Source/FamilyMeshViewer.cs` (mới): khung 3D tự vẽ, xoay/phóng/dời bằng chuột; lưới lấy bằng `FamilyPaletteService.GetSymbolMesh` trong ExternalEvent; Family không có hình khối -> ảnh `GetPreviewImage`.
