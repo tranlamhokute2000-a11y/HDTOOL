@@ -22,12 +22,13 @@ namespace HDTool
         public bool Unlinked;       // không nối với đoạn nào -> cần kiểm tra
         internal PointF[] Outline;  // đáy khối, đơn vị feet
         internal float Height;      // feet
+        internal float ZShift;      // feet, tâm khối so với tim ống ngang
 
         public string Title
         {
             get
             {
-                if (IsDuct) return "Ống #" + Number;
+                if (IsDuct) return (Segment.IsRiser ? "Trục đứng #" : "Ống #") + Number;
                 string kind;
                 switch (Segment.ShapeKind)
                 {
@@ -45,6 +46,7 @@ namespace HDTool
         {
             get
             {
+                if (Segment.IsRiser) return Segment.Length;
                 if (Segment.StartPoint == null || Segment.EndPoint == null) return 0;
                 return Segment.StartPoint.DistanceTo(Segment.EndPoint) * 304.8;
             }
@@ -149,8 +151,16 @@ namespace HDTool
             {
                 CadDuctSegment s = it.Segment;
                 it.Height = (float)((s.HeightMm > 0 ? s.HeightMm : DefaultHeightMm) * MmToFeet);
+                it.ZShift = 0f;
                 it.Outline = null;
                 List<XYZ> pts = null;
+                if (s.IsRiser)
+                {
+                    // Trục đứng: tiết diện W x H trên mặt bằng, chạy từ cốt tầng lên hết chiều cao tầng
+                    it.Height = (float)(s.Length * MmToFeet);
+                    it.ZShift = (float)((s.Length * 0.5 - s.CenterElevationMm) * MmToFeet);
+                    pts = CadToDuctService.BuildRiserFootprint(s);
+                }
                 // Ống thẳng vẽ theo Start -> End x W: đúng cái sẽ được dựng (kể cả đoạn đã gộp / đã sửa W)
                 if (it.IsDuct && s.StartPoint != null && s.EndPoint != null && s.StartPoint.DistanceTo(s.EndPoint) > 1e-6)
                 {
@@ -280,8 +290,8 @@ namespace HDTool
                 float topDepth = 0;
                 for (int i = 0; i < n; i++)
                 {
-                    top[i] = Project(it.Outline[i].X, it.Outline[i].Y, it.Height / 2, out dTop[i]);
-                    bottom[i] = Project(it.Outline[i].X, it.Outline[i].Y, -it.Height / 2, out dBottom[i]);
+                    top[i] = Project(it.Outline[i].X, it.Outline[i].Y, it.ZShift + it.Height / 2, out dTop[i]);
+                    bottom[i] = Project(it.Outline[i].X, it.Outline[i].Y, it.ZShift - it.Height / 2, out dBottom[i]);
                     topDepth += dTop[i];
                 }
                 _faces.Add(new Face { Item = it, Points = top, Depth = topDepth / n, Color = color });

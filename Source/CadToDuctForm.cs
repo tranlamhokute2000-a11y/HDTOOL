@@ -113,8 +113,8 @@ namespace HDTool
             this.SuspendLayout();
 
             this.Text = "HDTOOL - Dựng Mô Hình Hệ Thống Ống Gió 3D Từ Bản Vẽ CAD Link";
+            // Tọa độ control bên dưới tính theo khung 880x720; OnLoad mới phóng to để phần dư dồn hết vào bảng danh sách ống
             this.ClientSize = new Size(880, 720);
-            this.MinimumSize = new Size(880, 720);
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(248, 250, 252);
@@ -458,7 +458,47 @@ namespace HDTool
             this.Controls.Add(btnClose);
             this.CancelButton = btnClose;
 
+            this.MinimumSize = new Size(880, 720);
+
             this.ResumeLayout(false);
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            FitPreviewWindowToScreen();
+        }
+
+        /// <summary>Cửa sổ không vượt quá màn hình (DPI 125% / 150%), các cột bảng không hẹp hơn tiêu đề của nó.</summary>
+        private void FitPreviewWindowToScreen()
+        {
+            try
+            {
+                // Phóng to sau khi đã có handle để Anchor co giãn: bảng (neo 4 phía) nhận hết phần rộng / cao thêm
+                float scale = 1f;
+                using (Graphics g = CreateGraphics()) scale = g.DpiX / 96f;
+                System.Drawing.Rectangle area = Screen.FromControl(this).WorkingArea;
+                int w = Math.Min(this.Width + (int)(240 * scale), area.Width - 16);
+                int h = Math.Min(this.Height + (int)(200 * scale), area.Height - 16);
+                this.MinimumSize = new Size(Math.Min(this.MinimumSize.Width, w), Math.Min(this.MinimumSize.Height, h));
+                this.Bounds = new System.Drawing.Rectangle(area.Left + (area.Width - w) / 2, area.Top + (area.Height - h) / 2, w, h);
+
+                // Thanh tiêu đề tự vẽ dời các khung phía trên xuống -> kéo bảng xuống sát khung "4. Thiết Lập", không để khoảng trống
+                int gap = (int)(6 * scale);
+                int fill = grpRevit.Top - gap - grpPreview.Top;
+                if (fill > grpPreview.Height) grpPreview.Height = fill;
+
+                Font headerFont = dgvPreview.ColumnHeadersDefaultCellStyle.Font ?? dgvPreview.Font;
+                foreach (DataGridViewColumn col in dgvPreview.Columns)
+                {
+                    int need = TextRenderer.MeasureText(col.HeaderText, headerFont).Width + 28;
+                    col.MinimumWidth = Math.Max(col.MinimumWidth, need);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Không căn được cửa sổ dựng ống: " + ex.Message);
+            }
         }
 
         protected override bool OnBeforeEscapeClose()
@@ -499,7 +539,7 @@ namespace HDTool
 
             var colSize = new DataGridViewTextBoxColumn();
             colSize.HeaderText = "Kích Thước WxH (mm)";
-            colSize.FillWeight = 115;
+            colSize.FillWeight = 80;
             colSize.ReadOnly = false; // Kỹ sư có thể gõ sửa trực tiếp nếu muốn!
             colSize.ToolTipText = "Cú pháp chuẩn HVAC: W x H (ví dụ: 350 x 300 — số đầu là Rộng W, số sau là Cao H).";
             dgvPreview.Columns.Add(colSize);
@@ -518,13 +558,13 @@ namespace HDTool
 
             var colNext = new DataGridViewTextBoxColumn();
             colNext.HeaderText = "Kết Nối Nối Tiếp";
-            colNext.FillWeight = 95;
+            colNext.FillWeight = 170;
             colNext.ReadOnly = true;
             dgvPreview.Columns.Add(colNext);
 
             var colSource = new DataGridViewTextBoxColumn();
             colSource.HeaderText = "Nguồn Kích Thước";
-            colSource.FillWeight = 112;
+            colSource.FillWeight = 120;
             colSource.ReadOnly = true;
             dgvPreview.Columns.Add(colSource);
         }
@@ -923,6 +963,8 @@ namespace HDTool
 
             SetStatus(Color.FromArgb(2, 132, 199), "Đang nhận diện hình học (Ống, Côn, Cút cong/góc, Chân rẽ) và trích xuất Text WxH từ file DWG gốc...");
 
+            ElementId scanLevelId = (_levels != null && cmbLevel.SelectedIndex >= 0) ? _levels[cmbLevel.SelectedIndex].Id : ElementId.InvalidElementId;
+
             HDToolModelessHost.Run(uiapp =>
             {
                 try
@@ -944,6 +986,14 @@ namespace HDTool
                         out fittings,
                         out edges,
                         out dampers);
+
+                    // Trục đứng cao bằng 1 tầng tính từ tầng đang chọn
+                    bool storeyFromLevels;
+                    double storeyMm = CadToDuctService.GetStoreyHeightMm(_doc, scanLevelId, out storeyFromLevels);
+                    foreach (CadDuctSegment riser in ducts)
+                    {
+                        if (riser.IsRiser) riser.Length = storeyMm;
+                    }
 
                     _currentStraightDucts = ducts;
                     _currentFittings = fittings;
@@ -1028,7 +1078,9 @@ namespace HDTool
                         }
                         string otherName = otherNum > 0 ? ("#" + otherNum) : "";
 
-                        if (c.Kind == CadConnectionKind.Transition && other != null)
+                        if (c.Kind == CadConnectionKind.RiserTap)
+                            parts.Add((d.IsRiser ? "Đón ống ngang " : "Đấu vào trục đứng ") + otherName);
+                        else if (c.Kind == CadConnectionKind.Transition && other != null)
                         {
                             if (other.HeightMm > 0)
                                 parts.Add(string.Format("Côn thu -> {0} ({1}x{2})", otherName, (int)Math.Round(other.WidthMm), (int)Math.Round(other.HeightMm)));
@@ -1066,7 +1118,7 @@ namespace HDTool
                 row.CreateCells(
                     dgvPreview,
                     (i + 1).ToString(),
-                    "Ống gió thẳng",
+                    d.IsRiser ? "Ống trục đứng" : "Ống gió thẳng",
                     sizeText,
                     string.Format("{0:N0} mm", d.Length),
                     elevText,
@@ -1235,6 +1287,11 @@ namespace HDTool
 
         private void BuildFromPreview3D()
         {
+            if (_buildRunning)
+            {
+                SetStatus(Color.FromArgb(180, 83, 9), "Đang dựng lần trước, chờ xong rồi mới bấm tiếp.");
+                return;
+            }
             if (TryStartBuild())
             {
                 _preview3D.Close();
@@ -1255,7 +1312,7 @@ namespace HDTool
             {
                 bool off = _currentStraightDucts[r].IsExcluded;
                 DataGridViewRow row = dgvPreview.Rows[r];
-                row.Cells[1].Value = off ? "ĐÃ BỎ - không dựng" : "Ống gió thẳng";
+                row.Cells[1].Value = off ? "ĐÃ BỎ - không dựng" : (_currentStraightDucts[r].IsRiser ? "Ống trục đứng" : "Ống gió thẳng");
                 row.DefaultCellStyle.BackColor = off ? HDToolTheme.Surface2 : System.Drawing.Color.Empty;
                 row.DefaultCellStyle.ForeColor = off ? HDToolTheme.Text3 : System.Drawing.Color.Empty;
             }
@@ -1266,8 +1323,64 @@ namespace HDTool
             TryStartBuild();
         }
 
+        // Đang chạy 1 lần dựng: bấm thêm (kể cả bấm đúp) không được tạo thêm lớp ống
+        private bool _buildRunningFlag;
+        private DateTime _buildStartedAt;
+
+        // Lệnh dựng không chạy được (Revit không nhận ExternalEvent) thì sau 10 phút tự mở khoá, không kẹt nút mãi
+        private bool _buildRunning
+        {
+            get { return _buildRunningFlag && (DateTime.Now - _buildStartedAt).TotalMinutes < 10.0; }
+        }
+
+        private void SetBuildRunning(bool running)
+        {
+            _buildRunningFlag = running;
+            if (running) _buildStartedAt = DateTime.Now;
+            Action act = delegate
+            {
+                if (this.IsDisposed) return;
+                btnBuild.Enabled = !running;
+                btnBuild.Text = running ? "ĐANG DỰNG..." : "DỰNG MÔ HÌNH REVIT 3D";
+            };
+            if (this.InvokeRequired) this.BeginInvoke(act); else act();
+        }
+
+        /// <summary>Số ống của lần quét này đã dựng và vẫn còn trong mô hình. Gọi trong ngữ cảnh Revit API.</summary>
+        private int CountAlreadyBuilt(List<CadDuctSegment> ducts)
+        {
+            int count = 0;
+            foreach (CadDuctSegment d in ducts)
+            {
+                if (d.CreatedDuctId == null || d.CreatedDuctId == ElementId.InvalidElementId) continue;
+                Element el = _doc.GetElement(d.CreatedDuctId);
+                if (el != null && el.IsValidObject) count++;
+            }
+            return count;
+        }
+
+        /// <summary>Hỏi trước khi dựng chồng lên lần dựng trước (mặc định: huỷ). Gọi trong ngữ cảnh Revit API.</summary>
+        private static bool ConfirmBuildAgain(int alreadyBuilt)
+        {
+            TaskDialog td = new TaskDialog("HDTOOL - ĐÃ DỰNG TỪ LẦN QUÉT NÀY");
+            td.MainInstruction = string.Format("{0} ống của lần quét này đã có trong mô hình.", alreadyBuilt);
+            td.MainContent = "Dựng tiếp sẽ tạo thêm một lớp ống, côn, cút, chân rẽ CHỒNG lên lớp cũ.\n"
+                + "Muốn dựng lại cho sạch: xoá các ống đã dựng trước, rồi bấm dựng.";
+            td.AddCommandLink(TaskDialogCommandLinkId.CommandLink1, "Huỷ, không dựng chồng");
+            td.AddCommandLink(TaskDialogCommandLinkId.CommandLink2, "Vẫn dựng thêm một lớp");
+            td.CommonButtons = TaskDialogCommonButtons.Cancel;
+            td.DefaultButton = TaskDialogResult.CommandLink1;
+            return td.Show() == TaskDialogResult.CommandLink2;
+        }
+
         private bool TryStartBuild()
         {
+            if (_buildRunning)
+            {
+                SetStatus(Color.FromArgb(180, 83, 9), "Đang dựng lần trước, chờ xong rồi mới bấm tiếp.");
+                return false;
+            }
+
             if (_currentStraightDucts == null || _currentStraightDucts.Count == 0)
             {
                 SetStatus(Color.Red, "Chưa có đoạn ống nào được nhận diện. Hãy bấm [PICK CHỌN HÌNH VẼ TUYẾN ỐNG] trước.");
@@ -1351,11 +1464,19 @@ namespace HDTool
             bool useTap = chkTakeoffTap.Checked;
 
             SetStatus(Color.FromArgb(2, 132, 199), "Đang dựng ống gió và tự động lắp côn thu, cút, chân rẽ trong Revit...");
+            SetBuildRunning(true);
 
             HDToolModelessHost.Run(uiapp =>
             {
                 try
                 {
+                    int alreadyBuilt = CountAlreadyBuilt(buildDucts);
+                    if (alreadyBuilt > 0 && !ConfirmBuildAgain(alreadyBuilt))
+                    {
+                        SetStatus(Color.FromArgb(180, 83, 9), string.Format("Đã huỷ: {0} ống của lần quét này đã có trong mô hình, không dựng chồng.", alreadyBuilt));
+                        return;
+                    }
+
                     string report;
                     int count = CadToDuctService.BuildDuctsInRevit(
                         _doc,
@@ -1378,6 +1499,10 @@ namespace HDTool
                 catch (Exception ex)
                 {
                     SetStatus(Color.Red, "Lỗi dựng ống gió: " + ex.Message);
+                }
+                finally
+                {
+                    SetBuildRunning(false);
                 }
             });
             return true;

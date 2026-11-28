@@ -241,6 +241,24 @@ Bộ cài đặt HDTOOL được đóng gói thành **1 file `.exe` duy nhất**
 - Sau khi dựng, nếu thông báo có dòng **CHƯA DỰNG ĐƯỢC**, mở file nhật ký ghi ngay bên dưới để biết đoạn / phụ kiện nào lỗi và vì sao.
 - (Version 123) Mọi vị trí tay nhánh được dựng bằng **chân rẽ**, không dùng chạc 3: cả chỗ 2 nhánh tách ra từ đầu một ống qua hộp gió, và nhánh nhỏ rẽ ra ở cuối tuyến. Hình xem trước chưa vẽ phần ống chính kéo thêm; khi dựng, tool tự kéo ống chính tới đủ chỗ gắn 2 chân rẽ.
 
+## Đường dẫn ghi chú không bị nhận thành ống (Version 130)
+- Các đường kẻ từ chữ ghi chú tới mũi tên (đường dẫn) được nhận ra và bỏ qua, kể cả khi 2 đường dẫn chạy song song cạnh nhau như 2 mép ống.
+
+## Không dựng chồng ống (Version 129)
+- Trong lúc đang dựng, nút đổi thành **ĐANG DỰNG...**; bấm thêm (kể cả bấm đúp) không tạo thêm ống.
+- Bấm dựng lại khi ống của lần quét đó vẫn còn trong mô hình: tool hỏi trước, mặc định là **Huỷ, không dựng chồng**. Muốn dựng lại cho sạch: xoá ống cũ rồi bấm dựng.
+- Đã quét lại thì tool không biết ống cũ: tự xoá ống cũ trước khi dựng.
+
+## Chỗ chia chữ Y và bảng danh sách ống (Version 128)
+- Chỗ ống lớn chia làm 2 nhánh (chữ Y) được dựng bằng **ống thẳng + 2 chân rẽ**: ống lớn kéo thẳng qua, 2 nhánh gắn chân rẽ vào sườn. Không dựng chạc Y.
+- Cửa sổ dựng ống mở to hơn (tự thu nhỏ nếu màn hình không đủ chỗ), bảng danh sách ống hiện khoảng 10 dòng, tiêu đề cột không bị cắt. Ô chữ dài: rê chuột để xem đủ.
+
+## Ống trục đứng (Version 126)
+- Tool tự tìm khung có gạch chéo (trục đứng) khi quét. Cỡ lấy theo ghi chú trùng khung (VD `KT: 450x1000 mm`), không có thì lấy theo ống ngang đấu vào.
+- Chiều cao bằng 1 tầng: từ tầng đang chọn ở ô **Cao Độ Tầng** tới tầng kế trên. Không có tầng trên thì dùng 3300mm (bảng tổng kết sẽ ghi rõ).
+- (Version 127) Bản vẽ kéo ống xuyên vào khung trục vẫn nhận được: tool cắt đầu ống về mặt khung rồi đấu vào trục.
+- Trong bảng và hình xem trước 3D hiện là **Ống trục đứng**. Trục không có ống ngang đấu vào được tô đỏ để kiểm tra; bỏ chọn nếu không muốn dựng.
+
 ## Ống có ghi chú mà không được vẽ (Version 124-125)
 - (Version 125) Sửa lỗi mất đoạn ống nằm sát cổ loe: Revit gộp 2 hình thành 1 đường gấp khúc, tool nay tự tách ra trước khi nhận diện.
 - Đoạn chữ nhật trên layer ống có ghi chú `WxH` bên trong (rộng đúng bằng W) luôn được lấy lại, kể cả khi bước lọc đã bỏ.

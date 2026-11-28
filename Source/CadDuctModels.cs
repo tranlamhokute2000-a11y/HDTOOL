@@ -19,7 +19,8 @@ namespace HDTool
         Transition,      // Côn thu đồng tâm (W1 -> W2)
         Elbow,           // Cút góc chuyển hướng
         TakeoffTap,      // Chân rẽ Tap đâm sườn ống chính
-        TeeBranch        // Chạc 3 chia nhánh
+        TeeBranch,       // Chạc 3 chia nhánh
+        RiserTap         // Ống ngang đấu vào sườn ống trục đứng (SegmentA = trục đứng, SegmentB = ống ngang)
     }
 
     /// <summary>
@@ -77,6 +78,10 @@ namespace HDTool
         public XYZ TapBevelDirection { get; set; }
 
         public ElementId CreatedDuctId { get; set; }
+
+        // Ống trục đứng: Start = End = tâm trên mặt bằng, Length = chiều cao (mm), WidthMm nằm theo phương RiserWidthAxis
+        public bool IsRiser { get; set; }
+        public XYZ RiserWidthAxis { get; set; }
 
         // Kỹ sư bỏ đoạn này ở cửa sổ xem trước 3D -> không dựng
         public bool IsExcluded { get; set; }
