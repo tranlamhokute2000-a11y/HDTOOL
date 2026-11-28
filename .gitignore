@@ -30,3 +30,6 @@ dist/
 .vite/
 
 
+
+# Du lieu ban ve du an that cho cong cu chay lai Dung Ong Gio (chi o may nay, khong day len GitHub)
+.agents/tools/cad-duct-replay/data/

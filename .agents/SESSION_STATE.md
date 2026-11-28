@@ -1,16 +1,49 @@
 ﻿# TRẠNG THÁI LÀM VIỆC GẦN NHẤT (SESSION STATE)
 
 - **Thời gian cập nhật**: 2026-11-28
-- **Phiên bản hiện tại**: **Version 125** (`HDTOOL_Setup_Version_125.exe`)
-- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_124.exe` và `HDTOOL_Setup_Version_125.exe` (0 file trên Desktop)
-- **Git**: Version 112 đã commit (`f3390e3`), Version 113–114 (Mac Sáng + Menu cột trái) đã commit (`97ccf1a`). Version 115–125 + sửa quy tắc 16h50 đã commit ngày 2026-11-28.
+- **Phiên bản hiện tại**: **Version 130** (`HDTOOL_Setup_Version_130.exe`)
+- **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_129.exe` và `HDTOOL_Setup_Version_130.exe` (0 file trên Desktop)
+- **Git**: Version 112–130, skill `hdtool-cad-duct` và công cụ `.agents/tools/cad-duct-replay` đã commit và đẩy lên GitHub ngày 2026-11-28 (nhánh `main`). Dữ liệu bản vẽ `cad-duct-replay/data/` không lên GitHub (chỉ ở máy công ty).
 
-## 0. Vừa sửa — Mất đoạn SAD:400x250 trong Revit (Version 125)
+## 0. Vừa làm — Đúc kết thành Skill (Version 130, không đổi mã)
+- Sếp: "tất cả những thành quả đã làm được đúc kết hết lại thành skills".
+- `SKILL.md` + `.agents/skills/hdtool/SKILL.md`: viết lại mục `CadToDuct` theo đúng thứ tự pipeline, chỉ hiện trạng (bỏ lịch sử version); sửa bản đồ mã nguồn (bộ cài, file CAD -> ống gió).
+- Skill mới `.agents/skills/hdtool-cad-duct/SKILL.md`: ý muốn đã chốt của Sếp, môi trường Revit 2025 + journal, quy trình chẩn đoán, cách chạy lại ngoài Revit, bộ 3 bản vẽ hồi quy + kết quả hiện tại, các bẫy đã gặp.
+- Chương trình mô phỏng đã chép vào dự án: `.agents/tools/cad-duct-replay/` (`ChayLai.ps1` chạy + so chuẩn 3 bản vẽ: tes 23, tes2 61, tang1 40 — KHOP CHUAN; `TaoDuLieu.ps1` thêm bản vẽ). `data/` bị .gitignore (dữ liệu dự án thật, chỉ ở máy này).
+
+## 0s. Vừa sửa — 2 đường dẫn ghi chú bị nhận thành ống (Version 130)
+- Sếp gửi ảnh: 2 đường dẫn từ "OAD 300x350 / OAD 350x300" xuống 2 trục đứng thành ống 975x350. Thêm `CadLeaderFilter.cs` (`FindLeaderLineIndices`).
+- Mô phỏng bằng nét quét thật tes 2 (16:23): bỏ 975x350, 575x300, 2550 (thiếu H) + 2 khúc ngắn chồng; 1 đoạn 350x350 thành 350x300; 2 đoạn đổi sang lấy cỡ theo ghi chú có mũi tên. 61 ống (cả 16 trục). Liên kết tes / tầng 1 / tes 2 (DWG): không đổi. Build 130 0 lỗi. CHƯA thử trong Revit.
+
+## 0t. Chữ Y = ống thẳng + chân rẽ; bảng danh sách ống to hơn (Version 128)
+- Sếp quét tes 2 trong Revit 15:43 (65 ống). Mô phỏng phải nạp cả NOTE/ZONE từ `CadDuct_scan.log` (bản vẽ trong Revit lệch DWG dx 45294, dy -2579; độ lệch offline bị nhân 100 nên không dùng được) -> khớp Revit gần như 100%. Lưu ý: nhật ký quét không ghi cung (ARC); Revit cũng không nhận phụ kiện nào ở 2 chỗ Y.
+- Sửa: tách ống chính ở chỗ Y (BuildGeometricTopology), nới `ConnectSplitBranchesToTrunk`, thêm `AbsorbJunctionBoxes` (hộp 1300x500 trên ống 800x400). Kết quả: 2200x450 chân rẽ 1400x450 + 950x400; 800x400 kéo tới hết hộp, chân rẽ 2 ống 500x350 (cả dữ liệu Revit lẫn DWG). tes và tầng 1: liên kết không đổi.
+- Form `CadToDuctForm`: OnLoad phóng to (+240x200 theo DPI, kẹp theo màn hình), bảng kéo sát khung 4, cột tối thiểu bằng tiêu đề, cột Kết Nối rộng hơn. Chụp form ngoài Revit (scratchpad `formshot`): bảng 1068x328, 10 dòng. Làm thẳng theo lệnh Sếp, không qua Preview Studio.
+- ĐÃ THỬ trong Revit 2025 (28/11 15:56 quét, 15:57-16:01 dựng): 48 ống ngang + 16 trục đứng, 10 côn, 13 cút, 36 chân rẽ (16 vào trục), "Chưa dựng được: 0".
+- Sếp bấm dựng 4 lần (15:57:55, 15:58:00, 15:58:16, 16:00:57), không xoá giữa các lần -> nhiều khả năng ống chồng 4 lớp. ĐÃ SỬA ở Version 129 (khoá nút khi đang dựng + hỏi trước khi dựng chồng). Thử 28/11 16:20-16:22: Sếp xoá ống cũ, Cập nhật Tool, quét, dựng -> journal chỉ 1 lần dựng (16:21:42), đủ 48 ống + 16 trục, 0 lỗi. Chưa thấy lần bấm dựng thứ hai nên hộp hỏi "dựng chồng" CHƯA được thử.
+- Còn lại trên tes 2: 2 đoạn 800x400 cạnh tiêu âm chưa nối; khung chú thích 2550 rộng (thiếu H) và đoạn 975x350 bị nhận nhầm là ống.
+
+## 0u. Vừa sửa — `Downloads\tes 2.dwg` (cấp gió tươi OAD EI60), Version 127
+- Sếp: "Sửa đi" (lỗi mất 13 đoạn ống vẽ xuyên vào khung trục đứng).
+- Sửa: `TrimDuctsAtRiserSymbols` (cắt đầu ống về mặt khung trước bước lọc), `RemoveLinksThroughRisers` (bỏ cút/chân rẽ nối 2 ống qua trục), bỏ hình nằm gọn trong ống không nối gì khỏi phụ kiện.
+- Mô phỏng từ DWG (chưa quét trong Revit): 44 ống ngang + 16 trục đứng, cả 16 trục có ống đấu vào; chỉ còn 2 đoạn 800x400 cạnh tiêu âm chưa nối. tes (nét quét thật) và tầng 1: liên kết không đổi so với 126. Build 127 0 lỗi.
+- CHƯA làm: 2 chỗ chia chữ Y (800x400 vào 500x350; 2200x450 vào 1400x450) vẫn thành chân rẽ -> chờ Sếp quyết (vướng quy tắc "không chạc 3").
+- Cần Sếp xác nhận: khung chéo cuối nhánh là trục cao 1 tầng hay đoạn xuống miệng gió; đoạn cuối tuyến 400x400 (cỡ H lan truyền) và trục 400x400 ở cuối; cỡ 350x350 lan truyền (2 đoạn).
+- File mô phỏng: scratchpad `tes2\run` (t2.png, t2_3d.png, run_127.log).
+
+## 0v. Ống trục đứng + tuyến TEAD:200x150 (Version 126)
+- Sếp: trục đứng cao bằng 1 tầng; text kích thước là ký hiệu ống gần đó, lan truyền để vẽ đúng cỡ.
+- Mô phỏng bằng nét Revit quét 14:33 (tes.dwg): 3 trục đứng (450x1000 và 300x500 theo ghi chú KT; đầu tuyến TEAD 200x150 lan truyền); tuyến TEAD đủ chuỗi trục - khúc cụt - cút - 200x150 dài 1427 - côn 200/150 - 150x150. Tầng 1: không mất liên kết nào, thêm 4 trục đứng (đều có ghi chú trùng khung) và 2 đoạn ống. Build 126 0 lỗi.
+- ĐÃ THỬ trong Revit 28/11 15:28 (tes.dwg): quét 3 ký hiệu -> 3 trục đứng, dựng 23 ống, cao tầng 4200mm, "Chưa dựng được: 0". Sếp nhận xét "vẽ hiện tại làm tốt lắm". Mới đạt trên tes.dwg; HVAC TẦNG 1 chỉ mới mô phỏng. Chưa hỗ trợ ống tròn, chưa đọc ghi chú cao độ.
+- Giả định cần Sếp xác nhận: (1) ống đứng đi từ tầng đang chọn LÊN tầng trên; (2) khung đầu tuyến TEAD (250x200) dùng 200x150 dù đường dẫn trỏ tới nó ghi `KT: 500x300 MM`.
+- Phụ: block `Air terminal` (tên ẩn *U3/*U16) đang bị xếp nhầm là tiêu âm trong `ClassifyBlockExclusion` (chưa sửa).
+
+## 0w. Mất đoạn SAD:400x250 trong Revit (Version 125)
 - Nguyên nhân gốc (từ `CadDuct_scan.log` 13:32): Revit 2025.5 gộp đoạn 400x250 + cổ loe sát đầu thành 1 PolyLine 9 điểm đi qua 2 đỉnh 2 lần -> không phân loại được. DWG là 2 hình rời nên trước đó không tái hiện được.
 - Sửa: `SplitPinchedPolyline` + `AddPolylinePart`; cổ loe chọn ống chính lệch vách ít nhất (trước lấy ống xét sau cùng -> khúc 200mm bị gắn chân rẽ, không thành côn thu).
 - Kiểm tra: nạp đúng nét từ nhật ký quét, không sửa ra đúng 17 ống như Revit; có sửa ra 18 ống, 400x250 dài 7359 + côn 400x250->400x150 + 2 chân rẽ ở hộp VCD/FD. Tầng 1: kết quả không đổi (34 ống). Build 125 0 lỗi.
 - ĐÃ THỬ trong Revit 2025.5 (28/11 14:33, tes.dwg): `CadDuct_build.log` 18 ống, chưa dựng được 0; journal: 18 ống, 1 côn thu, 0 cút, 14 chân rẽ (14 transaction Tap thành công, kể cả chân rẽ rộng bằng ống chính). Chưa xem bằng mắt hướng vát chân rẽ trên mô hình.
-- Còn lại: đoạn dài 1427mm tại y=7536 (cạnh ghi chú TEAD:200x150) bị loại vì block tiêu âm 820mm đè giữa đoạn (quy tắc loại thiết bị, chưa đổi, cần Sếp quyết).
+- (Ghi chú cũ SAI đã bỏ: đoạn 1427mm y=7536 bị loại do nét van VCD, không phải block tiêu âm; đã sửa ở 126.)
 
 ## 0x. Mọi tay nhánh dựng bằng chân rẽ (Version 123)
 - Sếp: "các vị trí tay nhánh quy về vẽ bằng chân rẽ, không cần chạc 3". Thêm `NormalizeBranchesToTaps` / `ConnectSplitBranchesToTrunk`.
