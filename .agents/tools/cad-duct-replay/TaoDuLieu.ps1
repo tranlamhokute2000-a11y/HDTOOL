@@ -25,6 +25,7 @@ $work = Join-Path $env:TEMP "HDTOOL_Replay"
 $tmp = Join-Path $work ("dwg_" + $Ten); New-Item -ItemType Directory -Force $tmp | Out-Null
 $copy = Join-Path $tmp "banve.dwg"
 Copy-Item $Dwg $copy -Force
+Copy-Item $Dwg (Join-Path $dir "banve.dwg") -Force  # giu ban goc cung du lieu
 
 # 1. Net ve -> lines.txt (dump.lsp ghi vao thu muc cua ban ve)
 $scr = Join-Path $tmp "dump.scr"

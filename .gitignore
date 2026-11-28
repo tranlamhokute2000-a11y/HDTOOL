@@ -34,5 +34,6 @@ dist/
 
 
 
-# Du lieu ban ve du an that cho cong cu chay lai Dung Ong Gio (chi o may nay, khong day len GitHub)
-.agents/tools/cad-duct-replay/data/
+# Cong cu chay lai Dung Ong Gio: dua du lieu ban ve len (Sep cho phep 2026-11-28), bo ket qua chay
+.agents/tools/cad-duct-replay/data/*/ket-qua/
+!.agents/tools/cad-duct-replay/data/*/CadDuct_scan.log
