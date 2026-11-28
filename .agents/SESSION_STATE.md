@@ -5,7 +5,13 @@
 - **Bộ cài lưu trữ**: `HDTOOL_Setup_Version_129.exe` và `HDTOOL_Setup_Version_130.exe` (0 file trên Desktop)
 - **Git**: Version 112–130, skill `hdtool-cad-duct` và công cụ `.agents/tools/cad-duct-replay` đã commit và đẩy lên GitHub ngày 2026-11-28 (nhánh `main`). Dữ liệu bản vẽ `cad-duct-replay/data/` không lên GitHub (chỉ ở máy công ty).
 
-## 0. Vừa làm — Đúc kết thành Skill (Version 130, không đổi mã)
+## 0. Làm tiếp ở máy khác (máy nhà) — 2026-11-28
+- Đã đẩy toàn bộ lên GitHub `main` (`3ce3280`). `Build.ps1` lấy thư mục dự án theo vị trí file (không còn cố định `c:\Users\Nguye\...`); `Installer/Setup.cs`, `app.ico`, `hadomee_logo.png` đã có trong git. Đã thử tải lại từ GitHub và biên dịch DLL + Setup: 0 lỗi.
+- Máy mới cần: Revit 2024 tại `C:\Program Files\Autodesk\Revit 2024` (thư viện để biên dịch), .NET Framework 4.8; AutoCAD 2021+ (accoreconsole) để đọc chữ DWG khi quét và cho `TaoDuLieu.ps1`.
+- `.agents/tools/cad-duct-replay/data/` KHÔNG có trên GitHub: ở máy mới tạo lại bằng `TaoDuLieu.ps1` (cần file DWG; muốn chạy đúng như Revit thì quét trong Revit rồi `-KemNhatKyQuet`), xem lại hình rồi `ChayLai.ps1 -LuuChuan`.
+- Bộ nhớ riêng của trợ lý (thư mục `.claude` trên máy công ty) không theo sang; trạng thái việc nằm ở file này + `AGENTS.md` + 2 skill.
+
+## 0a. Vừa làm — Đúc kết thành Skill (Version 130, không đổi mã)
 - Sếp: "tất cả những thành quả đã làm được đúc kết hết lại thành skills".
 - `SKILL.md` + `.agents/skills/hdtool/SKILL.md`: viết lại mục `CadToDuct` theo đúng thứ tự pipeline, chỉ hiện trạng (bỏ lịch sử version); sửa bản đồ mã nguồn (bộ cài, file CAD -> ống gió).
 - Skill mới `.agents/skills/hdtool-cad-duct/SKILL.md`: ý muốn đã chốt của Sếp, môi trường Revit 2025 + journal, quy trình chẩn đoán, cách chạy lại ngoài Revit, bộ 3 bản vẽ hồi quy + kết quả hiện tại, các bẫy đã gặp.
