@@ -57,6 +57,7 @@ namespace HDTool
         private System.Windows.Forms.Panel pnlToolbar;
         private Label lblSearchIcon;
         private System.Windows.Forms.TextBox txtSearch;
+        private HDToolSearchBox searchFamily;
         private Label lblCategoryIcon;
         private System.Windows.Forms.ComboBox cboCategoryFilter;
         private Label lblFilterResult;
@@ -72,6 +73,7 @@ namespace HDTool
         private FamilyMeshViewer picLargePreview;
         private System.Windows.Forms.ComboBox cboTypes;
         private Dictionary<ElementId, float[]> _meshCache;
+        private Dictionary<ElementId, float[]> _lineCache;
         private ElementId _viewerSymbolId;
         private Label lblInspectorCategory;
         private Label lblInspectorFamName;
@@ -79,6 +81,13 @@ namespace HDTool
         private System.Windows.Forms.Panel pnlInspectorInfo;
         private Label lblInspectorHost;
         private Label lblInspectorInstances;
+        private System.Windows.Forms.Panel pnlCategoryBox;
+        private Label lblCategoryChange;
+        private System.Windows.Forms.ComboBox cboNewCategory;
+        private System.Windows.Forms.Button btnChangeCategory;
+        private Label lblCategoryNote;
+        private List<FamilyCategoryChoice> _categoryChoices;
+        private bool _categoryBusy;
         private Label lblParamHeader;
         private DataGridView dgvParameters;
         private System.Windows.Forms.Button btnInspectorPlace;
@@ -117,6 +126,7 @@ namespace HDTool
             if (uidoc == null) return;
             _uidoc = uidoc;
             _doc = uidoc.Document;
+            _categoryChoices = null; // ten Category lay theo du an dang mo
             RefreshFamiliesFromProject();
         }
 
@@ -127,6 +137,7 @@ namespace HDTool
             _currentFilter = new FamilyPaletteFilter();
             _previewCache = new Dictionary<ElementId, Bitmap>();
             _meshCache = new Dictionary<ElementId, float[]>();
+            _lineCache = new Dictionary<ElementId, float[]>();
         }
 
         private void InitializeComponent()
@@ -138,8 +149,8 @@ namespace HDTool
             this.ClientSize = new Size(1320, 840);
             this.MinimumSize = new Size(1100, 700);
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.FromArgb(15, 20, 28);
-            this.ForeColor = Color.FromArgb(241, 245, 249);
+            this.BackColor = HDToolTheme.Bg;
+            this.ForeColor = HDToolTheme.Text;
             this.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             this.ShowIcon = false;
             this.DoubleBuffered = true;
@@ -157,11 +168,11 @@ namespace HDTool
             // Hàng 1: Toolbar Khoa Học (52px)
             // Hàng 2: Content (100% Fill)
             // Hàng 3: Bottom Status (48px)
+            tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 62F));
             tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
-            tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 52F));
             tblMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
-            tblMain.BackColor = Color.FromArgb(15, 20, 28);
+            tblMain.BackColor = HDToolTheme.Bg;
             tblMain.Margin = new Padding(0);
             tblMain.Padding = new Padding(0);
 
@@ -170,30 +181,30 @@ namespace HDTool
             // ===================================================================
             pnlHeader = new System.Windows.Forms.Panel();
             pnlHeader.Dock = DockStyle.Fill;
-            pnlHeader.BackColor = Color.FromArgb(16, 22, 34);
+            pnlHeader.BackColor = HDToolTheme.Surface;
             pnlHeader.Margin = new Padding(0);
             pnlHeader.Paint += PnlHeader_Paint;
             pnlHeader.Resize += PnlHeader_Resize;
 
             lblHeaderTitle = new Label();
             lblHeaderTitle.Text = "TỔNG HỢP FAMILY ĐÃ LOAD VÀO DỰ ÁN";
-            lblHeaderTitle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            lblHeaderTitle.ForeColor = Color.FromArgb(248, 250, 252);
-            lblHeaderTitle.Location = new Point(16, 7);
+            lblHeaderTitle.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
+            lblHeaderTitle.ForeColor = HDToolTheme.Text;
+            lblHeaderTitle.Location = new Point(16, 8);
             lblHeaderTitle.AutoSize = true;
 
             lblHeaderSubtitle = new Label();
             lblHeaderSubtitle.Text = "Mỗi dòng là 1 Family đã load (không đếm số lượng trên bản vẽ). Chọn Type ở khung bên phải, nhấp đúp hoặc bấm [Đặt] để vẽ.";
-            lblHeaderSubtitle.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
-            lblHeaderSubtitle.ForeColor = Color.FromArgb(148, 163, 184);
-            lblHeaderSubtitle.Location = new Point(17, 31);
+            lblHeaderSubtitle.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            lblHeaderSubtitle.ForeColor = HDToolTheme.Text2;
+            lblHeaderSubtitle.Location = new Point(17, 36);
             lblHeaderSubtitle.AutoSize = true;
 
             lblHeaderBadge = new Label();
             lblHeaderBadge.Text = "Revit 2024–2027";
             lblHeaderBadge.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
-            lblHeaderBadge.ForeColor = Color.FromArgb(199, 210, 254);
-            lblHeaderBadge.BackColor = Color.FromArgb(49, 46, 129);
+            lblHeaderBadge.ForeColor = HDToolTheme.Accent;
+            lblHeaderBadge.BackColor = HDToolTheme.AccentSoft;
             lblHeaderBadge.TextAlign = ContentAlignment.MiddleCenter;
             lblHeaderBadge.Size = new Size(115, 24);
             lblHeaderBadge.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -201,9 +212,9 @@ namespace HDTool
             lblTotalStats = new Label();
             lblTotalStats.Text = "0 Families | 0 Types";
             lblTotalStats.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-            lblTotalStats.ForeColor = Color.FromArgb(52, 211, 153);
-            lblTotalStats.BackColor = Color.FromArgb(15, 23, 42);
-            lblTotalStats.BorderStyle = BorderStyle.FixedSingle;
+            lblTotalStats.ForeColor = HDToolTheme.Ok;
+            lblTotalStats.BackColor = HDToolTheme.OkSoft;
+            lblTotalStats.BorderStyle = BorderStyle.None;
             lblTotalStats.TextAlign = ContentAlignment.MiddleCenter;
             lblTotalStats.Size = new Size(200, 26);
             lblTotalStats.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -219,49 +230,47 @@ namespace HDTool
             // ===================================================================
             pnlToolbar = new System.Windows.Forms.Panel();
             pnlToolbar.Dock = DockStyle.Fill;
-            pnlToolbar.BackColor = Color.FromArgb(19, 26, 38);
+            pnlToolbar.BackColor = HDToolTheme.Bg;
             pnlToolbar.Margin = new Padding(0);
             pnlToolbar.Padding = new Padding(14, 8, 14, 8);
             pnlToolbar.Resize += PnlToolbar_Resize;
 
-            // Khối 1: Tìm kiếm
+            // Khối 1: Tìm kiếm (ô bo góc, kính lúp, chữ gợi ý rõ công dụng)
             lblSearchIcon = new Label();
-            lblSearchIcon.Text = "Tìm kiếm:";
-            lblSearchIcon.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblSearchIcon.ForeColor = Color.FromArgb(148, 163, 184);
-            lblSearchIcon.Location = new Point(14, 15);
+            lblSearchIcon.Text = "Lọc Family:";
+            lblSearchIcon.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            lblSearchIcon.ForeColor = HDToolTheme.Text;
+            lblSearchIcon.Location = new Point(16, 20);
             lblSearchIcon.AutoSize = true;
 
-            txtSearch = new System.Windows.Forms.TextBox();
-            txtSearch.Location = new Point(82, 12);
-            txtSearch.Size = new Size(220, 25);
-            txtSearch.BackColor = Color.FromArgb(15, 23, 42);
-            txtSearch.ForeColor = Color.White;
-            txtSearch.BorderStyle = BorderStyle.FixedSingle;
-            txtSearch.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
-            txtSearch.Text = "";
+            searchFamily = new HDToolSearchBox();
+            searchFamily.Placeholder = "Gõ tên Family hoặc Type để lọc…";
+            searchFamily.KeyHint = "Ctrl+F";
+            searchFamily.Location = new Point(104, 10);
+            searchFamily.Size = new Size(380, 36);
+            txtSearch = searchFamily.Box;
             txtSearch.TextChanged += delegate
             {
                 _currentFilter.SearchKeyword = txtSearch.Text.Trim();
                 FilterAndPopulateGrid();
             };
 
-            // Khối 2: Chuyên ngành (Dropdown ComboBox hiện đại)
+            // Khối 2: Chuyên ngành
             lblCategoryIcon = new Label();
-            lblCategoryIcon.Text = "Chuyên Ngành:";
-            lblCategoryIcon.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblCategoryIcon.ForeColor = Color.FromArgb(148, 163, 184);
-            lblCategoryIcon.Location = new Point(318, 15);
+            lblCategoryIcon.Text = "Chuyên ngành:";
+            lblCategoryIcon.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            lblCategoryIcon.ForeColor = HDToolTheme.Text;
+            lblCategoryIcon.Location = new Point(504, 20);
             lblCategoryIcon.AutoSize = true;
 
             cboCategoryFilter = new System.Windows.Forms.ComboBox();
-            cboCategoryFilter.Location = new Point(415, 11);
+            cboCategoryFilter.Location = new Point(606, 15);
             cboCategoryFilter.Size = new Size(240, 28);
             cboCategoryFilter.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboCategoryFilter.BackColor = Color.FromArgb(15, 23, 42);
-            cboCategoryFilter.ForeColor = Color.FromArgb(52, 211, 153); // Emerald
-            cboCategoryFilter.FlatStyle = FlatStyle.Flat;
-            cboCategoryFilter.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            cboCategoryFilter.BackColor = HDToolTheme.Input;
+            cboCategoryFilter.ForeColor = HDToolTheme.Text;
+            cboCategoryFilter.FlatStyle = FlatStyle.Standard;
+            cboCategoryFilter.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
             PopulateCategoryDropdown();
             cboCategoryFilter.SelectedIndexChanged += CboCategoryFilter_SelectedIndexChanged;
 
@@ -269,18 +278,18 @@ namespace HDTool
             lblFilterResult = new Label();
             lblFilterResult.Text = "Hiển thị: 0 Types";
             lblFilterResult.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-            lblFilterResult.ForeColor = Color.FromArgb(56, 189, 248); // Sky
-            lblFilterResult.Location = new Point(675, 16);
+            lblFilterResult.ForeColor = HDToolTheme.Text2;
+            lblFilterResult.Location = new Point(866, 21);
             lblFilterResult.AutoSize = true;
 
             // Khối 5: Nút Làm Mới (F5) neo góc phải
-            btnRefresh = CreateSmallButton("Làm Mới (F5)", Color.FromArgb(67, 56, 202));
-            btnRefresh.Size = new Size(110, 28);
+            btnRefresh = CreateSmallButton("Làm Mới (F5)", HDToolTheme.Accent);
+            btnRefresh.Size = new Size(120, 34);
             btnRefresh.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnRefresh.Click += delegate { RefreshFamiliesFromProject(); };
 
             pnlToolbar.Controls.Add(lblSearchIcon);
-            pnlToolbar.Controls.Add(txtSearch);
+            pnlToolbar.Controls.Add(searchFamily);
             pnlToolbar.Controls.Add(lblCategoryIcon);
             pnlToolbar.Controls.Add(cboCategoryFilter);
             pnlToolbar.Controls.Add(lblFilterResult);
@@ -294,7 +303,7 @@ namespace HDTool
             splitMain.Dock = DockStyle.Fill;
             splitMain.Orientation = Orientation.Vertical;
             splitMain.SplitterWidth = 6;
-            splitMain.BackColor = Color.FromArgb(30, 41, 59);
+            splitMain.BackColor = HDToolTheme.Line;
             splitMain.Margin = new Padding(0);
 
             // -------------------------------------------------------------------
@@ -302,9 +311,9 @@ namespace HDTool
             // -------------------------------------------------------------------
             dgvFamilies = new DataGridView();
             dgvFamilies.Dock = DockStyle.Fill;
-            dgvFamilies.BackgroundColor = Color.FromArgb(15, 20, 28);
+            dgvFamilies.BackgroundColor = HDToolTheme.Surface;
             dgvFamilies.BorderStyle = BorderStyle.None;
-            dgvFamilies.GridColor = Color.FromArgb(30, 41, 59);
+            dgvFamilies.GridColor = HDToolTheme.Line;
             dgvFamilies.RowHeadersVisible = false;
             dgvFamilies.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvFamilies.MultiSelect = false;
@@ -312,25 +321,25 @@ namespace HDTool
             dgvFamilies.AllowUserToDeleteRows = false;
             dgvFamilies.AllowUserToResizeRows = false;
             dgvFamilies.EnableHeadersVisualStyles = false;
-            dgvFamilies.RowTemplate.Height = 32;
+            dgvFamilies.RowTemplate.Height = 36;
 
             EnableDoubleBuffer(dgvFamilies);
 
             // Header Style
             dgvFamilies.ColumnHeadersHeight = 34;
             dgvFamilies.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            dgvFamilies.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(30, 41, 59);
-            dgvFamilies.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(248, 250, 252);
-            dgvFamilies.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+            dgvFamilies.ColumnHeadersDefaultCellStyle.BackColor = HDToolTheme.Surface2;
+            dgvFamilies.ColumnHeadersDefaultCellStyle.ForeColor = HDToolTheme.Text2;
+            dgvFamilies.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             dgvFamilies.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
 
             // Row Default Style
-            dgvFamilies.DefaultCellStyle.BackColor = Color.FromArgb(15, 23, 42);
-            dgvFamilies.DefaultCellStyle.ForeColor = Color.FromArgb(226, 232, 240);
-            dgvFamilies.DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
-            dgvFamilies.DefaultCellStyle.SelectionBackColor = Color.FromArgb(67, 56, 202); // Indigo 600
-            dgvFamilies.DefaultCellStyle.SelectionForeColor = Color.White;
-            dgvFamilies.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(21, 29, 44);
+            dgvFamilies.DefaultCellStyle.BackColor = HDToolTheme.Surface;
+            dgvFamilies.DefaultCellStyle.ForeColor = HDToolTheme.Text;
+            dgvFamilies.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
+            dgvFamilies.DefaultCellStyle.SelectionBackColor = HDToolTheme.AccentSoft;
+            dgvFamilies.DefaultCellStyle.SelectionForeColor = HDToolTheme.Text;
+            dgvFamilies.AlternatingRowsDefaultCellStyle.BackColor = HDToolTheme.RowAlt;
 
             // Cột 0: STT
             DataGridViewTextBoxColumn colSTT = new DataGridViewTextBoxColumn();
@@ -347,7 +356,7 @@ namespace HDTool
             colFamily.HeaderText = "Tên Family (Họ)";
             colFamily.Width = 240;
             colFamily.ReadOnly = true;
-            colFamily.DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            colFamily.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             dgvFamilies.Columns.Add(colFamily);
 
             // Cột 2: Type / Kích Thước
@@ -357,16 +366,16 @@ namespace HDTool
             colType.Width = 90;
             colType.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             colType.ReadOnly = true;
-            colType.DefaultCellStyle.ForeColor = Color.FromArgb(167, 243, 208); // Emerald Light
+            colType.DefaultCellStyle.ForeColor = HDToolTheme.Text;
             dgvFamilies.Columns.Add(colType);
 
             // Cột 3: Chuyên Ngành
             DataGridViewTextBoxColumn colCategory = new DataGridViewTextBoxColumn();
             colCategory.Name = "colCategory";
-            colCategory.HeaderText = "Chuyên Ngành (Category)";
-            colCategory.Width = 160;
+            colCategory.HeaderText = "Chuyên Ngành";
+            colCategory.Width = 180;
             colCategory.ReadOnly = true;
-            colCategory.DefaultCellStyle.ForeColor = Color.FromArgb(125, 211, 252); // Sky Light
+            colCategory.DefaultCellStyle.ForeColor = HDToolTheme.Text2;
             dgvFamilies.Columns.Add(colCategory);
 
             // Cột 4: Nút Thao Tác Đặt Vào Bản Vẽ
@@ -377,8 +386,7 @@ namespace HDTool
             colAction.Text = "Đặt Vào Bản Vẽ";
             colAction.UseColumnTextForButtonValue = true;
             colAction.FlatStyle = FlatStyle.Flat;
-            colAction.DefaultCellStyle.BackColor = Color.FromArgb(5, 150, 105); // Emerald Green
-            colAction.DefaultCellStyle.ForeColor = Color.White;
+            colAction.DefaultCellStyle.ForeColor = HDToolTheme.AccentInk;
             colAction.DefaultCellStyle.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
             colAction.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgvFamilies.Columns.Add(colAction);
@@ -388,6 +396,7 @@ namespace HDTool
             dgvFamilies.SelectionChanged += DgvFamilies_SelectionChanged;
             dgvFamilies.CellDoubleClick += DgvFamilies_CellDoubleClick;
             dgvFamilies.CellContentClick += DgvFamilies_CellContentClick;
+            dgvFamilies.CellPainting += DgvFamilies_CellPainting;
             dgvFamilies.KeyDown += DgvFamilies_KeyDown;
 
             splitMain.Panel1.Controls.Add(dgvFamilies);
@@ -397,42 +406,42 @@ namespace HDTool
             // -------------------------------------------------------------------
             pnlInspector = new System.Windows.Forms.Panel();
             pnlInspector.Dock = DockStyle.Fill;
-            pnlInspector.BackColor = Color.FromArgb(21, 27, 38);
+            pnlInspector.BackColor = HDToolTheme.Surface2;
             pnlInspector.AutoScroll = true;
             pnlInspector.Padding = new Padding(16, 10, 16, 12);
             pnlInspector.Margin = new Padding(0);
-            pnlInspector.Resize += delegate { AdjustInspectorLayout(); };
+            pnlInspector.ClientSizeChanged += delegate { AdjustInspectorLayout(); }; // gồm cả lúc thanh cuộn dọc hiện ra
 
             lblInspectorHeader = new Label();
-            lblInspectorHeader.Text = "XEM TRƯỚC 3D (KÉO CHUỘT ĐỂ XOAY) & THÔNG SỐ";
+            lblInspectorHeader.Text = "XEM TRƯỚC 3D · KÉO CHUỘT ĐỂ XOAY";
             lblInspectorHeader.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblInspectorHeader.ForeColor = Color.FromArgb(129, 140, 248);
+            lblInspectorHeader.ForeColor = HDToolTheme.Text;
             lblInspectorHeader.Location = new Point(16, 8);
             lblInspectorHeader.AutoSize = true;
 
             picLargePreview = new FamilyMeshViewer();
             picLargePreview.Location = new Point(16, 32);
-            picLargePreview.Size = new Size(380, 240);
+            picLargePreview.Size = new Size(380, 200);
 
             lblInspectorCategory = new Label();
             lblInspectorCategory.Text = "[Category]";
             lblInspectorCategory.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-            lblInspectorCategory.ForeColor = Color.FromArgb(56, 189, 248);
-            lblInspectorCategory.Location = new Point(16, 280);
+            lblInspectorCategory.ForeColor = HDToolTheme.Accent;
+            lblInspectorCategory.Location = new Point(16, 240);
             lblInspectorCategory.AutoSize = true;
 
             lblInspectorFamName = new Label();
             lblInspectorFamName.Text = "Tên Family";
-            lblInspectorFamName.Font = new Font("Segoe UI", 10.5F, FontStyle.Bold);
-            lblInspectorFamName.ForeColor = Color.White;
-            lblInspectorFamName.Location = new Point(16, 300);
+            lblInspectorFamName.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            lblInspectorFamName.ForeColor = HDToolTheme.Text;
+            lblInspectorFamName.Location = new Point(16, 260);
             lblInspectorFamName.Size = new Size(380, 36);
             lblInspectorFamName.AutoEllipsis = true;
 
             lblInspectorTypeName = new Label();
             lblInspectorTypeName.Text = "Type: (Chưa chọn)";
             lblInspectorTypeName.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblInspectorTypeName.ForeColor = Color.FromArgb(52, 211, 153);
+            lblInspectorTypeName.ForeColor = HDToolTheme.Ok;
             lblInspectorTypeName.Location = new Point(16, 338);
             lblInspectorTypeName.Size = new Size(380, 24);
             lblInspectorTypeName.AutoEllipsis = true;
@@ -440,59 +449,104 @@ namespace HDTool
             cboTypes = new System.Windows.Forms.ComboBox();
             cboTypes.DropDownStyle = ComboBoxStyle.DropDownList;
             cboTypes.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            cboTypes.Location = new Point(16, 336);
+            cboTypes.Location = new Point(16, 296);
             cboTypes.Size = new Size(380, 26);
             cboTypes.SelectedIndexChanged += CboTypes_SelectedIndexChanged;
 
             pnlInspectorInfo = new System.Windows.Forms.Panel();
-            pnlInspectorInfo.Location = new Point(16, 366);
+            pnlInspectorInfo.Location = new Point(16, 326);
             pnlInspectorInfo.Size = new Size(380, 52);
-            pnlInspectorInfo.BackColor = Color.FromArgb(15, 23, 42);
+            pnlInspectorInfo.BackColor = HDToolTheme.Surface;
             pnlInspectorInfo.BorderStyle = BorderStyle.FixedSingle;
             pnlInspectorInfo.Padding = new Padding(8);
 
             lblInspectorHost = new Label();
             lblInspectorHost.Text = "Host: Khớp nối / Mặt phẳng làm việc";
             lblInspectorHost.Font = new Font("Segoe UI", 8F, FontStyle.Regular);
-            lblInspectorHost.ForeColor = Color.FromArgb(203, 213, 225);
+            lblInspectorHost.ForeColor = HDToolTheme.Text2;
             lblInspectorHost.Location = new Point(8, 6);
             lblInspectorHost.AutoSize = true;
 
             lblInspectorInstances = new Label();
             lblInspectorInstances.Text = "Số Type đã load: 0";
             lblInspectorInstances.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-            lblInspectorInstances.ForeColor = Color.FromArgb(245, 158, 11);
+            lblInspectorInstances.ForeColor = HDToolTheme.Warn;
             lblInspectorInstances.Location = new Point(8, 26);
             lblInspectorInstances.AutoSize = true;
 
             pnlInspectorInfo.Controls.Add(lblInspectorHost);
             pnlInspectorInfo.Controls.Add(lblInspectorInstances);
 
+            // Khung đổi Category trực tiếp (không cần mở Family)
+            pnlCategoryBox = new System.Windows.Forms.Panel();
+            pnlCategoryBox.Location = new Point(16, 386);
+            pnlCategoryBox.Size = new Size(380, 84);
+            pnlCategoryBox.BackColor = HDToolTheme.Surface;
+            pnlCategoryBox.Paint += PnlCategoryBox_Paint;
+            pnlCategoryBox.Resize += delegate { pnlCategoryBox.Invalidate(); };
+
+            lblCategoryChange = new Label();
+            lblCategoryChange.Text = "Đổi Category (không cần mở Family)";
+            lblCategoryChange.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblCategoryChange.ForeColor = HDToolTheme.Text;
+            lblCategoryChange.BackColor = HDToolTheme.Surface;
+            lblCategoryChange.Location = new Point(10, 8);
+            lblCategoryChange.AutoSize = true;
+
+            cboNewCategory = new System.Windows.Forms.ComboBox();
+            cboNewCategory.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboNewCategory.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            cboNewCategory.BackColor = HDToolTheme.Input;
+            cboNewCategory.ForeColor = HDToolTheme.Text;
+            cboNewCategory.Location = new Point(10, 32);
+            cboNewCategory.Size = new Size(230, 26);
+            cboNewCategory.MaxDropDownItems = 16;
+            cboNewCategory.SelectedIndexChanged += delegate { UpdateCategoryButton(); };
+
+            btnChangeCategory = CreateSmallButton("Đổi Category", HDToolTheme.Accent);
+            btnChangeCategory.Location = new Point(246, 30);
+            btnChangeCategory.Size = new Size(124, 29);
+            btnChangeCategory.Enabled = false;
+            btnChangeCategory.Click += delegate { ChangeSelectedCategory(); };
+
+            lblCategoryNote = new Label();
+            lblCategoryNote.Font = new Font("Segoe UI", 8F, FontStyle.Regular);
+            lblCategoryNote.ForeColor = HDToolTheme.Text2;
+            lblCategoryNote.BackColor = HDToolTheme.Surface;
+            lblCategoryNote.Location = new Point(10, 63);
+            lblCategoryNote.Size = new Size(360, 16);
+            lblCategoryNote.AutoEllipsis = true;
+
+            pnlCategoryBox.Controls.Add(lblCategoryChange);
+            pnlCategoryBox.Controls.Add(cboNewCategory);
+            pnlCategoryBox.Controls.Add(btnChangeCategory);
+            pnlCategoryBox.Controls.Add(lblCategoryNote);
+
             lblParamHeader = new Label();
             lblParamHeader.Text = "Thông Số Kỹ Thuật (Type Parameters):";
-            lblParamHeader.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-            lblParamHeader.ForeColor = Color.FromArgb(148, 163, 184);
-            lblParamHeader.Location = new Point(16, 426);
+            lblParamHeader.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblParamHeader.ForeColor = HDToolTheme.Text;
+            lblParamHeader.Location = new Point(16, 476);
             lblParamHeader.AutoSize = true;
 
             dgvParameters = new DataGridView();
-            dgvParameters.Location = new Point(16, 448);
-            dgvParameters.Size = new Size(380, 160);
-            dgvParameters.BackgroundColor = Color.FromArgb(15, 23, 42);
+            dgvParameters.Location = new Point(16, 498);
+            dgvParameters.Size = new Size(380, 112);
+            dgvParameters.BackgroundColor = HDToolTheme.Surface;
             dgvParameters.BorderStyle = BorderStyle.FixedSingle;
-            dgvParameters.GridColor = Color.FromArgb(30, 41, 59);
+            dgvParameters.GridColor = HDToolTheme.Line;
             dgvParameters.RowHeadersVisible = false;
             dgvParameters.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvParameters.AllowUserToAddRows = false;
             dgvParameters.AllowUserToDeleteRows = false;
             dgvParameters.AllowUserToResizeRows = false;
             dgvParameters.EnableHeadersVisualStyles = false;
-            dgvParameters.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(30, 41, 59);
-            dgvParameters.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(241, 245, 249);
+            dgvParameters.ColumnHeadersDefaultCellStyle.BackColor = HDToolTheme.Surface2;
+            dgvParameters.ColumnHeadersDefaultCellStyle.ForeColor = HDToolTheme.Text2;
             dgvParameters.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
-            dgvParameters.DefaultCellStyle.BackColor = Color.FromArgb(15, 23, 42);
-            dgvParameters.DefaultCellStyle.ForeColor = Color.FromArgb(226, 232, 240);
-            dgvParameters.DefaultCellStyle.Font = new Font("Segoe UI", 8F, FontStyle.Regular);
+            dgvParameters.DefaultCellStyle.BackColor = HDToolTheme.Surface;
+            dgvParameters.DefaultCellStyle.ForeColor = HDToolTheme.Text;
+            dgvParameters.DefaultCellStyle.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
             dgvParameters.RowTemplate.Height = 22;
 
             DataGridViewTextBoxColumn colParamName = new DataGridViewTextBoxColumn();
@@ -512,8 +566,8 @@ namespace HDTool
             btnInspectorPlace = new System.Windows.Forms.Button();
             btnInspectorPlace.Text = "ĐẶT VÀO BẢN VẼ REVIT (CLICK ĐỂ ĐẶT)";
             btnInspectorPlace.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            btnInspectorPlace.ForeColor = Color.White;
-            btnInspectorPlace.BackColor = Color.FromArgb(5, 150, 105); // Emerald Green
+            btnInspectorPlace.ForeColor = HDToolTheme.AccentInk;
+            btnInspectorPlace.BackColor = HDToolTheme.Accent;
             btnInspectorPlace.FlatStyle = FlatStyle.Flat;
             btnInspectorPlace.FlatAppearance.BorderSize = 0;
             btnInspectorPlace.Location = new Point(16, 620);
@@ -523,8 +577,8 @@ namespace HDTool
 
             lblPlacementHint = new Label();
             lblPlacementHint.Text = "Hướng dẫn: Click nút hoặc Double-click dòng trên bảng, di chuột sang bản vẽ Revit để đặt Family liên tục (Space: xoay, ESC: kết thúc).";
-            lblPlacementHint.Font = new Font("Segoe UI", 8F, FontStyle.Italic);
-            lblPlacementHint.ForeColor = Color.FromArgb(148, 163, 184);
+            lblPlacementHint.Font = new Font("Segoe UI", 8F, FontStyle.Regular);
+            lblPlacementHint.ForeColor = HDToolTheme.Text2;
             lblPlacementHint.Location = new Point(16, 674);
             lblPlacementHint.Size = new Size(380, 36);
 
@@ -534,6 +588,7 @@ namespace HDTool
             pnlInspector.Controls.Add(lblInspectorFamName);
             pnlInspector.Controls.Add(cboTypes);
             pnlInspector.Controls.Add(pnlInspectorInfo);
+            pnlInspector.Controls.Add(pnlCategoryBox);
             pnlInspector.Controls.Add(lblParamHeader);
             pnlInspector.Controls.Add(dgvParameters);
             pnlInspector.Controls.Add(btnInspectorPlace);
@@ -547,7 +602,7 @@ namespace HDTool
             // ===================================================================
             pnlBottom = new System.Windows.Forms.Panel();
             pnlBottom.Dock = DockStyle.Fill;
-            pnlBottom.BackColor = Color.FromArgb(16, 22, 34);
+            pnlBottom.BackColor = HDToolTheme.Header;
             pnlBottom.Margin = new Padding(0);
             pnlBottom.Padding = new Padding(16, 6, 16, 6);
             pnlBottom.Resize += PnlBottom_Resize;
@@ -555,24 +610,24 @@ namespace HDTool
             lblStatus = new Label();
             lblStatus.Text = "● Đang sẵn sàng nạp Family...";
             lblStatus.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-            lblStatus.ForeColor = Color.FromArgb(52, 211, 153);
+            lblStatus.ForeColor = HDToolTheme.Ok;
             lblStatus.Location = new Point(16, 6);
             lblStatus.AutoSize = true;
 
             lblModelessNotice = new Label();
             lblModelessNotice.Text = "● Chế độ Modeless 100%: Kỹ sư hoàn toàn tự do Pan, Zoom, xoay 3D hoặc vẽ trên Revit. Phím ESC để đóng cửa sổ.";
-            lblModelessNotice.Font = new Font("Segoe UI", 8F, FontStyle.Regular);
-            lblModelessNotice.ForeColor = Color.FromArgb(56, 189, 248);
+            lblModelessNotice.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
+            lblModelessNotice.ForeColor = HDToolTheme.Text2;
             lblModelessNotice.Location = new Point(16, 26);
             lblModelessNotice.AutoSize = true;
 
             btnClose = new System.Windows.Forms.Button();
             btnClose.Text = "Đóng (ESC)";
             btnClose.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
-            btnClose.ForeColor = Color.FromArgb(226, 232, 240);
-            btnClose.BackColor = Color.FromArgb(51, 65, 85);
+            btnClose.ForeColor = HDToolTheme.Text;
+            btnClose.BackColor = HDToolTheme.Surface;
             btnClose.FlatStyle = FlatStyle.Flat;
-            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.FlatAppearance.BorderSize = 1;
             btnClose.Size = new Size(115, 34);
             btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnClose.Cursor = Cursors.Hand;
@@ -624,14 +679,14 @@ namespace HDTool
         {
             if (pnlHeader == null || lblTotalStats == null || lblHeaderBadge == null) return;
             int rightX = pnlHeader.ClientSize.Width - 16;
-            lblTotalStats.Location = new Point(rightX - lblTotalStats.Width, 15);
-            lblHeaderBadge.Location = new Point(lblTotalStats.Left - lblHeaderBadge.Width - 10, 16);
+            lblTotalStats.Location = new Point(rightX - lblTotalStats.Width, 18);
+            lblHeaderBadge.Location = new Point(lblTotalStats.Left - lblHeaderBadge.Width - 10, 19);
         }
 
         private void PnlToolbar_Resize(object sender, EventArgs e)
         {
             if (pnlToolbar == null || btnRefresh == null) return;
-            btnRefresh.Location = new Point(pnlToolbar.ClientSize.Width - btnRefresh.Width - 16, 12);
+            btnRefresh.Location = new Point(pnlToolbar.ClientSize.Width - btnRefresh.Width - 16, 11);
         }
 
         private void PnlBottom_Resize(object sender, EventArgs e)
@@ -650,9 +705,14 @@ namespace HDTool
             lblInspectorFamName.Width = w;
             cboTypes.Width = w;
             pnlInspectorInfo.Width = w;
+            pnlCategoryBox.Width = w;
+            btnChangeCategory.Left = w - 10 - btnChangeCategory.Width;
+            cboNewCategory.Width = btnChangeCategory.Left - 6 - cboNewCategory.Left;
+            lblCategoryNote.Width = w - 20;
             dgvParameters.Width = w;
             btnInspectorPlace.Width = w;
             lblPlacementHint.Width = w;
+            pnlInspector.PerformLayout(); // tính lại vùng cuộn, tránh thanh cuộn ngang thừa
         }
 
         protected override void OnShown(EventArgs e)
@@ -688,7 +748,7 @@ namespace HDTool
             try
             {
                 Stopwatch sw = Stopwatch.StartNew();
-                _allFamilies = FamilyPaletteService.GetProjectFamilies(_doc, _currentFilter);
+                _allFamilies = FamilyPaletteService.GetProjectFamilies(_doc, new FamilyPaletteFilter()); // loc lam o FilterAndPopulateGrid
                 sw.Stop();
 
                 _totalProjectTypes = 0;
@@ -859,6 +919,7 @@ namespace HDTool
             if (cboTypes.Items.Count > 0) cboTypes.SelectedIndex = selIndex;
             _fillingTypes = false;
 
+            UpdateCategoryBox(group);
             ShowType(rowItem.TypeItem);
         }
 
@@ -885,12 +946,14 @@ namespace HDTool
             _viewerSymbolId = symbolId;
 
             float[] mesh;
+            float[] segs;
             Bitmap bmp;
             if (_meshCache.TryGetValue(symbolId, out mesh))
             {
+                _lineCache.TryGetValue(symbolId, out segs);
                 _previewCache.TryGetValue(symbolId, out bmp);
                 picLargePreview.Image = bmp;
-                picLargePreview.SetMesh(mesh);
+                picLargePreview.SetGeometry(mesh, segs);
             }
             else
             {
@@ -900,20 +963,23 @@ namespace HDTool
                 Document doc = _doc;
                 HDToolModelessHost.Run(delegate(UIApplication app)
                 {
-                    float[] m = FamilyPaletteService.GetSymbolMesh(doc, symbolId, 30000);
+                    float[] m, s;
+                    FamilyPaletteService.GetSymbolGeometry(doc, symbolId, 30000, out m, out s);
                     Bitmap b = null;
-                    if (m == null)
+                    if (m == null && s == null)
                     {
+                        // Family 2D (Tag...): ảnh xem trước, khung xem cho xoay như tấm phẳng
                         b = FamilyPaletteService.GetSymbolPreviewImage(doc, symbolId, new Size(380, 240), famName, catName);
                     }
                     if (this.IsDisposed || !this.IsHandleCreated) return;
                     this.BeginInvoke((MethodInvoker)delegate
                     {
                         _meshCache[symbolId] = m;
+                        _lineCache[symbolId] = s;
                         if (b != null) _previewCache[symbolId] = b;
                         if (_viewerSymbolId != symbolId) return; // người dùng đã chọn Type khác
                         picLargePreview.Image = b;
-                        picLargePreview.SetMesh(m);
+                        picLargePreview.SetGeometry(m, s);
                     });
                 });
             }
@@ -963,6 +1029,7 @@ namespace HDTool
             picLargePreview.Message = "Không có Family phù hợp";
             cboTypes.Items.Clear();
             dgvParameters.Rows.Clear();
+            UpdateCategoryBox(null);
         }
 
         private void BtnInspectorPlace_Click(object sender, EventArgs e)
@@ -1009,6 +1076,189 @@ namespace HDTool
             });
         }
 
+        // ==================== ĐỔI CATEGORY TRỰC TIẾP ====================
+
+        /// <summary>Nạp danh sách Category đích cho Family đang chọn; Family không đổi được thì khóa ô và ghi lý do.</summary>
+        private void UpdateCategoryBox(FamilyGroupItem group)
+        {
+            if (cboNewCategory == null) return;
+            bool canChange = false;
+            string reason = null;
+            cboNewCategory.BeginUpdate();
+            cboNewCategory.Items.Clear();
+            cboNewCategory.Items.Add("-- Chọn Category mới --");
+            if (group != null)
+            {
+                try
+                {
+                    canChange = FamilyCategoryService.CanChange(_doc, group.FamilyId, out reason);
+                    if (canChange)
+                    {
+                        if (_categoryChoices == null) _categoryChoices = FamilyCategoryService.GetChoices(_doc);
+                        for (int i = 0; i < _categoryChoices.Count; i++)
+                        {
+                            if (_categoryChoices[i].Bic != group.BuiltInCat) cboNewCategory.Items.Add(_categoryChoices[i]);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    canChange = false;
+                    reason = "Không đọc được Family: " + ex.Message;
+                }
+            }
+            cboNewCategory.SelectedIndex = 0;
+            cboNewCategory.EndUpdate();
+            cboNewCategory.Enabled = canChange && !_categoryBusy;
+            lblCategoryNote.Text = canChange ? "Giữ nguyên thông số Type đang có trong dự án." : (reason ?? "");
+            lblCategoryNote.ForeColor = canChange || group == null ? HDToolTheme.Text2 : HDToolTheme.Warn;
+            UpdateCategoryButton();
+        }
+
+        private void UpdateCategoryButton()
+        {
+            bool on = !_categoryBusy && cboNewCategory.Enabled && cboNewCategory.SelectedItem is FamilyCategoryChoice;
+            btnChangeCategory.Enabled = on;
+            btnChangeCategory.BackColor = on ? HDToolTheme.Accent : HDToolTheme.Surface2;
+        }
+
+        private void PnlCategoryBox_Paint(object sender, PaintEventArgs e)
+        {
+            using (Pen p = new Pen(HDToolTheme.Accent, 2F))
+            {
+                e.Graphics.DrawRectangle(p, 1, 1, pnlCategoryBox.ClientSize.Width - 2, pnlCategoryBox.ClientSize.Height - 2);
+            }
+        }
+
+        private void ChangeSelectedCategory()
+        {
+            FamilyCategoryChoice choice = cboNewCategory.SelectedItem as FamilyCategoryChoice;
+            if (_categoryBusy || choice == null || _selectedRow == null) return;
+
+            FamilyGroupItem group = _selectedRow.Group;
+            string familyName = group.FamilyName;
+            ElementId familyId = group.FamilyId;
+            List<ElementId> symbolIds = new List<ElementId>();
+            for (int i = 0; i < group.Types.Count; i++) symbolIds.Add(group.Types[i].Id);
+
+            string question = string.Format(CultureInfo.CurrentCulture,
+                "Family: {0} ({1} Type)\n\nĐổi từ \"{2}\" sang \"{3}\".\nMọi đối tượng đã vẽ của Family này sẽ đổi theo.",
+                familyName, group.Types.Count, group.CategoryName, choice.Name);
+            if (MessageBox.Show(this, question, "HDTOOL - Xác nhận đổi Category", MessageBoxButtons.OKCancel,
+                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
+
+            _categoryBusy = true;
+            cboNewCategory.Enabled = false;
+            UpdateCategoryButton();
+            lblStatus.Text = string.Format(CultureInfo.CurrentCulture, "● Đang đổi Category của [{0}]... (Family nặng có thể mất vài giây)", familyName);
+
+            Document doc = _doc;
+            BuiltInCategory target = choice.Bic;
+            string targetName = choice.Name;
+            HDToolModelessHost.Run(delegate(UIApplication app)
+            {
+                string message;
+                bool ok;
+                bool idsKept = false;
+                FamilyCategoryGroup targetGroup = FamilyCategoryGroup.All;
+                try
+                {
+                    ok = FamilyCategoryService.Change(doc, familyId, target, out message);
+                    if (ok)
+                    {
+                        targetGroup = FamilyPaletteService.ResolveCategoryGroup(Category.GetCategory(doc, target));
+                        idsKept = doc.GetElement(familyId) is Family;
+                        for (int i = 0; idsKept && i < symbolIds.Count; i++) idsKept = doc.GetElement(symbolIds[i]) is FamilySymbol;
+                    }
+                }
+                catch (Exception ex) { ok = false; message = "Không đổi được Category: " + ex.Message; }
+
+                if (this.IsDisposed || !this.IsHandleCreated) return;
+                this.BeginInvoke((MethodInvoker)delegate { OnCategoryChanged(ok, message, group, target, targetName, targetGroup, idsKept, symbolIds); });
+            });
+        }
+
+        private void OnCategoryChanged(bool ok, string message, FamilyGroupItem group, BuiltInCategory target, string targetName,
+            FamilyCategoryGroup targetGroup, bool idsKept, List<ElementId> symbolIds)
+        {
+            _categoryBusy = false;
+            if (!ok)
+            {
+                UpdateCategoryBox(_selectedRow != null ? _selectedRow.Group : null);
+                lblStatus.Text = "Lưu ý: " + message;
+                MessageBox.Show(this, message, "HDTOOL - Đổi Category", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (idsKept)
+            {
+                // Chỉ sửa đúng Family vừa đổi: không quét lại dự án, không dựng lại hình 3D (đổi Category không đổi hình)
+                ApplyCategoryInPlace(group, target, targetName, targetGroup);
+            }
+            else
+            {
+                // Revit cấp Id mới -> bắt buộc quét lại
+                for (int i = 0; i < symbolIds.Count; i++)
+                {
+                    _meshCache.Remove(symbolIds[i]);
+                    _lineCache.Remove(symbolIds[i]);
+                    _previewCache.Remove(symbolIds[i]);
+                }
+                RefreshFamiliesFromProject();
+                if (!SelectFamilyRow(group.FamilyName))
+                {
+                    txtSearch.Text = string.Empty;
+                    cboCategoryFilter.SelectedIndex = 0;
+                    SelectFamilyRow(group.FamilyName);
+                }
+            }
+            lblStatus.Text = "● " + message;
+        }
+
+        private void ApplyCategoryInPlace(FamilyGroupItem group, BuiltInCategory bic, string categoryName, FamilyCategoryGroup categoryGroup)
+        {
+            group.BuiltInCat = bic;
+            group.CategoryName = categoryName;
+            group.CategoryGroup = categoryGroup;
+            for (int i = 0; i < group.Types.Count; i++)
+            {
+                group.Types[i].BuiltInCat = bic;
+                group.Types[i].CategoryName = categoryName;
+                group.Types[i].CategoryGroup = categoryGroup;
+            }
+
+            for (int i = 0; i < dgvFamilies.Rows.Count; i++)
+            {
+                FamilyTypeRowItem item = dgvFamilies.Rows[i].Tag as FamilyTypeRowItem;
+                if (item != null && item.Group == group) dgvFamilies.Rows[i].Cells["colCategory"].Value = categoryName;
+            }
+
+            if (_selectedRow != null && _selectedRow.Group == group)
+            {
+                lblInspectorCategory.Text = string.Format(CultureInfo.InvariantCulture, "[{0}]", categoryName);
+                UpdateCategoryBox(group);
+                if (_selectedRow.TypeItem != null) UpdateParameterTable(_selectedRow.TypeItem.Id);
+            }
+            else
+            {
+                UpdateCategoryBox(_selectedRow != null ? _selectedRow.Group : null);
+            }
+        }
+
+        private bool SelectFamilyRow(string familyName)
+        {
+            for (int i = 0; i < dgvFamilies.Rows.Count; i++)
+            {
+                FamilyTypeRowItem item = dgvFamilies.Rows[i].Tag as FamilyTypeRowItem;
+                if (item == null || !string.Equals(item.Group.FamilyName, familyName, StringComparison.OrdinalIgnoreCase)) continue;
+                dgvFamilies.CurrentCell = dgvFamilies.Rows[i].Cells[1];
+                dgvFamilies.Rows[i].Selected = true;
+                SelectRowItem(item);
+                return true;
+            }
+            return false;
+        }
+
         // ==================== CÁC PHƯƠNG THỨC TRỢ GIÚP UI ====================
 
         private void PnlHeader_Paint(object sender, PaintEventArgs e)
@@ -1016,27 +1266,58 @@ namespace HDTool
             Rectangle rect = pnlHeader.ClientRectangle;
             if (rect.Width <= 0 || rect.Height <= 0) return;
 
-            using (LinearGradientBrush lgb = new LinearGradientBrush(
-                rect,
-                Color.FromArgb(30, 27, 75),     // Deep Indigo dark
-                Color.FromArgb(15, 23, 42),      // Slate dark
-                LinearGradientMode.Horizontal))
+            using (SolidBrush b = new SolidBrush(HDToolTheme.Surface))
             {
-                e.Graphics.FillRectangle(lgb, rect);
+                e.Graphics.FillRectangle(b, rect);
             }
 
-            using (Pen p = new Pen(Color.FromArgb(30, 41, 59)))
+            using (Pen p = new Pen(HDToolTheme.Line))
             {
                 e.Graphics.DrawLine(p, 0, rect.Height - 1, rect.Width, rect.Height - 1);
             }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == (Keys.Control | Keys.F) && txtSearch != null)
+            {
+                txtSearch.Focus();
+                txtSearch.SelectAll();
+                return true;
+            }
+            if (keyData == Keys.F5)
+            {
+                RefreshFamiliesFromProject();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        /// <summary>Cột "Đặt Vào Bản Vẽ": vẽ nút bo góc màu nhấn, đồng nhất mọi dòng (không bị màu dòng xen kẽ đè).</summary>
+        private void DgvFamilies_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (dgvFamilies.Columns[e.ColumnIndex].Name != "colAction") return;
+            bool sel = (e.State & DataGridViewElementStates.Selected) != 0;
+            e.PaintBackground(e.CellBounds, sel);
+            Graphics g = e.Graphics;
+            SmoothingMode old = g.SmoothingMode;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            int px = HDDraw.S(g, 8), py = HDDraw.S(g, 5);
+            Rectangle r = new Rectangle(e.CellBounds.X + px, e.CellBounds.Y + py, e.CellBounds.Width - px * 2, e.CellBounds.Height - py * 2 - 1);
+            HDDraw.FillRound(g, r, HDDraw.S(g, 6), sel ? HDToolTheme.AccentDown : HDToolTheme.Accent);
+            TextRenderer.DrawText(g, "Đặt Vào Bản Vẽ", e.CellStyle.Font, r, HDToolTheme.AccentInk,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | HDDraw.One);
+            g.SmoothingMode = old;
+            e.Handled = true;
         }
 
         private System.Windows.Forms.Button CreateSmallButton(string text, Color backColor)
         {
             System.Windows.Forms.Button btn = new System.Windows.Forms.Button();
             btn.Text = text;
-            btn.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
-            btn.ForeColor = Color.White;
+            btn.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btn.ForeColor = HDToolTheme.AccentInk;
             btn.BackColor = backColor;
             btn.FlatStyle = FlatStyle.Flat;
             btn.FlatAppearance.BorderSize = 0;

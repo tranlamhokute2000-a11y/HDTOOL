@@ -21,6 +21,7 @@ namespace HDTool
         private const double MM_TO_FEET = 1.0 / 304.8;
         private const double FEET_TO_MM = 304.8;
         private const int ACCORE_TIMEOUT_MS = 60000;
+        private const double MaxExclusionBlockSizeMm = 8000.0;
 
         private static string _lastDiagnostic = string.Empty;
 
@@ -835,6 +836,9 @@ namespace HDTool
                     double edge1Mm = Dist2D(be.CornersCad[1], be.CornersCad[2]) * unitToMm;
                     double maxDimMm = Math.Max(edge0Mm, edge1Mm);
                     if (maxDimMm < 30.0) continue;
+                    // Block quá lớn là xref/mặt bằng kiến trúc, không phải miệng gió - tiêu âm - quạt.
+                    // Nếu coi là vùng loại trừ thì mọi ống nằm trong đó bị xoá sạch.
+                    if (maxDimMm > MaxExclusionBlockSizeMm) continue;
 
                     string tagText;
                     string damperType;

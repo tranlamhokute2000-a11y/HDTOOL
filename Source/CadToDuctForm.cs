@@ -49,6 +49,9 @@ namespace HDTool
         // Group 3: Xem trước dữ liệu nhận diện
         private System.Windows.Forms.GroupBox grpPreview;
         private System.Windows.Forms.DataGridView dgvPreview;
+        private System.Windows.Forms.Button btnShow3D;
+        private CadDuctPreviewForm _preview3D;
+        private float[] _currentCadLines;
         private System.Windows.Forms.Label lblPreviewSummary;
         private System.Windows.Forms.Label lblTextDiag;
         private Font _boldGridFont;
@@ -273,6 +276,7 @@ namespace HDTool
             dgvPreview.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvPreview.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvPreview.CellEndEdit += DgvPreview_CellEndEdit;
+            dgvPreview.CellEndEdit += delegate { RefreshPreview3DGeometry(); };
             _boldGridFont = new Font(dgvPreview.Font, FontStyle.Bold);
 
             SetupPreviewGridColumns();
@@ -282,7 +286,7 @@ namespace HDTool
             lblPreviewSummary.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
             lblPreviewSummary.ForeColor = Color.FromArgb(51, 65, 85);
             lblPreviewSummary.Location = new Point(12, 196);
-            lblPreviewSummary.Size = new Size(832, 20);
+            lblPreviewSummary.Size = new Size(700, 20);
             lblPreviewSummary.AutoSize = false;
             lblPreviewSummary.AutoEllipsis = true;
             lblPreviewSummary.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -296,6 +300,19 @@ namespace HDTool
             lblTextDiag.AutoSize = false;
             lblTextDiag.AutoEllipsis = true;
             lblTextDiag.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+
+            btnShow3D = new System.Windows.Forms.Button();
+            btnShow3D.Text = "Xem 3D";
+            btnShow3D.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+            btnShow3D.Location = new Point(720, 192);
+            btnShow3D.Size = new Size(124, 25);
+            btnShow3D.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnShow3D.FlatStyle = FlatStyle.Flat;
+            btnShow3D.FlatAppearance.BorderSize = 1;
+            btnShow3D.Cursor = Cursors.Hand;
+            btnShow3D.Enabled = false;
+            btnShow3D.Click += delegate { ShowPreview3D(false); };
+            grpPreview.Controls.Add(btnShow3D);
 
             grpPreview.Controls.Add(dgvPreview);
             grpPreview.Controls.Add(lblPreviewSummary);
@@ -605,10 +622,11 @@ namespace HDTool
             ImportInstance cad = _cadLinks[cmbCadLinks.SelectedIndex];
 
             cmbDuctLayer.Items.Clear();
-            cmbDuctLayer.Items.Add("(Tất cả Layer - Nhận diện theo hình vẽ)");
+            cmbDuctLayer.Items.Add(CadToDuctService.AutoDuctLayerOption);
 
             List<string> layers = CadToDuctService.GetLayersFromCadLink(cad, _doc);
             foreach (string l in layers) cmbDuctLayer.Items.Add(l);
+            cmbDuctLayer.Items.Add(CadToDuctService.AllLayerOption);
 
             cmbDuctLayer.SelectedIndex = 0; // Mặc định tự động nhận diện theo hình vẽ
         }
@@ -931,11 +949,13 @@ namespace HDTool
                     _currentFittings = fittings;
                     _currentEdges = edges;
                     _currentDampers = dampers;
+                    _currentCadLines = CadToDuctService.LastCadLinework;
                     _lastDwgDiagnostic = CadDwgExtractor.LastDiagnostic ?? string.Empty;
 
                     this.BeginInvoke((MethodInvoker)delegate
                     {
                         PopulatePreviewGrid();
+                        ShowPreview3D(true); // quét xong là hiện 3D ngay để soát lỗi
                     });
                 }
                 catch (Exception ex)
@@ -1128,6 +1148,8 @@ namespace HDTool
                     diagDisplay = diagDisplay + string.Format(" | {0} đoạn giữ chuẩn WxH theo Text (bọc EI)", eiAdjustedCount);
                 }
 
+                diagDisplay = "Layer đã đọc: " + CadToDuctService.LastLayersUsed + " | " + diagDisplay;
+
                 lblTextDiag.Text = diagDisplay;
                 lblTextDiag.ForeColor = diagHasError
                     ? Color.FromArgb(185, 28, 28)
@@ -1157,18 +1179,105 @@ namespace HDTool
         // DỰNG HỆ THỐNG ỐNG GIÓ TRONG REVIT
         // =========================================================================
 
+        // ==================== XEM TRƯỚC 3D ====================
+
+        /// <summary>Mở (hoặc cập nhật) cửa sổ xem trước 3D. reload = true: vừa quét xong, nạp dữ liệu mới.</summary>
+        private void ShowPreview3D(bool reload)
+        {
+            if (this.IsDisposed) return;
+            int count = (_currentStraightDucts != null ? _currentStraightDucts.Count : 0) + (_currentFittings != null ? _currentFittings.Count : 0);
+            btnShow3D.Enabled = count > 0;
+            if (count == 0)
+            {
+                if (_preview3D != null && !_preview3D.IsDisposed) _preview3D.Close();
+                return;
+            }
+
+            try
+            {
+                if (_preview3D == null || _preview3D.IsDisposed)
+                {
+                    _preview3D = new CadDuctPreviewForm();
+                    _preview3D.ExclusionChanged += delegate { ApplyExclusionStyles(); };
+                    _preview3D.DuctPicked += SelectPreviewRow;
+                    _preview3D.BuildRequested += delegate { BuildFromPreview3D(); };
+                    _preview3D.RescanRequested += delegate
+                    {
+                        _preview3D.Close();
+                        this.Activate();
+                        SetStatus(Color.FromArgb(2, 132, 199), "Chọn lại Layer (nếu cần) rồi bấm nút quét lại.");
+                    };
+                    reload = true;
+                }
+                if (reload) _preview3D.SetData(_currentStraightDucts, _currentFittings, _currentEdges, _currentCadLines);
+                if (!_preview3D.Visible) _preview3D.Show(this); // Modeless: vẫn thao tác được trên bản vẽ
+                _preview3D.Activate();
+            }
+            catch (Exception ex)
+            {
+                SetStatus(Color.Red, "Không mở được xem trước 3D: " + ex.Message);
+            }
+        }
+
+        private void RefreshPreview3DGeometry()
+        {
+            if (_preview3D != null && !_preview3D.IsDisposed) _preview3D.RefreshGeometry();
+        }
+
+        private void SelectPreviewRow(int number)
+        {
+            int row = number - 1;
+            if (row < 0 || row >= dgvPreview.Rows.Count) return;
+            dgvPreview.ClearSelection();
+            dgvPreview.Rows[row].Selected = true;
+            dgvPreview.CurrentCell = dgvPreview.Rows[row].Cells[0];
+        }
+
+        private void BuildFromPreview3D()
+        {
+            if (TryStartBuild())
+            {
+                _preview3D.Close();
+            }
+            else
+            {
+                // Thiếu thông tin (cao độ, H, loại ống...): đóng xem trước để thấy ô cần nhập; bấm [Xem 3D] mở lại
+                _preview3D.Close();
+                this.Activate();
+            }
+        }
+
+        /// <summary>Đánh dấu trên bảng các ống đã bỏ ở cửa sổ 3D.</summary>
+        private void ApplyExclusionStyles()
+        {
+            if (_currentStraightDucts == null) return;
+            for (int r = 0; r < dgvPreview.Rows.Count && r < _currentStraightDucts.Count; r++)
+            {
+                bool off = _currentStraightDucts[r].IsExcluded;
+                DataGridViewRow row = dgvPreview.Rows[r];
+                row.Cells[1].Value = off ? "ĐÃ BỎ - không dựng" : "Ống gió thẳng";
+                row.DefaultCellStyle.BackColor = off ? HDToolTheme.Surface2 : System.Drawing.Color.Empty;
+                row.DefaultCellStyle.ForeColor = off ? HDToolTheme.Text3 : System.Drawing.Color.Empty;
+            }
+        }
+
         private void BtnBuild_Click(object sender, EventArgs e)
+        {
+            TryStartBuild();
+        }
+
+        private bool TryStartBuild()
         {
             if (_currentStraightDucts == null || _currentStraightDucts.Count == 0)
             {
                 SetStatus(Color.Red, "Chưa có đoạn ống nào được nhận diện. Hãy bấm [PICK CHỌN HÌNH VẼ TUYẾN ỐNG] trước.");
-                return;
+                return false;
             }
 
             if (cmbSystemType.SelectedIndex < 0 || cmbDuctType.SelectedIndex < 0 || cmbLevel.SelectedIndex < 0)
             {
                 SetStatus(Color.Red, "Vui lòng chọn Hệ thống gió, Loại ống và Cao độ tầng.");
-                return;
+                return false;
             }
 
             dgvPreview.EndEdit();
@@ -1179,7 +1288,7 @@ namespace HDTool
                 txtElev.BackColor = Color.FromArgb(254, 226, 226);
                 txtElev.Focus();
                 SetStatus(Color.Red, "⚠ Vui lòng nhập Cao độ tim ống gió (mm) trước khi dựng mô hình 3D!");
-                return;
+                return false;
             }
 
             // Đồng bộ lại kích thước nếu kỹ sư có sửa trong bảng DataGridView & áp dụng Cao độ tim cho toàn bộ đoạn ống
@@ -1196,6 +1305,7 @@ namespace HDTool
             for (int i = 0; i < _currentStraightDucts.Count; i++)
             {
                 CadDuctSegment seg = _currentStraightDucts[i];
+                if (seg.IsExcluded) continue;
                 if (seg.WidthMm <= 0 || seg.HeightMm <= 0)
                 {
                     int wWarn = (int)Math.Round(seg.WidthMm);
@@ -1206,8 +1316,31 @@ namespace HDTool
                     }
                     dgvPreview.Focus();
                     SetStatus(Color.Red, string.Format("⚠ Đoạn ống #{0} (W={1} mm) chưa có chiều cao H! Vui lòng nhập WxH (ví dụ: {1}x300) vào bảng trước khi dựng 3D.", i + 1, wWarn));
-                    return;
+                    return false;
                 }
+            }
+
+            // Bỏ các đoạn người dùng đã loại ở cửa sổ xem trước 3D (không đụng vào danh sách gốc để còn đưa lại được)
+            List<CadDuctSegment> buildDucts = _currentStraightDucts;
+            List<CadConnectionEdge> buildEdges = _currentEdges;
+            bool anyExcluded = _currentStraightDucts.Exists(delegate(CadDuctSegment d) { return d.IsExcluded; })
+                || (_currentFittings != null && _currentFittings.Exists(delegate(CadDuctSegment d) { return d.IsExcluded; }));
+            if (anyExcluded)
+            {
+                buildDucts = _currentStraightDucts.FindAll(delegate(CadDuctSegment d) { return !d.IsExcluded; });
+                if (_currentEdges != null)
+                {
+                    buildEdges = _currentEdges.FindAll(delegate(CadConnectionEdge x)
+                    {
+                        return !x.SegmentA.IsExcluded && !x.SegmentB.IsExcluded && (x.BridgePolygon == null || !x.BridgePolygon.IsExcluded);
+                    });
+                }
+            }
+
+            if (buildDucts.Count == 0)
+            {
+                SetStatus(Color.Red, "Đã bỏ hết các đoạn ống, không còn gì để dựng.");
+                return false;
             }
 
             ElementId sysTypeId = _systemTypes[cmbSystemType.SelectedIndex].Id;
@@ -1226,8 +1359,8 @@ namespace HDTool
                     string report;
                     int count = CadToDuctService.BuildDuctsInRevit(
                         _doc,
-                        _currentStraightDucts,
-                        _currentEdges,
+                        buildDucts,
+                        buildEdges,
                         sysTypeId,
                         ductTypeId,
                         levelId,
@@ -1247,6 +1380,7 @@ namespace HDTool
                     SetStatus(Color.Red, "Lỗi dựng ống gió: " + ex.Message);
                 }
             });
+            return true;
         }
 
         private void SetStatus(Color color, string text)

@@ -225,3 +225,29 @@ Bộ cài đặt HDTOOL được đóng gói thành **1 file `.exe` duy nhất**
 2. Nhấp đúp chuột vào file **`HDTOOL_Setup_Version_85.exe`**.
 3. Cửa sổ cài đặt HadoMEE mở ra, tự động phát hiện phiên bản Revit trên máy (Revit 2024, 2025, 2026, 2027...).
 4. Bấm nút màu đỏ: **`🚀 CÀI ĐẶT ADD-IN HDTOOL`**. Báo "Cài đặt thành công" là xong ngay trong 1 giây!
+
+## Đổi Category cho Family (không cần mở Family)
+1. Mở **Tổng Hợp Family**, chọn Family trong bảng.
+2. Ở khung **Đổi Category** bên phải, chọn Category mới rồi bấm **Đổi Category**.
+3. Bấm **OK** để xác nhận. Mọi Type và đối tượng đã vẽ của Family đổi theo; thông số Type trong dự án được giữ nguyên.
+- Không đổi được: Tag / ký hiệu chú thích, Family In-Place. Nếu Revit từ chối, tool hiện lý do.
+
+## Dựng ống gió từ CAD: chọn Layer
+- Để mục **(Tự động - chỉ các Layer ống gió)**. Sau khi quét, xem dòng **Layer đã đọc** để kiểm tra.
+- Nếu tool báo không nhận ra layer ống gió (hoặc thiếu hệ thống), chọn đúng layer đó ở ô Layer rồi quét lại.
+
+## Ống đổi kích thước và nhật ký dựng (Version 122)
+- Đoạn ngắn nằm giữa 2 ống khác cỡ (vd 400x150 và 400x250) được dựng thành **côn thu**, kích thước 2 bên lấy theo ghi chú trên bản vẽ.
+- Sau khi dựng, nếu thông báo có dòng **CHƯA DỰNG ĐƯỢC**, mở file nhật ký ghi ngay bên dưới để biết đoạn / phụ kiện nào lỗi và vì sao.
+- (Version 123) Mọi vị trí tay nhánh được dựng bằng **chân rẽ**, không dùng chạc 3: cả chỗ 2 nhánh tách ra từ đầu một ống qua hộp gió, và nhánh nhỏ rẽ ra ở cuối tuyến. Hình xem trước chưa vẽ phần ống chính kéo thêm; khi dựng, tool tự kéo ống chính tới đủ chỗ gắn 2 chân rẽ.
+
+## Ống có ghi chú mà không được vẽ (Version 124-125)
+- (Version 125) Sửa lỗi mất đoạn ống nằm sát cổ loe: Revit gộp 2 hình thành 1 đường gấp khúc, tool nay tự tách ra trước khi nhận diện.
+- Đoạn chữ nhật trên layer ống có ghi chú `WxH` bên trong (rộng đúng bằng W) luôn được lấy lại, kể cả khi bước lọc đã bỏ.
+- Nếu vẫn thiếu: quét lại rồi gửi 2 file trong `%LOCALAPPDATA%\HDTOOL\Logs\`: `CadDuct_scan.log` và `CadDuct_build.log`.
+
+## Xem trước 3D ống gió trước khi dựng
+1. Quét xong, cửa sổ **Xem Trước 3D** tự mở. Đóng rồi muốn xem lại thì bấm **Xem 3D**.
+2. Giống Revit: giữ **chuột giữa** để kéo view, `Shift` + chuột giữa để xoay, lăn để phóng, nhấp đúp để vừa khung. Chuột trái cũng xoay được.
+3. Xem các đoạn **đỏ** (chưa nối) ở danh sách bên phải. Đoạn sai thì chọn rồi bấm **Bỏ đoạn này, không dựng**.
+4. Bấm **Dựng hàng loạt**. Nếu còn thiếu cao độ hoặc chiều cao H, tool đưa về form chính để nhập.

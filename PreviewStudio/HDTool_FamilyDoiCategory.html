@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Đổi Category</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#3b4453;font:13px "Segoe UI",sans-serif;color:#1d1d1f;padding:16px}
+.win{width:1180px;max-width:100%;margin:0 auto;background:#f5f5f7;border-radius:10px;overflow:hidden}
+.bar{height:36px;background:#ececee;display:flex;align-items:center;padding:0 14px;gap:8px;border-bottom:1px solid #d2d2d7;font-weight:700}
+.bar i{width:12px;height:12px;border-radius:6px;background:#ff5f57}.bar i+i{background:#febc2e}.bar i+i+i{background:#28c840}
+.bar span{flex:1;text-align:center}
+.head{background:#fff;padding:10px 20px;border-bottom:1px solid #e5e5ea}.head b{font-size:17px}.head p{color:#515154;font-size:12px}
+.main{display:grid;grid-template-columns:1fr 380px}
+table{width:100%;border-collapse:collapse;background:#fff;align-self:start}
+th{background:#f2f2f4;color:#515154;font-size:12px;text-align:left;padding:8px 12px}
+td{padding:0 12px;height:36px;border-bottom:1px solid #e5e5ea;cursor:pointer}
+td.n{font-weight:700}tr.sel td{background:#dcebff}
+.side{background:#f2f2f4;padding:8px 16px 16px;border-left:1px solid #d2d2d7}
+.side h3{font-size:12.5px;margin-bottom:6px}
+.view{height:200px;background:linear-gradient(#1a2340,#0b0f1c);border-radius:2px;display:flex;align-items:center;justify-content:center;color:#8a93a8}
+.cat{color:#007aff;font-weight:700;font-size:11.5px;margin-top:8px}
+.fam{font-size:15px;font-weight:700;margin:2px 0 6px}
+select{width:100%;height:30px;border:1px solid #c7c7cc;border-radius:4px;background:#fff;font:inherit;padding:0 6px}
+.info{background:#fff;border:1px solid #8e8e93;padding:6px 8px;margin-top:6px;font-size:11.5px}.info b{color:#b25e00}
+.box{margin-top:10px;background:#fff;border:2px solid #007aff;border-radius:8px;padding:8px 10px 10px}
+.box label{display:block;font-weight:700;margin-bottom:6px}
+.row{display:flex;gap:8px}.row select{flex:1;min-width:0}
+button{font:700 13px "Segoe UI",sans-serif;border:0;border-radius:6px;background:#007aff;color:#fff;cursor:pointer;padding:0 14px;height:30px;white-space:nowrap}
+button:disabled{background:#c7c7cc;cursor:default}
+.note{font-size:11.5px;color:#515154;margin-top:5px}
+.ph{font-weight:700;margin:10px 0 4px}
+.params{background:#fff;border:1px solid #8e8e93;height:112px;overflow:hidden}.params td{height:22px;font-size:12px;cursor:default}
+.place{width:100%;height:44px;margin-top:10px}
+.foot{background:#ececee;border-top:1px solid #d2d2d7;padding:8px 20px;color:#1e8e3e;font-weight:700;font-size:12px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px}
+.dlg{background:#fff;width:420px;max-width:100%;border-radius:10px;padding:18px}
+.dlg p{margin:8px 0;line-height:1.5}.dlg div{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.dlg .no{background:#e5e5ea;color:#1d1d1f}
+@media(max-width:760px){.main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="bar"><i></i><i></i><i></i><span>HDTOOL - TỔNG HỢP FAMILY (BẢN XEM TRƯỚC)</span></div>
+  <div class="head"><b>TỔNG HỢP FAMILY ĐÃ LOAD VÀO DỰ ÁN</b><p>Chọn 1 Family ở bảng, đổi Category ở khung viền xanh bên phải.</p></div>
+  <div class="main">
+    <table><thead><tr><th>STT</th><th>Tên Family</th><th>Số Type</th><th>Chuyên Ngành</th></tr></thead><tbody id="rows"></tbody></table>
+    <div class="side">
+      <h3>XEM TRƯỚC 3D · KÉO CHUỘT ĐỂ XOAY</h3>
+      <div class="view">(khung xem 3D như hiện tại, thu thấp 40px)</div>
+      <div class="cat" id="cat"></div>
+      <div class="fam" id="fam"></div>
+      <select><option>Canvas-L=200mm</option></select>
+      <div class="info">Host: Khớp nối / Mặt phẳng làm việc<br><b id="cnt"></b></div>
+      <div class="box">
+        <label for="to">Đổi Category (không cần mở Family)</label>
+        <div class="row"><select id="to"></select><button id="go">Đổi Category</button></div>
+        <div class="note" id="note"></div>
+      </div>
+      <div class="ph">Thông Số Kỹ Thuật (Type Parameters):</div>
+      <div class="params"><table><tr><th>Thông Số</th><th>Giá Trị</th></tr><tr><td>Default Elevation</td><td>0</td></tr><tr><td>Export Type to IFC</td><td>Default</td></tr></table></div>
+      <button class="place">ĐẶT VÀO BẢN VẼ REVIT (CLICK ĐỂ ĐẶT)</button>
+    </div>
+  </div>
+  <div class="foot" id="st">● Sẵn sàng.</div>
+</div>
+<div class="ov" id="ov"><div class="dlg"><b>Xác nhận đổi Category</b><p id="msg"></p><div><button class="no" id="no">Không</button><button id="yes">Đổi</button></div></div></div>
+<script>
+const cats=["Air Terminals","Cable Tray Fittings","Duct Accessories","Duct Fittings","Electrical Equipment","Electrical Fixtures","Furniture","Generic Models","Lighting Fixtures","Mechanical Equipment","Pipe Accessories","Pipe Fittings","Plumbing Fixtures","Specialty Equipment","Sprinklers"];
+const data=[["01.DSC_ROD_VCD",1,"Duct Accessories"],["DRT_REC_Canvas",3,"Duct Accessories"],["DRT_REC_MFD",1,"Duct Accessories"],["M_ỐNG GIÓ_(SYS-WXH-BOD=FL+)R24",1,"Duct Tags"],["00.REC Elbow",3,"Duct Fittings"],["00.REC Tee",1,"Duct Fittings"],["00.REC Transition REC",7,"Duct Fittings"]];
+let cur=1;
+const $=id=>document.getElementById(id);
+function draw(){
+  $("rows").innerHTML=data.map((d,i)=>`<tr class="${i==cur?'sel':''}" data-i="${i}"><td>${i+1}</td><td class="n">${d[0]}</td><td>${d[1]}</td><td>${d[2]}</td></tr>`).join("");
+  const d=data[cur],tag=/Tags$/.test(d[2]);
+  $("cat").textContent="["+d[2]+"]";$("fam").textContent=d[0];$("cnt").textContent="Số Type đã load: "+d[1];
+  $("to").innerHTML='<option value="">-- Chọn Category mới --</option>'+cats.filter(c=>c!=d[2]).map(c=>`<option>${c}</option>`).join("");
+  $("to").disabled=tag;$("go").disabled=true;
+  $("note").textContent=tag?"Tag / ký hiệu chú thích không đổi Category được.":"Giữ nguyên thông số Type đang có trong dự án.";
+}
+$("rows").onclick=e=>{const r=e.target.closest("tr");if(r){cur=+r.dataset.i;draw()}};
+$("to").onchange=()=>$("go").disabled=!$("to").value;
+const close=()=>$("ov").style.display="none";
+$("go").onclick=()=>{const d=data[cur];$("msg").textContent=`Family: ${d[0]} (${d[1]} Type). Đổi từ "${d[2]}" sang "${$("to").value}". Mọi đối tượng đã vẽ của Family này sẽ đổi theo.`;$("ov").style.display="flex"};
+$("no").onclick=close;
+$("yes").onclick=()=>{const d=data[cur],n=$("to").value;d[2]=n;close();draw();$("st").textContent=`● Đã đổi [${d[0]}] sang ${n}. (mô phỏng)`};
+document.onkeydown=e=>{if(e.key=="Escape")close()};
+draw();
+</script>
+</body>
+</html>

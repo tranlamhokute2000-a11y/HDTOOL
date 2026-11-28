@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Mechanical;
 
@@ -58,6 +59,74 @@ namespace HDTool
             return imp.Name;
         }
 
+        // ==================== CHỌN LAYER ỐNG GIÓ ====================
+
+        /// <summary>Mục mặc định trong ô Layer: chỉ đọc các layer nhận ra là ống gió.</summary>
+        public const string AutoDuctLayerOption = "(Tự động - chỉ các Layer ống gió)";
+        /// <summary>Đọc mọi layer: chỉ dùng khi file CAD chỉ có ống gió (bản vẽ kèm kiến trúc sẽ ra ống rác).</summary>
+        public const string AllLayerOption = "(Tất cả Layer - kể cả nét kiến trúc)";
+
+        /// <summary>Các layer đã đọc ở lần nhận diện gần nhất (để hiện cho người dùng kiểm tra).</summary>
+        public static string LastLayersUsed { get; private set; }
+
+        private static readonly string[] DuctLayerWords = new string[] { "DUCT", "ONG GIO", "ONGGIO", "ONG THONG GIO" };
+        private static readonly string[] DuctSystemTokens = new string[] { "SAD", "RAD", "EAD", "OAD", "FAD", "TAD", "KED", "SED", "SEAD", "EXAD" };
+        private static readonly string[] NotDuctLayerWords = new string[]
+        {
+            "BUS", "CABLE", "ELEC", "PIPE", "FLEX", "TEXT", "TXT", "DIM", "TAG", "HANGER", "SUPPORT",
+            "OPEN", "HATCH", "CENTER", "AXIS", "INSUL"
+        };
+
+        /// <summary>Layer có phải layer ống gió cứng không (xét phần tên sau tiền tố xref "$0$").</summary>
+        public static bool IsDuctLayerName(string layer)
+        {
+            if (string.IsNullOrWhiteSpace(layer)) return false;
+            string[] parts = Regex.Split(layer, @"\$\d+\$");
+            string leaf = SheetExportCadPdfService.RemoveDiacritics(parts[parts.Length - 1]).ToUpperInvariant();
+            leaf = leaf.Replace('_', ' ').Replace('-', ' ').Replace('.', ' ');
+            foreach (string kw in NotDuctLayerWords)
+            {
+                if (leaf.Contains(kw)) return false;
+            }
+            foreach (string kw in DuctLayerWords)
+            {
+                if (leaf.Contains(kw)) return true;
+            }
+            foreach (string token in leaf.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (Array.IndexOf(DuctSystemTokens, token) >= 0) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Đổi lựa chọn trong ô Layer thành bộ lọc. Trả về null = đọc mọi layer (trừ layer trục/chữ/hatch).
+        /// Chế độ tự động mà không thấy layer ống gió thì báo lỗi, KHÔNG đoán trên toàn bản vẽ.
+        /// </summary>
+        private static Func<string, bool> BuildLayerFilter(Document doc, ImportInstance cadLink, string option)
+        {
+            if (string.Equals(option, AllLayerOption, StringComparison.Ordinal))
+            {
+                LastLayersUsed = "tất cả layer";
+                return null;
+            }
+            if (!string.IsNullOrWhiteSpace(option) && !string.Equals(option, AutoDuctLayerOption, StringComparison.Ordinal))
+            {
+                string wanted = option.Trim();
+                LastLayersUsed = wanted;
+                return delegate(string lay) { return string.Equals(lay, wanted, StringComparison.OrdinalIgnoreCase); };
+            }
+
+            List<string> ductLayers = GetLayersFromCadLink(cadLink, doc).Where(IsDuctLayerName).ToList();
+            if (ductLayers.Count == 0)
+            {
+                throw new InvalidOperationException("Không tự nhận ra layer ống gió trong file CAD này. Hãy chọn đúng layer ống gió ở ô Layer rồi quét lại.");
+            }
+            LastLayersUsed = string.Join(", ", ductLayers.ToArray());
+            HashSet<string> set = new HashSet<string>(ductLayers, StringComparer.OrdinalIgnoreCase);
+            return delegate(string lay) { return set.Contains(lay); };
+        }
+
         public static List<string> GetLayersFromCadLink(ImportInstance cadLink, Document doc)
         {
             HashSet<string> layers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -85,6 +154,8 @@ namespace HDTool
                 GeometryInstance gi = go as GeometryInstance;
                 if (gi != null)
                 {
+                    string blockLayer = GetLayerName(gi, doc);
+                    if (!string.IsNullOrEmpty(blockLayer)) layers.Add(blockLayer);
                     GeometryElement sym = gi.GetSymbolGeometry();
                     if (sym != null) CollectLayerNamesRecursive(sym, doc, layers);
                 }
@@ -175,6 +246,30 @@ namespace HDTool
             public double Score;
         }
 
+        /// <summary>Nét CAD của lần nhận diện gần nhất (x0,y0,x1,y1... feet) để lót dưới hình xem trước 3D.</summary>
+        public static float[] LastCadLinework { get; private set; }
+
+        private static float[] FlattenLinework(List<RawPolyShape> polys, List<RawLineShape> lines)
+        {
+            const int maxValues = 80000; // 20.000 đoạn: đủ đối chiếu mà vẫn xoay mượt
+            List<float> buf = new List<float>();
+            foreach (RawLineShape l in lines)
+            {
+                if (buf.Count >= maxValues) break;
+                XYZ a = l.Line.GetEndPoint(0), b = l.Line.GetEndPoint(1);
+                buf.Add((float)a.X); buf.Add((float)a.Y); buf.Add((float)b.X); buf.Add((float)b.Y);
+            }
+            foreach (RawPolyShape p in polys)
+            {
+                for (int i = 1; i < p.Points.Count && buf.Count < maxValues; i++)
+                {
+                    buf.Add((float)p.Points[i - 1].X); buf.Add((float)p.Points[i - 1].Y);
+                    buf.Add((float)p.Points[i].X); buf.Add((float)p.Points[i].Y);
+                }
+            }
+            return buf.ToArray();
+        }
+
         public static void AnalyzeCadDuctNetwork(
             Document doc,
             ImportInstance cadLink,
@@ -201,8 +296,7 @@ namespace HDTool
             string extractorDiag;
             CadDwgExtractor.ExtractTextAndDampersFromDwg(doc, cadLink, out textNotes, out dampers, out exclusions, out extractorDiag);
 
-            bool filterBySpecificLayer = !string.IsNullOrWhiteSpace(optionalLayerFilter)
-                && !optionalLayerFilter.StartsWith("(");
+            Func<string, bool> layerFilter = BuildLayerFilter(doc, cadLink, optionalLayerFilter);
 
             Options opt = new Options();
             opt.ComputeReferences = false;
@@ -231,7 +325,8 @@ namespace HDTool
                     new XYZ(pickSeedPoint.X + pad, pickSeedPoint.Y + pad, 1e6));
             }
 
-            CollectGeometryRecursive(rootGeom, Transform.Identity, doc, filterBySpecificLayer ? optionalLayerFilter : null, rawPolys, rawLines, rawArcs);
+            CollectGeometryRecursive(rootGeom, Transform.Identity, doc, layerFilter, null, rawPolys, rawLines, rawArcs);
+            LastCadLinework = FlattenLinework(rawPolys, rawLines);
 
             HashSet<int> consumedLineIndices = new HashSet<int>();
 
@@ -305,15 +400,33 @@ namespace HDTool
             }
 
             // Loại bỏ triệt để các hình hộp giả ống (miệng gió/trục đứng gạch chéo, khung hộp chữ IAQ, tiêu âm/quạt/hatch phòng máy, van ngang)
-            FilterFalsePositiveSegments(allRectangles, allFittings, rawLines, exclusions);
+            List<string> scanStages = new List<string>();
+            scanStages.Add("Lần quét: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " | Layer: " + optionalLayerFilter
+                + (pickBox != null ? " | quét vùng" : (pickSeedPoint != null ? " | chọn chuỗi" : " | quét toàn bộ")));
+            scanStages.Add("DIAG|" + extractorDiag);
+            AddStageLog(scanStages, "truoc-loc", allRectangles);
 
-            if (allRectangles.Count == 0) return;
+            FilterFalsePositiveSegments(allRectangles, allFittings, rawLines, exclusions);
+            AddStageLog(scanStages, "sau-loc", allRectangles);
+
+            // Đoạn có đủ ghi chú WxH mà bị bước trên bỏ mất thì lấy lại
+            int recovered = RecoverAnnotatedDucts(rawPolys, textNotes, allRectangles, allFittings, centerElevMm, wideBox);
+            scanStages.Add("KHOI-PHUC|" + recovered);
+
+            if (allRectangles.Count == 0)
+            {
+                WriteScanLog(scanStages, rawPolys, rawLines, textNotes, exclusions);
+                return;
+            }
 
             // Sửa hướng trục cho các đoạn ống cổ ngắn (Length < Width, VD 647x2200 hoặc 911x2000) dựa vào mặt tiếp xúc phụ kiện/ống và mũi tên Leader
             OrientShortCollarRectanglesByTopology(allRectangles, allFittings, textNotes);
 
             // Xây dựng Topology kết nối
             List<CadConnectionEdge> allEdges = BuildGeometricTopology(allRectangles, allFittings);
+
+            // Mọi vị trí tay nhánh đều dựng bằng Chân rẽ (không chạc 3). Làm trước khi lọc theo điểm bấm để chuỗi ống không bị đứt.
+            NormalizeBranchesToTaps(allRectangles, allFittings, allEdges);
 
             List<CadDuctSegment> selectedDucts;
             List<CadDuctSegment> selectedFittings;
@@ -367,6 +480,9 @@ namespace HDTool
 
             MatchAndPropagateDuctSizes(selectedDucts, textNotes, defaultHeightMm);
 
+            // Khúc ngắn vẽ giữa 2 ống khác kích thước là CÔN THU, không phải ống thẳng
+            ConvertInlineReducers(selectedDucts, selectedFittings, selectedEdges);
+
             // Gộp các đoạn ống thẳng cùng kích thước nối tiếp nhau qua quần ống gió / chạc chia Y thành 1 ống chính xuyên suốt để gắn Chân rẽ sạch sẽ không đụng mối nối
             MergeCollinearTapHosts(selectedDucts, selectedEdges);
             AssignFallbackTapBevelDirections(selectedDucts, selectedEdges);
@@ -393,13 +509,143 @@ namespace HDTool
             outStraightDucts = selectedDucts;
             outFittings = selectedFittings;
             outEdges = selectedEdges;
+
+            AddStageLog(scanStages, "cuoi", selectedDucts);
+            AddStageLog(scanStages, "phu-kien", selectedFittings);
+            WriteScanLog(scanStages, rawPolys, rawLines, textNotes, exclusions);
+        }
+
+        /// <summary>Lấy các nét trực tiếp của 1 block (mỗi nét = dãy điểm) để nhận diện ký hiệu.</summary>
+        private static bool IsAirTerminalBlock(GeometryElement symbolGeometry)
+        {
+            if (symbolGeometry == null) return false;
+            List<IList<XYZ>> shapes = new List<IList<XYZ>>();
+            foreach (GeometryObject go in symbolGeometry)
+            {
+                PolyLine pl = go as PolyLine;
+                Line ln = go as Line;
+                if (pl != null) shapes.Add(pl.GetCoordinates());
+                else if (ln != null) shapes.Add(new XYZ[] { ln.GetEndPoint(0), ln.GetEndPoint(1) });
+                else if (!(go is Solid)) return false;
+                if (shapes.Count > 6) return false;
+            }
+            return IsCrossHairTerminalSymbol(shapes);
+        }
+
+        /// <summary>
+        /// Ký hiệu miệng gió: 1-3 khung chữ nhật kín + đúng 2 đường tâm vuông góc đi qua tâm và thò ra ngoài khung.
+        /// Hay được vẽ trên layer ống gió nên dễ bị nhận nhầm thành đoạn ống.
+        /// </summary>
+        private static bool IsCrossHairTerminalSymbol(List<IList<XYZ>> shapes)
+        {
+            if (shapes == null || shapes.Count < 3 || shapes.Count > 5) return false;
+            double tol = 20.0 * MM_TO_FEET;
+
+            double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+            List<IList<XYZ>> axes = new List<IList<XYZ>>();
+            int rects = 0;
+            foreach (IList<XYZ> s in shapes)
+            {
+                if (s.Count == 2) { axes.Add(s); continue; }
+                if (s.Count != 5 || s[0].DistanceTo(s[4]) > tol) return false;
+                rects++;
+                foreach (XYZ p in s)
+                {
+                    minX = Math.Min(minX, p.X); maxX = Math.Max(maxX, p.X);
+                    minY = Math.Min(minY, p.Y); maxY = Math.Max(maxY, p.Y);
+                }
+            }
+            if (rects < 1 || axes.Count != 2) return false;
+
+            double cx = (minX + maxX) * 0.5, cy = (minY + maxY) * 0.5;
+            bool horizontal = false, vertical = false;
+            foreach (IList<XYZ> a in axes)
+            {
+                if (Math.Abs((a[0].X + a[1].X) * 0.5 - cx) > tol || Math.Abs((a[0].Y + a[1].Y) * 0.5 - cy) > tol) return false;
+                if (Math.Abs(a[0].Y - a[1].Y) <= tol && Math.Abs(a[0].X - a[1].X) > (maxX - minX) + tol) horizontal = true;
+                if (Math.Abs(a[0].X - a[1].X) <= tol && Math.Abs(a[0].Y - a[1].Y) > (maxY - minY) + tol) vertical = true;
+            }
+            return horizontal && vertical;
+        }
+
+        /// <summary>
+        /// Tách đường gấp khúc đi qua 1 đỉnh nhiều lần thành các vòng kín đơn; phần còn lại (nếu có) giữ thành chuỗi riêng.
+        /// Đường không có đỉnh lặp được trả về nguyên vẹn.
+        /// </summary>
+        private static List<List<XYZ>> SplitPinchedPolyline(List<XYZ> pts)
+        {
+            double tol = 1.0 * MM_TO_FEET;
+            List<List<XYZ>> parts = new List<List<XYZ>>();
+            List<XYZ> chain = new List<XYZ>();
+            foreach (XYZ p in pts)
+            {
+                if (chain.Count > 0 && chain[chain.Count - 1].DistanceTo(p) < tol) continue;
+                int hit = -1;
+                for (int i = chain.Count - 1; i >= 0; i--)
+                {
+                    if (chain[i].DistanceTo(p) < tol) { hit = i; break; }
+                }
+                if (hit < 0)
+                {
+                    chain.Add(p);
+                    continue;
+                }
+
+                List<XYZ> loop = chain.GetRange(hit, chain.Count - hit);
+                loop.Add(p);
+                parts.Add(loop);
+                chain.RemoveRange(hit + 1, chain.Count - hit - 1); // giữ lại đỉnh trùng để đi tiếp
+            }
+            if (chain.Count >= 2) parts.Add(chain);
+
+            // Chỉ có tối đa 1 hình -> đường bình thường, giữ nguyên dữ liệu gốc
+            if (parts.Count <= 1)
+            {
+                parts.Clear();
+                parts.Add(pts);
+            }
+            return parts;
+        }
+
+        private static void AddPolylinePart(List<XYZ> pts, string lay, int color, List<RawPolyShape> outPolys, List<RawLineShape> outLines)
+        {
+            if (pts.Count >= 4 && pts[0].DistanceTo(pts[pts.Count - 1]) < 15.0 * MM_TO_FEET)
+            {
+                RawPolyShape rps = new RawPolyShape();
+                rps.Points = pts;
+                rps.LayerName = lay;
+                rps.ColorRgb = color;
+                outPolys.Add(rps);
+            }
+            else if (!IsAirflowArrowPolygon(pts))
+            {
+                for (int i = 0; i < pts.Count - 1; i++)
+                {
+                    if (pts[i].DistanceTo(pts[i + 1]) > 50.0 * MM_TO_FEET)
+                    {
+                        try
+                        {
+                            RawLineShape rls = new RawLineShape();
+                            rls.Line = Line.CreateBound(pts[i], pts[i + 1]);
+                            rls.LayerName = lay;
+                            rls.ColorRgb = color;
+                            outLines.Add(rls);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Bỏ qua nét CAD lỗi: " + ex.Message);
+                        }
+                    }
+                }
+            }
         }
 
         private static void CollectGeometryRecursive(
             GeometryElement geomElem,
             Transform currentTransform,
             Document doc,
-            string requiredLayer,
+            Func<string, bool> layerFilter,
+            string blockLayer,
             List<RawPolyShape> outPolys,
             List<RawLineShape> outLines,
             List<RawArcShape> outArcs)
@@ -427,18 +673,21 @@ namespace HDTool
 
                     Transform nextTransform = currentTransform.Multiply(gInst.Transform);
                     GeometryElement symGeom = gInst.GetSymbolGeometry();
-                    if (symGeom != null)
+                    if (symGeom != null && !IsAirTerminalBlock(symGeom))
                     {
-                        CollectGeometryRecursive(symGeom, nextTransform, doc, requiredLayer, outPolys, outLines, outArcs);
+                        // Block đặt trên layer nào thì nét layer "0" bên trong thuộc layer đó (quy tắc AutoCAD)
+                        string childLayer = string.IsNullOrEmpty(instLayer) || instLayer == "0" ? blockLayer : instLayer;
+                        CollectGeometryRecursive(symGeom, nextTransform, doc, layerFilter, childLayer, outPolys, outLines, outArcs);
                     }
                     continue;
                 }
 
                 int layColor;
                 string lay = GetLayerNameAndColor(obj, doc, out layColor);
-                if (!string.IsNullOrEmpty(requiredLayer))
+                if ((string.IsNullOrEmpty(lay) || lay == "0") && !string.IsNullOrEmpty(blockLayer)) lay = blockLayer;
+                if (layerFilter != null)
                 {
-                    if (!string.Equals(lay, requiredLayer.Trim(), StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!layerFilter(lay)) continue;
                 }
                 else if (IsIgnoredUtilityLayer(lay))
                 {
@@ -458,31 +707,10 @@ namespace HDTool
                             wcsPts.Add(new XYZ(p.X, p.Y, 0.0));
                         }
 
-                        if (wcsPts.Count >= 4 && wcsPts[0].DistanceTo(wcsPts[wcsPts.Count - 1]) < 15.0 * MM_TO_FEET)
+                        // Revit có thể gộp nhiều hình vẽ nối nhau (VD: đoạn ống + cổ loe sát đầu) thành 1 PolyLine
+                        foreach (List<XYZ> part in SplitPinchedPolyline(wcsPts))
                         {
-                            RawPolyShape rps = new RawPolyShape();
-                            rps.Points = wcsPts;
-                            rps.LayerName = lay;
-                            rps.ColorRgb = layColor;
-                            outPolys.Add(rps);
-                        }
-                        else if (!IsAirflowArrowPolygon(wcsPts))
-                        {
-                            for (int i = 0; i < wcsPts.Count - 1; i++)
-                            {
-                                if (wcsPts[i].DistanceTo(wcsPts[i + 1]) > 50.0 * MM_TO_FEET)
-                                {
-                                    try
-                                    {
-                                        RawLineShape rls = new RawLineShape();
-                                        rls.Line = Line.CreateBound(wcsPts[i], wcsPts[i + 1]);
-                                        rls.LayerName = lay;
-                                        rls.ColorRgb = layColor;
-                                        outLines.Add(rls);
-                                    }
-                                    catch { }
-                                }
-                            }
+                            AddPolylinePart(part, lay, layColor, outPolys, outLines);
                         }
                     }
                     continue;
@@ -3065,6 +3293,7 @@ namespace HDTool
                     CadDuctSegment mainSideDuct = null;
                     CadDuctSegment smallEndDuct = null;
                     CadDuctSegment largeEndDuct = null;
+                    double mainSideErr = double.MaxValue;
 
                     double fsx = fit.StartPoint.X, fsy = fit.StartPoint.Y;
                     double fex = fit.EndPoint.X, fey = fit.EndPoint.Y;
@@ -3104,11 +3333,14 @@ namespace HDTool
                         bool alignedWithMainWall = (fit.TapBevelDirection != null)
                             ? (Math.Abs(d.Direction.DotProduct(fit.TapBevelDirection)) >= 0.92 && Math.Abs(d.Direction.DotProduct(fit.Direction)) < 0.65)
                             : (Math.Abs(d.Direction.DotProduct(fit.Direction)) < 0.60);
-                        if (Math.Abs(distToAxis - halfMainW) <= baseTouchTolFeet
+                        // Nhiều ống cùng đạt -> lấy ống có vách khớp cổ chân rẽ nhất (không lấy khúc ngắn nằm kế bên)
+                        double wallErr = Math.Abs(distToAxis - halfMainW);
+                        if (wallErr <= baseTouchTolFeet && wallErr <= mainSideErr
                             && d.WidthMm >= fit.Width2Mm + 20.0
                             && alignedWithMainWall)
                         {
                             mainSideDuct = d;
+                            mainSideErr = wallErr;
                         }
                     }
 
@@ -4142,6 +4374,9 @@ namespace HDTool
                     bool strictInside = duct.ContainsPointXY(note.Position, strictInsideMargin);
                     if (insideOnly && !strictInside) continue;
 
+                    // Chữ nằm ngoài ống: bề rộng phải khớp sát, nếu không ghi chú 200 sẽ bị ống 150 gần đó lấy mất
+                    if (!allowEiTolerance && !strictInside && Math.Abs(geomW - note.WidthMm) > 25.0) continue;
+
                     double distToAxis = duct.DistanceToPointXY(note.Position);
                     bool nearPoly = strictInside || duct.ContainsPointXY(note.Position, nearPolyMargin);
                     if (!nearPoly && distToAxis > maxMatchRadiusFeet) continue;
@@ -4657,7 +4892,10 @@ namespace HDTool
                     bool isSameRunContinuation = (edge == null || edge.Kind == CadConnectionKind.CollinearDirect || edge.Kind == CadConnectionKind.Elbow)
                         && geomSameWidth;
 
-                    if (neighbor.WidthMm <= 0 || (isSameRunContinuation && current.WidthMm > 0))
+                    // Chỉ chép bề rộng khi nét CAD của 2 đoạn thật sự bằng nhau (lệch 150/200 là 2 cỡ ống khác nhau)
+                    bool geomIdentical = neighGeomW <= 0 || Math.Abs(currGeomW - neighGeomW) <= 25.0;
+
+                    if (neighbor.WidthMm <= 0 || (isSameRunContinuation && geomIdentical && current.WidthMm > 0))
                     {
                         neighbor.WidthMm = current.WidthMm;
                         neighbor.Width2Mm = current.WidthMm;
@@ -4701,6 +4939,9 @@ namespace HDTool
             int createdElbowCount = 0;
             int createdTakeoffCount = 0;
             int createdTeeCount = 0;
+            int failedDuctCount = 0;
+            int failedFitCount = 0;
+            List<string> buildLog = new List<string>();
 
             if (doc == null || ducts == null || ducts.Count == 0)
             {
@@ -4756,7 +4997,7 @@ namespace HDTool
                 // PHA 1: Tạo toàn bộ đoạn ống gió thẳng
                 using (Transaction txDucts = new Transaction(doc, "HDTOOL - Tạo Ống Gió Thẳng"))
                 {
-                    AttachSilentFailureHandling(txDucts);
+                    SilentFittingFailuresPreprocessor ductFails = AttachSilentFailureHandling(txDucts);
                     txDucts.Start();
 
                     EnsureDuctTypeRoutingPreferences(doc, ductTypeId, useTakeoffTap);
@@ -4769,7 +5010,12 @@ namespace HDTool
                         {
                             XYZ pt1 = adjustedStarts[seg.Id];
                             XYZ pt2 = adjustedEnds[seg.Id];
-                            if (pt1.DistanceTo(pt2) < 40.0 * MM_TO_FEET) continue;
+                            if (pt1.DistanceTo(pt2) < 40.0 * MM_TO_FEET)
+                            {
+                                failedDuctCount++;
+                                buildLog.Add("ỐNG không dựng (ngắn hơn 40mm): " + DescribeSegment(seg));
+                                continue;
+                            }
 
                             Duct duct = Duct.Create(doc, systemTypeId, ductTypeId, levelId, pt1, pt2);
                             if (duct != null)
@@ -4785,84 +5031,110 @@ namespace HDTool
                                 createdDuctCount++;
                             }
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            failedDuctCount++;
+                            buildLog.Add("ỐNG lỗi: " + DescribeSegment(seg) + " -> " + ex.Message);
+                        }
                     }
 
                     doc.Regenerate();
-                    txDucts.Commit();
+                    if (txDucts.Commit() != TransactionStatus.Committed)
+                    {
+                        buildLog.Add("Revit huỷ bước tạo ống thẳng: " + ductFails.Text);
+                    }
                 }
 
                 if (edges != null && edges.Count > 0)
                 {
-                    // PHA 2: Nối đầu-đối-đầu TRƯỚC (Transition, CollinearDirect, Elbow) để cố định hình học đầu mút ống trước khi gắn Tap
-                    using (Transaction txEndFits = new Transaction(doc, "HDTOOL - Nối Côn & Cút"))
+                    // PHA 2: Nối đầu-đối-đầu TRƯỚC (Transition, CollinearDirect, Elbow) để cố định hình học đầu mút ống trước khi gắn Tap.
+                    // Mỗi phụ kiện một Transaction riêng: 1 chỗ Revit không nối được chỉ huỷ đúng chỗ đó, không kéo mất các côn/cút khác.
+                    foreach (CadConnectionEdge edge in edges)
                     {
-                        AttachSilentFailureHandling(txEndFits);
-                        txEndFits.Start();
-
-                        foreach (CadConnectionEdge edge in edges)
+                        if (edge.Kind != CadConnectionKind.Transition
+                            && edge.Kind != CadConnectionKind.Elbow
+                            && edge.Kind != CadConnectionKind.CollinearDirect)
                         {
-                            if (edge.Kind != CadConnectionKind.Transition
-                                && edge.Kind != CadConnectionKind.Elbow
-                                && edge.Kind != CadConnectionKind.CollinearDirect)
-                            {
-                                continue;
-                            }
+                            continue;
+                        }
 
-                            Duct d1, d2;
-                            if (!ductMap.TryGetValue(edge.SegmentA.Id, out d1) || !ductMap.TryGetValue(edge.SegmentB.Id, out d2)) continue;
-                            if (!d1.IsValidObject || !d2.IsValidObject) continue;
+                        Duct d1, d2;
+                        if (!ductMap.TryGetValue(edge.SegmentA.Id, out d1) || !ductMap.TryGetValue(edge.SegmentB.Id, out d2)) continue;
+                        if (!d1.IsValidObject || !d2.IsValidObject) continue;
 
+                        using (Transaction txEndFit = new Transaction(doc, "HDTOOL - Nối Côn & Cút"))
+                        {
+                            SilentFittingFailuresPreprocessor fitFails = AttachSilentFailureHandling(txEndFit);
+                            txEndFit.Start();
+
+                            int addTransition = 0, addElbow = 0;
+                            string problem = null;
                             try
                             {
                                 Connector c1, c2;
                                 FindBestFacingConnectors(d1, d2, out c1, out c2);
-                                if (c1 == null || c2 == null || c1.IsConnected || c2.IsConnected) continue;
-
-                                if (edge.Kind == CadConnectionKind.Transition)
+                                if (c1 == null || c2 == null || c1.IsConnected || c2.IsConnected)
+                                {
+                                    problem = "đầu ống đã có phụ kiện khác";
+                                }
+                                else if (edge.Kind == CadConnectionKind.Transition)
                                 {
                                     if (c1.CoordinateSystem.BasisZ.DotProduct(c2.CoordinateSystem.BasisZ) <= -0.92
                                         && c1.Origin.DistanceTo(c2.Origin) <= 2500.0 * MM_TO_FEET)
                                     {
-                                        FamilyInstance trans = doc.Create.NewTransitionFitting(c1, c2);
-                                        if (trans != null) createdTransitionCount++;
+                                        if (doc.Create.NewTransitionFitting(c1, c2) != null) addTransition = 1;
                                     }
+                                    else problem = "2 đầu ống không đối diện nhau để đặt côn";
                                 }
                                 else if (edge.Kind == CadConnectionKind.Elbow)
                                 {
-                                    double zDot = Math.Abs(c1.CoordinateSystem.BasisZ.DotProduct(c2.CoordinateSystem.BasisZ));
-                                    if (zDot < 0.96)
+                                    if (Math.Abs(c1.CoordinateSystem.BasisZ.DotProduct(c2.CoordinateSystem.BasisZ)) < 0.96)
                                     {
-                                        FamilyInstance elb = doc.Create.NewElbowFitting(c1, c2);
-                                        if (elb != null) createdElbowCount++;
+                                        if (doc.Create.NewElbowFitting(c1, c2) != null) addElbow = 1;
                                     }
+                                    else problem = "2 ống gần song song, không đặt được cút";
                                 }
-                                else if (edge.Kind == CadConnectionKind.CollinearDirect)
+                                else if (c1.CoordinateSystem.BasisZ.DotProduct(c2.CoordinateSystem.BasisZ) <= -0.92)
                                 {
-                                    if (c1.CoordinateSystem.BasisZ.DotProduct(c2.CoordinateSystem.BasisZ) <= -0.92)
+                                    if (Math.Abs(d1.Width - d2.Width) > 0.01 || Math.Abs(d1.Height - d2.Height) > 0.01)
                                     {
-                                        if (Math.Abs(d1.Width - d2.Width) > 0.01 || Math.Abs(d1.Height - d2.Height) > 0.01)
-                                        {
-                                            FamilyInstance trans = doc.Create.NewTransitionFitting(c1, c2);
-                                            if (trans != null) createdTransitionCount++;
-                                        }
-                                        else if (c1.Origin.DistanceTo(c2.Origin) <= 8.0 * MM_TO_FEET)
-                                        {
-                                            c1.ConnectTo(c2);
-                                        }
-                                        else if (c1.Origin.DistanceTo(c2.Origin) <= 1500.0 * MM_TO_FEET)
-                                        {
-                                            FamilyInstance union = doc.Create.NewTransitionFitting(c1, c2);
-                                            if (union != null) createdTransitionCount++;
-                                        }
+                                        if (doc.Create.NewTransitionFitting(c1, c2) != null) addTransition = 1;
                                     }
+                                    else if (c1.Origin.DistanceTo(c2.Origin) <= 8.0 * MM_TO_FEET)
+                                    {
+                                        c1.ConnectTo(c2);
+                                    }
+                                    else if (c1.Origin.DistanceTo(c2.Origin) <= 1500.0 * MM_TO_FEET)
+                                    {
+                                        if (doc.Create.NewTransitionFitting(c1, c2) != null) addTransition = 1;
+                                    }
+                                    else problem = "2 đầu ống cách nhau quá 1500mm";
                                 }
+                                else problem = "2 đầu ống không đối diện nhau";
                             }
-                            catch { }
-                        }
+                            catch (Exception ex) { problem = ex.Message; }
 
-                        doc.Regenerate();
-                        txEndFits.Commit();
+                            bool done = false;
+                            if (problem == null)
+                            {
+                                doc.Regenerate();
+                                done = (txEndFit.Commit() == TransactionStatus.Committed);
+                                if (!done) problem = fitFails.Text.Length > 0 ? fitFails.Text : "Revit huỷ phụ kiện";
+                            }
+
+                            if (done)
+                            {
+                                createdTransitionCount += addTransition;
+                                createdElbowCount += addElbow;
+                            }
+                            else
+                            {
+                                if (txEndFit.HasStarted()) txEndFit.RollBack();
+                                failedFitCount++;
+                                buildLog.Add((edge.Kind == CadConnectionKind.Elbow ? "CÚT" : "CÔN/NỐI") + " không dựng được: "
+                                    + DescribeSegment(edge.SegmentA) + " với " + DescribeSegment(edge.SegmentB) + " -> " + problem);
+                            }
+                        }
                     }
 
                     // PHA 3: Gắn toàn bộ Chân rẽ TakeoffTap / Tee (cô lập từng Tap trong Transaction riêng để 1 Tap lỗi không kéo sập cả mạng & tự động xoay đúng chiều vát 45° theo CAD)
@@ -4912,9 +5184,10 @@ namespace HDTool
 
                             using (Transaction txOneTap = new Transaction(doc, "HDTOOL - Gắn Chân Rẽ Tap"))
                             {
-                                AttachSilentFailureHandling(txOneTap);
+                                SilentFittingFailuresPreprocessor tapFails = AttachSilentFailureHandling(txOneTap);
                                 txOneTap.Start();
                                 bool committed = false;
+                                string tapError = null;
                                 try
                                 {
                                     Connector cBranch = FindClosestConnectorToSegment(d2, d1);
@@ -4936,10 +5209,16 @@ namespace HDTool
                                         }
                                     }
                                 }
-                                catch { }
-                                if (!committed && txOneTap.HasStarted())
+                                catch (Exception ex) { tapError = ex.Message; }
+                                if (!committed)
                                 {
-                                    try { txOneTap.RollBack(); } catch { }
+                                    if (txOneTap.HasStarted())
+                                    {
+                                        try { txOneTap.RollBack(); } catch { }
+                                    }
+                                    failedFitCount++;
+                                    buildLog.Add("CHÂN RẼ không gắn được: nhánh " + DescribeSegment(edge.SegmentB) + " vào " + DescribeSegment(edge.SegmentA)
+                                        + " -> " + (tapError ?? (tapFails.Text.Length > 0 ? tapFails.Text : "không đủ chỗ trên ống chính")));
                                 }
                             }
                         }
@@ -5004,8 +5283,21 @@ namespace HDTool
                     }
                 }
 
+                foreach (CadDuctSegment seg in ducts)
+                {
+                    Duct made;
+                    if (ductMap.TryGetValue(seg.Id, out made) && !made.IsValidObject)
+                    {
+                        createdDuctCount--;
+                        failedDuctCount++;
+                        buildLog.Add("ỐNG bị Revit xoá khi nối: " + DescribeSegment(seg));
+                    }
+                }
+
                 tg.Assimilate();
             }
+
+            string logPath = WriteBuildLog(ducts, buildLog);
 
             summaryReport = string.Format(
                 "✔ Dựng thành công: {0} ống gió thẳng | {1} côn thu đồng tâm | {2} cút chuyển hướng | {3} chân rẽ Tap{4}{5}!",
@@ -5015,21 +5307,59 @@ namespace HDTool
                 createdTakeoffCount,
                 createdTeeCount > 0 ? string.Format(" | {0} chạc chia Tee", createdTeeCount) : "",
                 skippedInvalidSizeCount > 0 ? string.Format(" | Bỏ qua {0} đoạn thiếu WxH", skippedInvalidSizeCount) : "");
+            if (failedDuctCount > 0 || failedFitCount > 0)
+            {
+                summaryReport += string.Format("\nCHƯA DỰNG ĐƯỢC: {0} ống, {1} phụ kiện.", failedDuctCount, failedFitCount);
+                if (logPath != null) summaryReport += "\nChi tiết: " + logPath;
+            }
 
             return createdDuctCount;
         }
 
-        private static void AttachSilentFailureHandling(Transaction tx)
+        private static string DescribeSegment(CadDuctSegment s)
         {
-            if (tx == null) return;
+            return string.Format("ống {0}x{1} dài {2:0}mm, tâm ({3:0}; {4:0})",
+                (int)s.WidthMm, (int)s.HeightMm, s.StartPoint.DistanceTo(s.EndPoint) / MM_TO_FEET, s.CenterPoint.X / MM_TO_FEET, s.CenterPoint.Y / MM_TO_FEET);
+        }
+
+        /// <summary>Ghi nhật ký lần dựng gần nhất (ghi đè) để biết chính xác đoạn nào Revit không dựng được và vì sao.</summary>
+        private static string WriteBuildLog(List<CadDuctSegment> ducts, List<string> problems)
+        {
+            try
+            {
+                string folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HDTOOL", "Logs");
+                System.IO.Directory.CreateDirectory(folder);
+                string path = System.IO.Path.Combine(folder, "CadDuct_build.log");
+
+                List<string> text = new List<string>();
+                text.Add("Lần dựng: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                text.Add("--- Ống đưa vào dựng: " + ducts.Count);
+                foreach (CadDuctSegment s in ducts) text.Add(DescribeSegment(s) + " [" + s.SizeSource + "]");
+                text.Add("--- Chưa dựng được: " + problems.Count);
+                text.AddRange(problems);
+                System.IO.File.WriteAllLines(path, text.ToArray(), System.Text.Encoding.UTF8);
+                return path;
+            }
+            catch { return null; }
+        }
+
+        private static SilentFittingFailuresPreprocessor AttachSilentFailureHandling(Transaction tx)
+        {
+            SilentFittingFailuresPreprocessor preprocessor = new SilentFittingFailuresPreprocessor();
+            if (tx == null) return preprocessor;
             FailureHandlingOptions opts = tx.GetFailureHandlingOptions();
-            opts.SetFailuresPreprocessor(new SilentFittingFailuresPreprocessor());
+            opts.SetFailuresPreprocessor(preprocessor);
             opts.SetClearAfterRollback(true);
             tx.SetFailureHandlingOptions(opts);
+            return preprocessor;
         }
 
         private class SilentFittingFailuresPreprocessor : IFailuresPreprocessor
         {
+            private readonly List<string> _errors = new List<string>();
+
+            public string Text { get { return string.Join("; ", _errors.ToArray()); } }
+
             public FailureProcessingResult PreprocessFailures(FailuresAccessor failuresAccessor)
             {
                 if (failuresAccessor == null) return FailureProcessingResult.Continue;
@@ -5046,6 +5376,7 @@ namespace HDTool
                     }
                     else if (sev == FailureSeverity.Error)
                     {
+                        _errors.Add(fma.GetDescriptionText());
                         // Không bao giờ cho phép ResolveFailure tự xóa ống gió hoặc hiện hộp thoại lỗi; RollBack an toàn transaction cục bộ
                         return FailureProcessingResult.ProceedWithRollBack;
                     }
@@ -5271,6 +5602,369 @@ namespace HDTool
             return v.Normalize();
         }
 
+        /// <summary>
+        /// Quy các vị trí tay nhánh về Chân rẽ (TakeoffTap). Dùng bề rộng đo từ nét CAD.
+        /// </summary>
+        private static void NormalizeBranchesToTaps(List<CadDuctSegment> ducts, List<CadDuctSegment> fittings, List<CadConnectionEdge> edges)
+        {
+            if (ducts == null || edges == null || ducts.Count < 2) return;
+
+            ConnectSplitBranchesToTrunk(ducts, fittings, edges);
+
+            // Rẽ vuông góc sang ống hẹp hơn mà bản vẽ không vẽ cút -> đó là tay nhánh
+            foreach (CadConnectionEdge edge in edges)
+            {
+                if (edge.Kind != CadConnectionKind.Elbow || edge.BridgePolygon != null) continue;
+                CadDuctSegment a = edge.SegmentA, b = edge.SegmentB;
+                if (Math.Abs(a.WidthMm - b.WidthMm) < 25.0) continue;
+                if (Math.Abs(GetSegmentAxisXY(a).DotProduct(GetSegmentAxisXY(b))) > 0.5) continue;
+
+                CadDuctSegment main = (a.WidthMm > b.WidthMm) ? a : b;
+                edge.SegmentB = (main == a) ? b : a;
+                edge.SegmentA = main;
+                edge.Kind = CadConnectionKind.TakeoffTap;
+            }
+        }
+
+        /// <summary>
+        /// Đầu một ống chính có 2 tay nhánh chĩa ra 2 bên (thường qua hộp van VCD/FD): ống ở giữa là ống chính,
+        /// 2 ống hai bên là chân rẽ cắm vào sườn ống chính.
+        /// </summary>
+        private static void ConnectSplitBranchesToTrunk(List<CadDuctSegment> ducts, List<CadDuctSegment> fittings, List<CadConnectionEdge> edges)
+        {
+            foreach (CadDuctSegment trunk in ducts)
+            {
+                XYZ ut = GetSegmentAxisXY(trunk);
+                for (int end = 0; end < 2; end++)
+                {
+                    XYZ tip = (end == 0) ? trunk.StartPoint : trunk.EndPoint;
+                    XYZ other = (end == 0) ? trunk.EndPoint : trunk.StartPoint;
+                    XYZ outward = new XYZ(tip.X - other.X, tip.Y - other.Y, 0.0);
+                    if (outward.GetLength() < 1e-6) continue;
+                    outward = outward.Normalize();
+
+                    List<BranchArm> arms = new List<BranchArm>();
+                    foreach (CadDuctSegment d in ducts)
+                    {
+                        if (d == trunk || d.WidthMm > trunk.WidthMm + 15.0) continue;
+                        XYZ ud = GetSegmentAxisXY(d);
+                        if (Math.Abs(ud.DotProduct(ut)) > 0.35 || !AreDuctSystemsCompatible(trunk, d)) continue;
+
+                        XYZ cross = LineLineIntersectXY(trunk.StartPoint, ut, d.StartPoint, ud, tip.Z);
+                        if (cross == null) continue;
+                        double reach = (cross - tip).DotProduct(outward);
+                        if (reach < -200.0 * MM_TO_FEET || reach > 2000.0 * MM_TO_FEET) continue;
+
+                        bool startNear = DistXY(d.StartPoint, cross) <= DistXY(d.EndPoint, cross);
+                        XYZ near = startNear ? d.StartPoint : d.EndPoint;
+                        XYZ far = startNear ? d.EndPoint : d.StartPoint;
+                        double gap = DistXY(near, cross);
+                        double halfTrunk = trunk.WidthMm * 0.5 * MM_TO_FEET;
+                        if (gap < halfTrunk - 60.0 * MM_TO_FEET || gap > halfTrunk + 600.0 * MM_TO_FEET) continue;
+                        XYZ side = new XYZ(near.X - cross.X, near.Y - cross.Y, 0.0);
+                        if (side.DotProduct(new XYZ(far.X - cross.X, far.Y - cross.Y, 0.0)) <= 0) continue; // ống chạy xuyên qua, không phải tay nhánh
+
+                        arms.Add(new BranchArm { Duct = d, Cross = cross, Near = near, Side = side.Normalize(), Gap = gap });
+                    }
+
+                    BranchArm first = null, second = null;
+                    double best = double.MaxValue;
+                    for (int i = 0; i < arms.Count; i++)
+                    {
+                        for (int j = i + 1; j < arms.Count; j++)
+                        {
+                            BranchArm a = arms[i], c = arms[j];
+                            if (a.Side.DotProduct(c.Side) > -0.9) continue;
+                            double maxStep = (Math.Max(a.Duct.WidthMm, c.Duct.WidthMm) * 0.5 + 50.0) * MM_TO_FEET;
+                            if (Math.Abs((a.Cross - c.Cross).DotProduct(outward)) > maxStep) continue;
+                            if (a.Gap + c.Gap >= best) continue;
+
+                            // 2 ống đã nối thẳng với nhau = ống chính liền mạch, không phải 2 tay nhánh
+                            if (edges.Exists(delegate(CadConnectionEdge e) { return JoinsPair(e, a.Duct, c.Duct); })) continue;
+                            // Phải có ít nhất 1 liên kết sẵn trong cụm, tránh ghép nhầm các ống rời nằm gần nhau
+                            if (!edges.Exists(delegate(CadConnectionEdge e) { return JoinsPair(e, trunk, a.Duct) || JoinsPair(e, trunk, c.Duct); })) continue;
+
+                            first = a; second = c; best = a.Gap + c.Gap;
+                        }
+                    }
+                    if (first == null) continue;
+
+                    foreach (BranchArm arm in new BranchArm[] { first, second })
+                    {
+                        CadDuctSegment branch = arm.Duct;
+                        edges.RemoveAll(delegate(CadConnectionEdge e) { return JoinsPair(e, trunk, branch); });
+
+                        CadDuctSegment boot = (fittings == null) ? null : fittings.Find(delegate(CadDuctSegment f)
+                        {
+                            return f.CenterPoint != null && DistXY(f.CenterPoint, arm.Near) <= 150.0 * MM_TO_FEET;
+                        });
+                        if (boot != null) boot.ShapeKind = CadShapeKind.TakeoffTap;
+                        edges.Add(new CadConnectionEdge(trunk, branch, CadConnectionKind.TakeoffTap, boot, arm.Cross));
+                    }
+                }
+            }
+        }
+
+        private class BranchArm
+        {
+            public CadDuctSegment Duct;
+            public XYZ Cross;
+            public XYZ Near;
+            public XYZ Side;
+            public double Gap;
+        }
+
+        private static bool JoinsPair(CadConnectionEdge e, CadDuctSegment x, CadDuctSegment y)
+        {
+            return (e.SegmentA == x && e.SegmentB == y) || (e.SegmentA == y && e.SegmentB == x);
+        }
+
+        /// <summary>
+        /// Hai ống đồng trục khác kích thước (đã gán theo ghi chú) mà ở giữa có một khúc ngắn không ghi chú
+        /// thì khúc đó chính là côn thu: bỏ khỏi danh sách ống thẳng, nối thẳng 2 ống bằng 1 cạnh Transition.
+        /// </summary>
+        private static void ConvertInlineReducers(List<CadDuctSegment> ducts, List<CadDuctSegment> fittings, List<CadConnectionEdge> edges)
+        {
+            if (ducts == null || fittings == null || edges == null || ducts.Count < 3) return;
+
+            const double maxReducerLenMm = 800.0;
+            bool anyConverted = false;
+
+            for (int i = ducts.Count - 1; i >= 0; i--)
+            {
+                CadDuctSegment mid = ducts[i];
+                if (mid.HasDirectText || mid.Length > maxReducerLenMm) continue;
+
+                List<CadConnectionEdge> own = edges.FindAll(delegate(CadConnectionEdge e) { return e.SegmentA == mid || e.SegmentB == mid; });
+                if (own.Count != 2) continue;
+                if (!own.TrueForAll(delegate(CadConnectionEdge e)
+                    {
+                        return e.Kind == CadConnectionKind.CollinearDirect || e.Kind == CadConnectionKind.Transition;
+                    })) continue;
+
+                CadDuctSegment a = own[0].SegmentA == mid ? own[0].SegmentB : own[0].SegmentA;
+                CadDuctSegment b = own[1].SegmentA == mid ? own[1].SegmentB : own[1].SegmentA;
+                if (a == b || a.Length <= mid.Length || b.Length <= mid.Length) continue;
+                if (a.HeightMm <= 0 || b.HeightMm <= 0) continue;
+
+                double dw = Math.Abs(a.WidthMm - b.WidthMm);
+                if (dw < 15.0 && Math.Abs(a.HeightMm - b.HeightMm) < 15.0) continue;
+
+                // a và b phải nằm ở 2 phía của khúc giữa, cùng phương và gần như cùng trục
+                XYZ u = GetSegmentAxisXY(mid);
+                double ta = (a.CenterPoint - mid.CenterPoint).DotProduct(u);
+                double tb = (b.CenterPoint - mid.CenterPoint).DotProduct(u);
+                if (ta * tb >= 0) continue;
+                XYZ ua = GetSegmentAxisXY(a);
+                if (Math.Abs(ua.DotProduct(GetSegmentAxisXY(b))) < 0.96 || Math.Abs(ua.DotProduct(u)) < 0.96) continue;
+                double maxOffsetMm = Math.Max(100.0, dw * 0.65 + 80.0);
+                if (LineToLineDistance(a.StartPoint, ua, b.StartPoint, ua) > maxOffsetMm * MM_TO_FEET) continue;
+
+                CadDuctSegment big = (a.WidthMm * a.HeightMm >= b.WidthMm * b.HeightMm) ? a : b;
+                CadDuctSegment small = (big == a) ? b : a;
+
+                mid.ShapeKind = CadShapeKind.Transition;
+                mid.WidthMm = big.WidthMm;
+                mid.Width2Mm = small.WidthMm;
+                mid.HeightMm = big.HeightMm;
+                mid.TextLabel = string.Format("Côn {0}x{1} - {2}x{3}", (int)big.WidthMm, (int)big.HeightMm, (int)small.WidthMm, (int)small.HeightMm);
+                mid.SizeSource = "Côn thu giữa 2 đoạn khác kích thước";
+
+                edges.RemoveAll(delegate(CadConnectionEdge e) { return e.SegmentA == mid || e.SegmentB == mid; });
+                edges.Add(new CadConnectionEdge(big, small, CadConnectionKind.Transition, mid, mid.CenterPoint));
+                ducts.RemoveAt(i);
+                if (!fittings.Contains(mid)) fittings.Add(mid);
+                anyConverted = true;
+            }
+
+            if (anyConverted) RebuildNeighborLinks(ducts, edges);
+        }
+
+        private static void RebuildNeighborLinks(List<CadDuctSegment> ducts, List<CadConnectionEdge> edges)
+        {
+            foreach (CadDuctSegment d in ducts)
+            {
+                if (d.ConnectedNeighbors == null) d.ConnectedNeighbors = new List<CadDuctSegment>();
+                else d.ConnectedNeighbors.Clear();
+                if (d.Connections == null) d.Connections = new List<CadConnectionEdge>();
+                else d.Connections.Clear();
+            }
+            foreach (CadConnectionEdge edge in edges)
+            {
+                if (edge == null || edge.SegmentA == null || edge.SegmentB == null) continue;
+                if (!edge.SegmentA.Connections.Contains(edge)) edge.SegmentA.Connections.Add(edge);
+                if (!edge.SegmentB.Connections.Contains(edge)) edge.SegmentB.Connections.Add(edge);
+                if (!edge.SegmentA.ConnectedNeighbors.Contains(edge.SegmentB)) edge.SegmentA.ConnectedNeighbors.Add(edge.SegmentB);
+                if (!edge.SegmentB.ConnectedNeighbors.Contains(edge.SegmentA)) edge.SegmentB.ConnectedNeighbors.Add(edge.SegmentA);
+            }
+        }
+
+        /// <summary>
+        /// Lưới an toàn: hình chữ nhật trên layer ống có ghi chú WxH nằm bên trong và bề rộng đúng bằng W
+        /// thì CHẮC CHẮN là ống, phải được dựng, dù bước phân loại / lọc đối tượng giả nào đó đã bỏ nó.
+        /// </summary>
+        private static int RecoverAnnotatedDucts(
+            List<RawPolyShape> rawPolys,
+            List<CadTextNote> textNotes,
+            List<CadDuctSegment> ducts,
+            List<CadDuctSegment> fittings,
+            double centerElevMm,
+            Outline limitBox)
+        {
+            if (rawPolys == null || textNotes == null) return 0;
+            int recovered = 0;
+            double zFeet = centerElevMm * MM_TO_FEET;
+
+            foreach (CadTextNote note in textNotes)
+            {
+                if (note == null || note.Position == null || note.WidthMm <= 0 || note.HeightMm <= 0) continue;
+                if (IsNonDuctAnnotationNote(note.RawText)) continue;
+                if (ducts.Exists(delegate(CadDuctSegment d) { return d.ContainsPointXY(note.Position, 30.0 * MM_TO_FEET); })) continue;
+
+                CadDuctSegment best = null;
+                RawPolyShape bestPoly = null;
+                foreach (RawPolyShape rp in rawPolys)
+                {
+                    if (limitBox != null && !PolyIntersectsOutlineXY(rp.Points, limitBox)) continue;
+                    CadDuctSegment candidate = TryMakeRectangleDuct(rp, note, zFeet, centerElevMm);
+                    if (candidate != null && (best == null || candidate.Length * candidate.WidthMm < best.Length * best.WidthMm))
+                    {
+                        best = candidate;
+                        bestPoly = rp;
+                    }
+                }
+                if (best == null) continue;
+
+                best.ColorRgb = bestPoly.ColorRgb;
+                // Nếu đa giác này đang bị coi là phụ kiện thì gỡ ra để không vẽ trùng
+                if (fittings != null)
+                {
+                    fittings.RemoveAll(delegate(CadDuctSegment f)
+                    {
+                        return f.PolygonVertices != null && f.PolygonVertices.Count >= 3
+                            && DistXY(ComputeCentroidXY(f.PolygonVertices, zFeet), best.CenterPoint) < 30.0 * MM_TO_FEET;
+                    });
+                }
+                ducts.Add(best);
+                recovered++;
+            }
+            return recovered;
+        }
+
+        private static CadDuctSegment TryMakeRectangleDuct(RawPolyShape rp, CadTextNote note, double zFeet, double centerElevMm)
+        {
+            List<XYZ> pts = rp.Points;
+            if (pts == null || pts.Count < 4) return null;
+
+            // Phương trục = cạnh dài nhất
+            XYZ u = null;
+            double longest = 0, area = 0;
+            for (int i = 0; i < pts.Count; i++)
+            {
+                XYZ a = pts[i], b = pts[(i + 1) % pts.Count];
+                area += a.X * b.Y - b.X * a.Y;
+                XYZ e = new XYZ(b.X - a.X, b.Y - a.Y, 0.0);
+                if (e.GetLength() > longest) { longest = e.GetLength(); u = e.Normalize(); }
+            }
+            if (u == null) return null;
+            area = Math.Abs(area) * 0.5;
+            XYZ v = new XYZ(-u.Y, u.X, 0.0);
+
+            double minU = double.MaxValue, maxU = double.MinValue, minV = double.MaxValue, maxV = double.MinValue;
+            foreach (XYZ p in pts)
+            {
+                double pu = p.X * u.X + p.Y * u.Y, pv = p.X * v.X + p.Y * v.Y;
+                minU = Math.Min(minU, pu); maxU = Math.Max(maxU, pu);
+                minV = Math.Min(minV, pv); maxV = Math.Max(maxV, pv);
+            }
+            double length = maxU - minU, width = maxV - minV;
+            if (length <= 0 || width <= 0) return null;
+            if (area < length * width * 0.96) return null;                              // không phải chữ nhật
+            if (Math.Abs(width * FEET_TO_MM - note.WidthMm) > 25.0) return null;        // rộng phải đúng bằng W ghi chú
+            if (length < width * 1.5) return null;                                      // loại miệng gió / hộp vuông
+
+            double tu = note.Position.X * u.X + note.Position.Y * u.Y, tv = note.Position.X * v.X + note.Position.Y * v.Y;
+            double pad = 30.0 * MM_TO_FEET;
+            if (tu < minU - pad || tu > maxU + pad || tv < minV - pad || tv > maxV + pad) return null;
+
+            double midV = (minV + maxV) * 0.5;
+            CadDuctSegment duct = new CadDuctSegment();
+            duct.ShapeKind = CadShapeKind.StraightDuct;
+            duct.StartPoint = new XYZ(u.X * minU + v.X * midV, u.Y * minU + v.Y * midV, zFeet);
+            duct.EndPoint = new XYZ(u.X * maxU + v.X * midV, u.Y * maxU + v.Y * midV, zFeet);
+            duct.CenterPoint = (duct.StartPoint + duct.EndPoint) * 0.5;
+            duct.Direction = u;
+            duct.Length = length * FEET_TO_MM;
+            duct.WidthMm = SnapStandardDuctWidthMm(width * FEET_TO_MM);
+            duct.Width2Mm = duct.WidthMm;
+            duct.CenterElevationMm = centerElevMm;
+            duct.LayerName = rp.LayerName;
+            duct.PolygonVertices = new List<XYZ>();
+            double[][] corners = new double[][] { new double[] { minU, minV }, new double[] { maxU, minV }, new double[] { maxU, maxV }, new double[] { minU, maxV } };
+            foreach (double[] c in corners)
+            {
+                duct.PolygonVertices.Add(new XYZ(u.X * c[0] + v.X * c[1], u.Y * c[0] + v.Y * c[1], zFeet));
+            }
+            return duct;
+        }
+
+        private static void AddStageLog(List<string> log, string stage, List<CadDuctSegment> items)
+        {
+            foreach (CadDuctSegment d in items)
+            {
+                log.Add(string.Format("STAGE|{0}|{1}|{2}x{3}|S={4}|E={5}|{6}", stage, d.ShapeKind, (int)d.WidthMm, (int)d.HeightMm,
+                    PointMm(d.StartPoint), PointMm(d.EndPoint), d.SizeSource));
+            }
+        }
+
+        private static string PointMm(XYZ p)
+        {
+            return p == null ? "" : string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:0.0},{1:0.0}", p.X / MM_TO_FEET, p.Y / MM_TO_FEET);
+        }
+
+        private static string PointsMm(IList<XYZ> pts)
+        {
+            if (pts == null) return "";
+            List<string> parts = new List<string>(pts.Count);
+            foreach (XYZ p in pts) parts.Add(PointMm(p));
+            return string.Join(";", parts.ToArray());
+        }
+
+        /// <summary>
+        /// Ghi lại đúng những gì Revit đọc được ở lần quét gần nhất (ghi đè): nét, ghi chú, vùng loại trừ và kết quả từng bước.
+        /// Dùng để tìm nguyên nhân khi một đoạn ống không được nhận diện.
+        /// </summary>
+        private static void WriteScanLog(
+            List<string> stages,
+            List<RawPolyShape> polys,
+            List<RawLineShape> lines,
+            List<CadTextNote> notes,
+            List<CadExclusionZone> zones)
+        {
+            try
+            {
+                string folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HDTOOL", "Logs");
+                System.IO.Directory.CreateDirectory(folder);
+
+                List<string> text = new List<string>(stages);
+                foreach (RawPolyShape p in polys) text.Add("POLY|" + p.LayerName + "|" + PointsMm(p.Points));
+                foreach (RawLineShape l in lines) text.Add("LINE|" + l.LayerName + "|" + PointMm(l.Line.GetEndPoint(0)) + ";" + PointMm(l.Line.GetEndPoint(1)));
+                if (notes != null)
+                {
+                    foreach (CadTextNote n in notes) text.Add("NOTE|" + n.RawText + "|" + PointMm(n.Position) + (n.HasLeaderArrow ? "|LDR=" + PointMm(n.LeaderArrowPoint) : ""));
+                }
+                if (zones != null)
+                {
+                    foreach (CadExclusionZone z in zones) text.Add("ZONE|" + z.Kind + "|" + z.BlockName + "|" + z.LayerName + "|" + PointsMm(z.Corners));
+                }
+                System.IO.File.WriteAllLines(System.IO.Path.Combine(folder, "CadDuct_scan.log"), text.ToArray(), System.Text.Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Không ghi được CadDuct_scan.log: " + ex.Message);
+            }
+        }
+
         private static void MergeCollinearTapHosts(List<CadDuctSegment> ducts, List<CadConnectionEdge> edges)
         {
             if (ducts == null || ducts.Count < 2 || edges == null || edges.Count == 0) return;
@@ -5347,7 +6041,7 @@ namespace HDTool
                     keeper.EndPoint = newEnd;
                     keeper.CenterPoint = (newStart + newEnd) * 0.5;
                     keeper.Direction = dirK;
-                    keeper.Length = newStart.DistanceTo(newEnd);
+                    keeper.Length = newStart.DistanceTo(newEnd) * FEET_TO_MM;
                     keeper.HasDirectText = keeper.HasDirectText || victim.HasDirectText;
                     if (keeper.HeightMm <= 0 && victim.HeightMm > 0)
                     {
@@ -5399,24 +6093,7 @@ namespace HDTool
                 }
             } while (changed);
 
-            if (anyMerged)
-            {
-                foreach (CadDuctSegment d in ducts)
-                {
-                    if (d.ConnectedNeighbors == null) d.ConnectedNeighbors = new List<CadDuctSegment>();
-                    else d.ConnectedNeighbors.Clear();
-                    if (d.Connections == null) d.Connections = new List<CadConnectionEdge>();
-                    else d.Connections.Clear();
-                }
-                foreach (CadConnectionEdge edge in edges)
-                {
-                    if (edge == null || edge.SegmentA == null || edge.SegmentB == null) continue;
-                    if (!edge.SegmentA.Connections.Contains(edge)) edge.SegmentA.Connections.Add(edge);
-                    if (!edge.SegmentB.Connections.Contains(edge)) edge.SegmentB.Connections.Add(edge);
-                    if (!edge.SegmentA.ConnectedNeighbors.Contains(edge.SegmentB)) edge.SegmentA.ConnectedNeighbors.Add(edge.SegmentB);
-                    if (!edge.SegmentB.ConnectedNeighbors.Contains(edge.SegmentA)) edge.SegmentB.ConnectedNeighbors.Add(edge.SegmentA);
-                }
-            }
+            if (anyMerged) RebuildNeighborLinks(ducts, edges);
         }
 
         private static void AssignFallbackTapBevelDirections(List<CadDuctSegment> ducts, List<CadConnectionEdge> edges)
@@ -5894,7 +6571,8 @@ namespace HDTool
 
                     double sinAng = Math.Sqrt(Math.Max(0.25, 1.0 - cosAng * cosAng));
                     double t = (tapPt.X - ms.X) * u.X + (tapPt.Y - ms.Y) * u.Y;
-                    double margin = (br.WidthMm * 0.5 / sinAng + 100.0) * MM_TO_FEET;
+                    // Cùng lề với TryEnsureTapHostCoversBranch để lúc gắn chân rẽ không phải sửa lại ống chính
+                    double margin = (br.WidthMm * 0.5 / sinAng + Math.Max(160.0, br.WidthMm * 0.28)) * MM_TO_FEET;
                     double needLow = t - margin;
                     double needHigh = t + margin;
 
@@ -5906,6 +6584,18 @@ namespace HDTool
                     {
                         maxReqT = needHigh;
                     }
+                }
+
+                // Đầu ống đã nối đồng trục (côn thu / nối thẳng) thì không được kéo dài, nếu không sẽ đè mất chỗ đặt côn
+                for (int i = 0; i < edges.Count; i++)
+                {
+                    CadConnectionEdge ax = edges[i];
+                    if (ax.Kind != CadConnectionKind.Transition && ax.Kind != CadConnectionKind.CollinearDirect) continue;
+                    CadDuctSegment other = (ax.SegmentA == main) ? ax.SegmentB : ((ax.SegmentB == main) ? ax.SegmentA : null);
+                    if (other == null) continue;
+                    double tOther = (other.CenterPoint.X - ms.X) * u.X + (other.CenterPoint.Y - ms.Y) * u.Y;
+                    if (tOther < mainLen * 0.5) minReqT = 0.0;
+                    else maxReqT = mainLen;
                 }
 
                 if (minReqT < 0.0)

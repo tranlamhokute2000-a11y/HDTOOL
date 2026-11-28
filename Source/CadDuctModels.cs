@@ -78,6 +78,9 @@ namespace HDTool
 
         public ElementId CreatedDuctId { get; set; }
 
+        // Kỹ sư bỏ đoạn này ở cửa sổ xem trước 3D -> không dựng
+        public bool IsExcluded { get; set; }
+
         // Kết nối mạng lưới đồ thị hình học (Geometric Graph Topology)
         public List<CadDuctSegment> ConnectedNeighbors { get; set; }
         public List<CadConnectionEdge> Connections { get; set; }

@@ -192,51 +192,236 @@ namespace HDTool
         }
 
         /// <summary>
-        /// Lấy lưới tam giác 3D của Type (9 số / tam giác, đơn vị feet) cho khung xem trước xoay được.
-        /// Ưu tiên hình khối của chính FamilySymbol; nếu rỗng thì lấy từ 1 đối tượng đã đặt của Type đó.
-        /// BẮT BUỘC gọi trong API context (ExternalEvent). Trả về null nếu Family không có hình 3D.
+        /// Lấy hình 3D của Type cho khung xem trước xoay được: tam giác (9 số / tam giác) + đoạn thẳng (6 số / đoạn), đơn vị feet.
+        /// Thứ tự: hình của FamilySymbol -> 1 đối tượng đã đặt -> giao dịch TẠM (kích hoạt Type, đặt thử 1 đối tượng
+        /// theo kiểu đặt của Family: điểm / Level / đường / mặt tường / tường chủ / view) rồi RollBack — dự án không đổi.
+        /// BẮT BUỘC gọi trong API context (ExternalEvent). Không lấy được gì thì cả 2 mảng = null.
         /// </summary>
-        public static float[] GetSymbolMesh(Document doc, ElementId symbolId, int maxTriangles)
+        public static void GetSymbolGeometry(Document doc, ElementId symbolId, int maxTriangles, out float[] triangles, out float[] lines)
         {
-            if (doc == null || symbolId == null || symbolId == ElementId.InvalidElementId) return null;
-            List<float> buf = new List<float>(9 * 2048);
+            triangles = null;
+            lines = null;
+            if (doc == null || symbolId == null || symbolId == ElementId.InvalidElementId) return;
+            List<float> tri = new List<float>(9 * 2048);
+            List<float> seg = new List<float>(6 * 512);
             try
             {
-                Options opt = new Options();
-                opt.DetailLevel = ViewDetailLevel.Fine;
-                opt.ComputeReferences = false;
-                opt.IncludeNonVisibleObjects = false;
-
                 FamilySymbol symbol = doc.GetElement(symbolId) as FamilySymbol;
-                if (symbol != null)
-                {
-                    CollectTriangles(symbol.get_Geometry(opt), buf, maxTriangles);
-                }
+                if (symbol == null) return;
 
-                if (buf.Count == 0)
+                CollectGeometry(symbol.get_Geometry(ModelOptions()), tri, seg, maxTriangles);
+
+                if (tri.Count == 0)
                 {
                     Element inst = new FilteredElementCollector(doc)
                         .WherePasses(new FamilyInstanceFilter(doc, symbolId))
                         .FirstElement();
                     if (inst != null)
                     {
-                        CollectTriangles(inst.get_Geometry(opt), buf, maxTriangles);
+                        tri.Clear(); seg.Clear();
+                        CollectGeometry(inst.get_Geometry(ModelOptions()), tri, seg, maxTriangles);
+                        if (tri.Count == 0 && inst.OwnerViewId != ElementId.InvalidElementId)
+                        {
+                            View ov = doc.GetElement(inst.OwnerViewId) as View;
+                            if (ov != null) CollectGeometry(inst.get_Geometry(ViewOptions(ov)), tri, seg, maxTriangles);
+                        }
                     }
+                }
+
+                if (tri.Count == 0 && !doc.IsReadOnly && !doc.IsModifiable)
+                {
+                    List<float> t2 = new List<float>(9 * 2048);
+                    List<float> s2 = new List<float>(6 * 512);
+                    GetGeometryByTempPlacement(doc, symbol, maxTriangles, t2, s2);
+                    if (t2.Count > 0 || s2.Count > seg.Count) { tri = t2; seg = s2; }
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Lỗi lấy hình 3D: " + ex.Message);
             }
-            return buf.Count > 0 ? buf.ToArray() : null;
+            if (tri.Count > 0) triangles = tri.ToArray();
+            if (seg.Count > 0) lines = seg.ToArray();
         }
 
-        private static void CollectTriangles(GeometryElement geo, List<float> buf, int maxTriangles)
+        private static Options ModelOptions()
+        {
+            Options opt = new Options();
+            opt.DetailLevel = ViewDetailLevel.Fine;
+            opt.ComputeReferences = false;
+            opt.IncludeNonVisibleObjects = false;
+            return opt;
+        }
+
+        private static Options ViewOptions(View v)
+        {
+            Options opt = new Options();
+            opt.View = v;
+            opt.ComputeReferences = false;
+            return opt;
+        }
+
+        /// <summary>Giao dịch tạm: kích hoạt Type / đặt thử 1 đối tượng, đọc hình rồi RollBack (không ghi vào dự án, không vào Undo).</summary>
+        private static void GetGeometryByTempPlacement(Document doc, FamilySymbol symbol, int maxTriangles, List<float> tri, List<float> seg)
+        {
+            using (Transaction t = new Transaction(doc, "HDTOOL - Xem trước 3D (tạm)"))
+            {
+                try
+                {
+                    FailureHandlingOptions fho = t.GetFailureHandlingOptions();
+                    fho.SetFailuresPreprocessor(new HDToolSilentFailures());
+                    fho.SetClearAfterRollback(true);
+                    fho.SetForcedModalHandling(false);
+                    t.SetFailureHandlingOptions(fho);
+                    if (t.Start() != TransactionStatus.Started) return;
+
+                    if (!symbol.IsActive) symbol.Activate();
+                    doc.Regenerate();
+                    CollectGeometry(symbol.get_Geometry(ModelOptions()), tri, seg, maxTriangles);
+
+                    if (tri.Count == 0)
+                    {
+                        View view;
+                        FamilyInstance fi = PlaceTempInstance(doc, symbol, out view);
+                        if (fi != null)
+                        {
+                            doc.Regenerate();
+                            tri.Clear(); seg.Clear();
+                            CollectGeometry(fi.get_Geometry(ModelOptions()), tri, seg, maxTriangles);
+                            if (tri.Count == 0 && seg.Count == 0 && view != null)
+                            {
+                                CollectGeometry(fi.get_Geometry(ViewOptions(view)), tri, seg, maxTriangles);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Đặt tạm để xem 3D lỗi: " + ex.Message);
+                }
+                finally
+                {
+                    try { if (t.GetStatus() == TransactionStatus.Started) t.RollBack(); }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine("RollBack xem 3D lỗi: " + ex.Message); }
+                }
+            }
+        }
+
+        /// <summary>Thử lần lượt các cách đặt theo kiểu đặt của Family; trả về đối tượng tạm đầu tiên đặt được.</summary>
+        private static FamilyInstance PlaceTempInstance(Document doc, FamilySymbol symbol, out View view)
+        {
+            view = null;
+            Autodesk.Revit.DB.Structure.StructuralType ns = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
+            Level level = null;
+            foreach (Element e in new FilteredElementCollector(doc).OfClass(typeof(Level)))
+            {
+                Level l = (Level)e;
+                if (level == null || l.Elevation < level.Elevation) level = l;
+            }
+            double z = level != null ? level.Elevation : 0.0;
+            XYZ p0 = new XYZ(0, 0, z);
+            Line line = Line.CreateBound(p0, new XYZ(6, 0, z));
+
+            FamilyPlacementType pt = FamilyPlacementType.Invalid;
+            try { pt = symbol.Family.FamilyPlacementType; } catch { pt = FamilyPlacementType.Invalid; }
+
+            FamilyInstance fi = null;
+
+            // 2D (chú thích / chi tiết): đặt trong 1 view mặt bằng
+            if (pt == FamilyPlacementType.ViewBased || pt == FamilyPlacementType.CurveBasedDetail)
+            {
+                View pv = FindPlanView(doc);
+                view = pv;
+                if (pv != null)
+                {
+                    if (pt == FamilyPlacementType.CurveBasedDetail) fi = TryPlace(delegate { return doc.Create.NewFamilyInstance(line, symbol, pv); });
+                    if (fi == null) fi = TryPlace(delegate { return doc.Create.NewFamilyInstance(p0, symbol, pv); });
+                }
+                return fi;
+            }
+
+            if (pt == FamilyPlacementType.Adaptive)
+            {
+                fi = TryPlace(delegate
+                {
+                    FamilyInstance a = AdaptiveComponentInstanceUtils.CreateAdaptiveComponentInstance(doc, symbol);
+                    IList<ElementId> ids = AdaptiveComponentInstanceUtils.GetInstancePlacementPointElementRefIds(a);
+                    for (int i = 0; i < ids.Count; i++)
+                    {
+                        ReferencePoint rp = doc.GetElement(ids[i]) as ReferencePoint;
+                        if (rp != null) rp.Position = new XYZ(4.0 * i, (i % 2) * 2.0, z);
+                    }
+                    return a;
+                });
+                if (fi != null) return fi;
+            }
+
+            if (pt == FamilyPlacementType.CurveBased || pt == FamilyPlacementType.CurveDrivenStructural)
+            {
+                if (level != null) fi = TryPlace(delegate { return doc.Create.NewFamilyInstance(line, symbol, level, ns); });
+                if (fi != null) return fi;
+            }
+
+            if (level != null) fi = TryPlace(delegate { return doc.Create.NewFamilyInstance(p0, symbol, level, ns); });
+            if (fi == null) fi = TryPlace(delegate { return doc.Create.NewFamilyInstance(p0, symbol, ns); });
+            if (fi != null) return fi;
+
+            // Family gắn tường / gắn mặt / mặt phẳng làm việc: dựng tường tạm làm chủ
+            if (level != null)
+            {
+                Wall wall = null;
+                try { wall = Wall.Create(doc, Line.CreateBound(new XYZ(-10, 0, z), new XYZ(10, 0, z)), level.Id, false); doc.Regenerate(); }
+                catch { wall = null; }
+                if (wall != null)
+                {
+                    XYZ mid = new XYZ(0, 0, z + 3.0);
+                    fi = TryPlace(delegate { return doc.Create.NewFamilyInstance(mid, symbol, wall, level, ns); });
+                    if (fi == null)
+                    {
+                        fi = TryPlace(delegate
+                        {
+                            IList<Reference> faces = HostObjectUtils.GetSideFaces(wall, ShellLayerType.Exterior);
+                            if (faces == null || faces.Count == 0) return null;
+                            Face face = wall.GetGeometryObjectFromReference(faces[0]) as Face;
+                            if (face == null) return null;
+                            IntersectionResult ir = face.Project(mid);
+                            XYZ loc = ir != null ? ir.XYZPoint : mid;
+                            return doc.Create.NewFamilyInstance(faces[0], loc, XYZ.BasisX, symbol);
+                        });
+                    }
+                }
+            }
+            return fi;
+        }
+
+        private static FamilyInstance TryPlace(Func<FamilyInstance> place)
+        {
+            try { return place(); }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Đặt tạm không được: " + ex.Message);
+                return null;
+            }
+        }
+
+        private static View FindPlanView(Document doc)
+        {
+            View av = doc.ActiveView;
+            if (av != null && !av.IsTemplate && (av is ViewPlan || av is ViewSection || av is ViewDrafting)) return av;
+            foreach (Element e in new FilteredElementCollector(doc).OfClass(typeof(ViewPlan)))
+            {
+                View v = (View)e;
+                if (!v.IsTemplate) return v;
+            }
+            return null;
+        }
+
+        private static void CollectGeometry(GeometryElement geo, List<float> tri, List<float> seg, int maxTriangles)
         {
             if (geo == null) return;
             foreach (GeometryObject obj in geo)
             {
-                if (buf.Count / 9 >= maxTriangles) return;
+                if (tri.Count / 9 >= maxTriangles) return;
 
                 Solid solid = obj as Solid;
                 if (solid != null)
@@ -245,9 +430,9 @@ namespace HDTool
                     foreach (Face face in solid.Faces)
                     {
                         Mesh fm = null;
-                        try { fm = face.Triangulate(); } catch { }
-                        AddMesh(fm, buf, maxTriangles);
-                        if (buf.Count / 9 >= maxTriangles) return;
+                        try { fm = face.Triangulate(); } catch { fm = null; }
+                        AddMesh(fm, tri, maxTriangles);
+                        if (tri.Count / 9 >= maxTriangles) return;
                     }
                     continue;
                 }
@@ -255,15 +440,40 @@ namespace HDTool
                 Mesh mesh = obj as Mesh;
                 if (mesh != null)
                 {
-                    AddMesh(mesh, buf, maxTriangles);
+                    AddMesh(mesh, tri, maxTriangles);
+                    continue;
+                }
+
+                Curve curve = obj as Curve;
+                if (curve != null)
+                {
+                    try { AddPolyline(curve.Tessellate(), seg); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Tessellate lỗi: " + ex.Message); }
+                    continue;
+                }
+
+                PolyLine pl = obj as PolyLine;
+                if (pl != null)
+                {
+                    try { AddPolyline(pl.GetCoordinates(), seg); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("PolyLine lỗi: " + ex.Message); }
                     continue;
                 }
 
                 GeometryInstance gi = obj as GeometryInstance;
                 if (gi != null)
                 {
-                    CollectTriangles(gi.GetInstanceGeometry(), buf, maxTriangles);
+                    CollectGeometry(gi.GetInstanceGeometry(), tri, seg, maxTriangles);
                 }
+            }
+        }
+
+        private static void AddPolyline(IList<XYZ> pts, List<float> seg)
+        {
+            if (pts == null) return;
+            for (int i = 1; i < pts.Count; i++)
+            {
+                if (seg.Count / 6 >= 40000) return;
+                seg.Add((float)pts[i - 1].X); seg.Add((float)pts[i - 1].Y); seg.Add((float)pts[i - 1].Z);
+                seg.Add((float)pts[i].X); seg.Add((float)pts[i].Y); seg.Add((float)pts[i].Z);
             }
         }
 
@@ -541,6 +751,16 @@ namespace HDTool
             string res = sb.ToString().Normalize(NormalizationForm.FormC);
             res = res.Replace('Đ', 'D').Replace('đ', 'd');
             return res;
+        }
+    }
+
+    /// <summary>Bỏ qua cảnh báo khi đặt tạm Family để xem trước 3D (giao dịch luôn RollBack).</summary>
+    internal class HDToolSilentFailures : IFailuresPreprocessor
+    {
+        public FailureProcessingResult PreprocessFailures(FailuresAccessor failuresAccessor)
+        {
+            try { failuresAccessor.DeleteAllWarnings(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Bỏ cảnh báo lỗi: " + ex.Message); }
+            return FailureProcessingResult.Continue;
         }
     }
 }
