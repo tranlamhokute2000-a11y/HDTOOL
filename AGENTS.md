@@ -80,12 +80,14 @@ Tài liệu này là quy tắc bắt buộc Antigravity phải tuân thủ trong
 
 ## 5. QUY TẮC ĐẨY DỮ LIỆU LÊN GITHUB & LỊCH NHẮC NHỞ HÀNG NGÀY (BẮT BUỘC THEO LỆNH SẾP HỒ)
 
-- **LỊCH NHẮC NHỞ ĐỊNH KỲ 16H15 HÀNG NGÀY**:
-  - Đúng **16h15 hàng ngày**, Antigravity tự động chủ động hỏi/nhắc nhở Sếp Hồ: *"Sếp Hồ ơi, đã 16h15 rồi, Sếp có muốn em cập nhật (push) toàn bộ code, tài liệu và tri thức mới nhất hôm nay lên GitHub không ạ?"*
+- **LỊCH NHẮC NHỞ ĐỊNH KỲ 16H50 HÀNG NGÀY**:
+  - Đúng **16h50 hàng ngày**, Antigravity tự động chủ động hỏi/nhắc nhở Sếp Hồ: *"Sếp Hồ ơi, đã 16h50 rồi, Sếp có muốn em cập nhật (push) toàn bộ code, tài liệu và tri thức mới nhất hôm nay lên GitHub không ạ?"*
+  - **Ngày hôm đó không làm gì (không có thay đổi / commit mới) thì KHÔNG hỏi.**
+  - **Ngoài giờ nhắc thì không hỏi chuyện push** (kể cả sau khi commit) — chỉ báo kết quả.
   - Nếu Sếp đồng ý -> Antigravity tiến hành kiểm tra git status, tạo commit chuẩn chỉ và push lên GitHub an toàn 100%.
 
 - **CHỈ ĐẨY LÊN GITHUB KHI SẾP HỒ ĐỒNG Ý / YÊU CẦU**:
-  - CHỈ ĐƯỢC PHÉP ĐẨY LÊN GITHUB KHI SẾP HỒ CÓ LỆNH RÕ RÀNG (ví dụ: *"đẩy lên github"*, *"push github"*, *"publish"*, hoặc trả lời *"đồng ý"* khi được nhắc vào 16h15).
+  - CHỈ ĐƯỢC PHÉP ĐẨY LÊN GITHUB KHI SẾP HỒ CÓ LỆNH RÕ RÀNG (ví dụ: *"đẩy lên github"*, *"push github"*, *"publish"*, hoặc trả lời *"đồng ý"* khi được nhắc vào 16h50).
   - **KHI SẾP CHƯA ĐỒNG Ý THÌ TUYỆT ĐỐI KHÔNG PUSH**: Tuyệt đối không tự tiện chạy `git push`.
 
 ---

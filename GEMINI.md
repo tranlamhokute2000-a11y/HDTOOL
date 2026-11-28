@@ -27,8 +27,8 @@ Tài liệu này kích hoạt chế độ ghi nhớ trạng thái làm việc li
    - **CHỈ GIỮ LẠI ĐÚNG 2 VERSION GẦN NHẤT**: Hệ thống tự động xóa sạch toàn bộ các file của các version cũ hơn (`v1`, `v2`, `v3`... đến `{N-2}`) để thư mục luôn tinh gọn.
    - **Chỉ giữ định dạng tên duy nhất `HDTOOL_Setup_Version_{N}.exe`**: Xóa sạch toàn bộ các file viết tắt `_v{N}` và các file trùng lặp để thư mục ngăn nắp 100%.
 
-6. **Quy tắc Git, GitHub & Lịch nhắc 16h15 hàng ngày theo lệnh Sếp Hồ**:
-   - **Lịch nhắc nhở 16h15 hàng ngày**: Cứ đúng 16h15 mỗi ngày, Antigravity chủ động nhắc Sếp Hồ: *"Sếp Hồ ơi, đã 16h15 rồi, Sếp có muốn em cập nhật (push) toàn bộ code, tài liệu và tri thức mới nhất hôm nay lên GitHub không ạ?"*
+6. **Quy tắc Git, GitHub & Lịch nhắc 16h50 hàng ngày theo lệnh Sếp Hồ**:
+   - **Lịch nhắc nhở 16h50 hàng ngày**: Cứ đúng 16h50 mỗi ngày, Antigravity chủ động nhắc Sếp Hồ: *"Sếp Hồ ơi, đã 16h50 rồi, Sếp có muốn em cập nhật (push) toàn bộ code, tài liệu và tri thức mới nhất hôm nay lên GitHub không ạ?"* Ngày không làm gì thì không hỏi.
    - CHỈ ĐẨY LÊN GITHUB KHI CÓ LỆNH RÕ RÀNG HOẶC ĐƯỢC SẾP ĐỒNG Ý. Tuyệt đối không tự tiện chạy `git push`.
 
 7. **Quy tắc thiết kế giao diện UX/UI rõ ràng, rành mạch, không che khuất, không nửa vời (Lệnh Sếp Hồ)**:

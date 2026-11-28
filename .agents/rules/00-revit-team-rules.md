@@ -23,8 +23,8 @@ trigger: always_on
    - **Chỉ giữ lại 2 version gần nhất**: Xóa sạch toàn bộ version cũ `{N-2}`.
    - **Chỉ dùng định dạng tên**: `HDTOOL_Setup_Version_{N}.exe`.
 
-5. **Kỷ luật Git, GitHub & Lịch nhắc 16h15 hàng ngày**:
-   - Đúng 16h15 hàng ngày: Tự động nhắc nhở Sếp Hồ có muốn cập nhật toàn bộ tri thức code lên GitHub không.
+5. **Kỷ luật Git, GitHub & Lịch nhắc 16h50 hàng ngày**:
+   - Đúng 16h50 hàng ngày: Tự động nhắc nhở Sếp Hồ có muốn cập nhật toàn bộ tri thức code lên GitHub không. Ngày không làm gì thì không hỏi.
    - CHỈ ĐẨY LÊN GITHUB KHI CÓ LỆNH RÕ RÀNG HOẶC ĐƯỢC SẾP HỒ ĐỒNG Ý. Tuyệt đối không tự ý chạy `git push`.
 
 6. **Hoàn thành công việc**:
