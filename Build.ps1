@@ -10,10 +10,11 @@ $ErrorActionPreference = 'Stop'
 $csc = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 $revitApi = "C:\Program Files\Autodesk\Revit 2024\RevitAPI.dll"
 $revitApiUI = "C:\Program Files\Autodesk\Revit 2024\RevitAPIUI.dll"
-$srcDir = "c:\Users\Nguye\Desktop\ADDIN REVIT"
+$srcDir = $PSScriptRoot  # thu muc chua Build.ps1: chay duoc o may khac / duong dan khac
 $buildDir = Join-Path $srcDir "Build"
 $installerDir = Join-Path $srcDir "Installer"
-$desktop = "C:\Users\Nguye\Desktop"
+New-Item -ItemType Directory -Force $buildDir, $installerDir | Out-Null
+$desktop = [Environment]::GetFolderPath("Desktop")
 $versionFile = Join-Path $srcDir "VERSION.txt"
 
 # 1. Quản lý số phiên bản (Version 1, 2, 3...)
@@ -132,7 +133,7 @@ Copy-Item $setupOut (Join-Path $installerDir $versionFileName) -Force
 Copy-Item $addinFile (Join-Path $buildDir "HDTOOL.addin") -Force
 
 # Đảm bảo không để tệp nào rác sinh ra trên Desktop theo lệnh Sếp Hồ
-$desktop = "C:\Users\Nguye\Desktop"
+$desktop = [Environment]::GetFolderPath("Desktop")
 if (Test-Path $desktop) {
     Get-ChildItem -Path $desktop -File -ErrorAction SilentlyContinue | Where-Object {
         $_.Name -like "HDTOOL_Setup*.exe" -or

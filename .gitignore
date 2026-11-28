@@ -1,6 +1,9 @@
 # Build outputs & installers
 Build/
-Installer/
+Installer/*
+!Installer/Setup.cs
+!Installer/app.ico
+!Installer/hadomee_logo.png
 *.exe
 *.zip
 *.dll
